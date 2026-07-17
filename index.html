@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Scale Visualizer</title>
+<meta name="theme-color" content="#0d1220">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Scales">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  :root{
+    --bg:#0d1220;
+    --panel:#161f31;
+    --panel-2:#1d2740;
+    --line:#2b3652;
+    --ink:#eef2fb;
+    --muted:#8a97b4;
+    --scale:#5b8cff;   /* scale tones */
+    --root:#f2a65a;    /* root tones */
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:radial-gradient(1200px 600px at 70% -10%, #16203a 0%, var(--bg) 55%);
+    color:var(--ink);
+    font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;
+    min-height:100vh;
+    padding:max(44px, env(safe-area-inset-top)) 24px 60px;
+    -webkit-font-smoothing:antialiased;
+  }
+  @media (max-width:640px){
+    body{padding:max(28px, env(safe-area-inset-top)) 14px 44px}
+    .board{padding:14px 10px 10px;border-radius:12px}
+    h1{font-size:26px}
+  }
+  @media (pointer:coarse){
+    .dot{width:36px;height:36px}
+    .cell{height:52px}
+  }
+  .wrap{max-width:1040px;margin:0 auto}
+
+  /* header */
+  .mark{
+    font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+    font-size:13px;color:var(--muted);
+    transform:skewX(-12deg);display:inline-block;
+  }
+  .mark b{color:var(--root)}
+  h1{
+    font-size:clamp(28px,4.5vw,42px);font-weight:800;line-height:1.05;
+    margin:10px 0 6px;letter-spacing:-.01em;
+  }
+  .sub{color:#c6cfe6;margin:0;font-size:15px}
+  .formula{color:var(--muted);font-size:13px;margin:4px 0 0}
+  .formula b{color:#c6cfe6;font-weight:600}
+
+  /* controls */
+  .bar{
+    display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+    margin:24px 0 18px;
+  }
+  select,button{
+    font:inherit;color:var(--ink);
+    background:var(--panel);border:1px solid var(--line);
+    border-radius:10px;padding:11px 14px;cursor:pointer;
+    transition:border-color .15s, background .15s, transform .05s;
+  }
+  select:hover,button:hover{border-color:#3d4b73}
+  button.primary{background:var(--scale);border-color:transparent;color:#08122c;font-weight:700}
+  button.primary:hover{filter:brightness(1.06)}
+  button:active{transform:translateY(1px)}
+  .lab{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin:0 0 5px 2px}
+
+  /* fretboard */
+  .board{
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line);border-radius:16px;
+    padding:22px 20px 14px;box-shadow:var(--shadow);
+    overflow-x:auto;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:34px repeat(16,minmax(40px,1fr));
+    min-width:760px;
+  }
+  .slabel{
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;color:var(--muted);
+  }
+  .cell{
+    position:relative;height:46px;
+    display:flex;align-items:center;justify-content:center;
+    border-left:1px solid var(--line);
+  }
+  .cell::before{
+    content:"";position:absolute;left:0;right:0;top:50%;height:2px;
+    background:linear-gradient(90deg,#3a466b,#4a5680);opacity:.55;
+  }
+  .cell.nut{border-left:4px solid #6b7699}
+  .fret0{border-left:none}
+  .dot{
+    position:relative;z-index:2;width:34px;height:34px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;color:#fff;
+    background:var(--scale);box-shadow:0 2px 8px rgba(0,0,0,.35);
+    cursor:pointer;transition:transform .12s, box-shadow .12s;
+  }
+  .dot.root{background:var(--root);color:#2a1400}
+  .dot.anchor{box-shadow:0 0 0 3px rgba(242,166,90,.45), 0 2px 8px rgba(0,0,0,.35)}
+  .dot:hover{transform:scale(1.16);box-shadow:0 4px 14px rgba(0,0,0,.5)}
+  .dot.ghost{
+    background:transparent;border:2px dashed rgba(242,166,90,.55);
+    color:rgba(242,166,90,.8);box-shadow:none;
+  }
+  .dot.ghost:hover{border-style:solid;background:rgba(242,166,90,.15)}
+
+  /* inlays + fret numbers */
+  .frets{display:grid;grid-template-columns:34px repeat(16,minmax(40px,1fr));min-width:760px;margin-top:6px}
+  .fnum{text-align:center;font-size:11px;color:var(--muted);position:relative;height:24px}
+  .fnum.inlay::after{content:"";position:absolute;left:50%;bottom:2px;transform:translateX(-50%);
+    width:6px;height:6px;border-radius:50%;background:#3c496b}
+  .legend{display:flex;gap:18px;margin-top:16px;font-size:13px;color:var(--muted);flex-wrap:wrap;align-items:center}
+  .chip{display:inline-flex;align-items:center;gap:7px}
+  .swatch{width:13px;height:13px;border-radius:50%}
+  .swatch.ghosted{background:transparent;border:2px dashed rgba(242,166,90,.6)}
+  .hint{color:var(--muted);font-size:13px;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="mark">Scale&nbsp;<b>Visualizer</b></div>
+  <h1 id="title"></h1>
+  <p class="sub" id="sub"></p>
+  <p class="formula">Notes: <b id="noteset"></b> &nbsp;·&nbsp; Formula: <b id="degrees"></b></p>
+
+  <div class="bar">
+    <div>
+      <span class="lab">Key</span>
+      <select id="key" aria-label="Pick a key"></select>
+    </div>
+    <div>
+      <span class="lab">Scale</span>
+      <select id="scale" aria-label="Pick a scale"></select>
+    </div>
+    <div>
+      <span class="lab">&nbsp;</span>
+      <button class="primary" id="play">&#9654;&nbsp; Play the box</button>
+    </div>
+  </div>
+
+  <div class="board">
+    <div class="grid" id="grid"></div>
+    <div class="frets" id="frets"></div>
+  </div>
+
+  <div class="legend">
+    <span class="chip"><span class="swatch" style="background:var(--root)"></span> Root</span>
+    <span class="chip"><span class="swatch" style="background:var(--scale)"></span> Scale tone</span>
+    <span class="chip"><span class="swatch ghosted"></span> Other root — click to move the box there</span>
+  </div>
+
+  <p class="hint">Hover or tap any dot to hear the actual note.</p>
+</div>
+
+<script>
+/* ---------- data ---------- */
+const SHARPS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const FLATS  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const FLAT_KEYS = new Set([1,3,5,8,10]);           // Db Eb F Ab Bb → spell flat
+const DEG = {0:'1',1:'b2',2:'2',3:'b3',4:'3',5:'4',6:'b5',7:'5',8:'b6',9:'6',10:'b7',11:'7'};
+
+// display order top->bottom: high e ... low E   (midi = open-string pitch)
+const STRINGS = [
+  {lbl:'e', pc:4,  midi:64, say:'high E'},
+  {lbl:'B', pc:11, midi:59, say:'B'},
+  {lbl:'G', pc:7,  midi:55, say:'G'},
+  {lbl:'D', pc:2,  midi:50, say:'D'},
+  {lbl:'A', pc:9,  midi:45, say:'A'},
+  {lbl:'E', pc:4,  midi:40, say:'low E'},
+];
+const FRETS = 15;        // board shows 0..15
+const MAX_ANCHOR = 12;   // roots past 12 aren't clickable (box would fall off the board)
+const INLAYS = new Set([3,5,7,9,12,15]);
+
+const SCALE_GROUPS = [
+  ['Pentatonic & Blues', {
+    'Minor Pentatonic':[0,3,5,7,10],
+    'Major Pentatonic':[0,2,4,7,9],
+    'Blues (minor)':[0,3,5,6,7,10],
+    'Blues (major)':[0,2,3,4,7,9],
+  }],
+  ['Major & Minor', {
+    'Major (Ionian)':[0,2,4,5,7,9,11],
+    'Natural Minor (Aeolian)':[0,2,3,5,7,8,10],
+    'Harmonic Minor':[0,2,3,5,7,8,11],
+    'Melodic Minor':[0,2,3,5,7,9,11],
+  }],
+  ['Modes', {
+    'Dorian':[0,2,3,5,7,9,10],
+    'Phrygian':[0,1,3,5,7,8,10],
+    'Lydian':[0,2,4,6,7,9,11],
+    'Mixolydian':[0,2,4,5,7,9,10],
+    'Locrian':[0,1,3,5,6,8,10],
+  }],
+  ['Flavor', {
+    'Phrygian Dominant':[0,1,4,5,7,8,10],
+    'Double Harmonic':[0,1,4,5,7,8,11],
+    'Whole Tone':[0,2,4,6,8,10],
+    'Diminished (W-H)':[0,2,3,5,6,8,9,11],
+    'Diminished (H-W)':[0,1,3,4,6,7,9,10],
+  }],
+];
+const ALL_SCALES = Object.assign({}, ...SCALE_GROUPS.map(([,m]) => m));
+
+/* ---------- audio: Karplus-Strong pluck ---------- */
+let actx = null;
+function ensureCtx(){
+  if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+  if (actx.state === 'suspended') actx.resume();
+  return actx;
+}
+// unlock audio on the first real gesture anywhere
+['pointerdown','keydown'].forEach(ev =>
+  window.addEventListener(ev, ensureCtx, {once:true, passive:true}));
+
+function pluck(midi, when=0, vel=0.5){
+  const ctx = ensureCtx();
+  const freq = 440 * Math.pow(2, (midi - 69) / 12);
+  const sr = ctx.sampleRate, dur = 1.8;
+  const buf = ctx.createBuffer(1, Math.floor(sr * dur), sr);
+  const out = buf.getChannelData(0);
+  const N = Math.max(2, Math.round(sr / freq));
+  const ring = new Float32Array(N);
+  for (let i = 0; i < N; i++) ring[i] = Math.random() * 2 - 1;   // pluck burst
+  let prev = 0;
+  for (let i = 0; i < out.length; i++){
+    const j = i % N, cur = ring[j];
+    ring[j] = 0.996 * 0.5 * (cur + prev);   // damped lowpass feedback
+    out[i] = cur;
+    prev = cur;
+  }
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2900;
+  const g = ctx.createGain(); g.gain.value = vel;
+  src.connect(lp); lp.connect(g); g.connect(ctx.destination);
+  src.start(ctx.currentTime + when);
+}
+
+/* ---------- state ---------- */
+let keyPc = 9;                          // A
+let scaleName = 'Minor Pentatonic';
+let anchor = null;                      // {s: string index, f: fret}
+
+function noteNames(){ return FLAT_KEYS.has(keyPc) ? FLATS : SHARPS; }
+
+function defaultAnchor(){
+  // lowest root on the low E string, else first root found anywhere
+  for (let s = STRINGS.length - 1; s >= 0; s--)
+    for (let f = 0; f <= MAX_ANCHOR; f++)
+      if ((STRINGS[s].pc + f) % 12 === keyPc) return {s, f};
+  return null;
+}
+
+function boxNotes(){
+  // every scale tone inside the anchor window, with its midi pitch
+  const iv = ALL_SCALES[scaleName];
+  const pcs = new Set(iv.map(i => (keyPc + i) % 12));
+  const lo = Math.max(0, anchor.f - 1), hi = Math.min(FRETS, anchor.f + 3);
+  const notes = [];
+  STRINGS.forEach((s, si) => {
+    for (let f = lo; f <= hi; f++)
+      if (pcs.has((s.pc + f) % 12)) notes.push({s: si, f, midi: s.midi + f});
+  });
+  return notes;
+}
+
+/* ---------- render ---------- */
+const grid  = document.getElementById('grid');
+const frets = document.getElementById('frets');
+
+function render(){
+  const NN = noteNames();
+  const iv = ALL_SCALES[scaleName];
+  const pcs = new Set(iv.map(i => (keyPc + i) % 12));
+  if (!anchor) anchor = defaultAnchor();
+  const lo = Math.max(0, anchor.f - 1), hi = Math.min(FRETS, anchor.f + 3);
+
+  document.getElementById('title').textContent = `${NN[keyPc]} ${scaleName}`;
+  const as = STRINGS[anchor.s];
+  document.getElementById('sub').textContent =
+    `One box, anchored on the root at ${anchor.f === 0 ? 'the open' : 'fret ' + anchor.f + ' on the'} ${as.say} string.`;
+  document.getElementById('noteset').textContent = iv.map(i => NN[(keyPc + i) % 12]).join(' · ');
+  document.getElementById('degrees').textContent = iv.map(i => DEG[i]).join(' ');
+
+  grid.innerHTML = '';
+  STRINGS.forEach((s, si) => {
+    const lab = document.createElement('div');
+    lab.className = 'slabel'; lab.textContent = s.lbl;
+    grid.appendChild(lab);
+
+    for (let f = 0; f <= FRETS; f++){
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (f === 0 ? ' fret0' : '') + (f === 1 ? ' nut' : '');
+      const pc = (s.pc + f) % 12;
+      const isRoot = pc === keyPc;
+      const inWindow = f >= lo && f <= hi && pcs.has(pc);
+
+      if (inWindow){
+        const dot = document.createElement('div');
+        dot.className = 'dot' + (isRoot ? ' root' : '') +
+          (isRoot && si === anchor.s && f === anchor.f ? ' anchor' : '');
+        dot.textContent = NN[pc];
+        const midi = s.midi + f;
+        dot.addEventListener('mouseenter', () => pluck(midi));
+        dot.addEventListener('click', () => pluck(midi));
+        cell.appendChild(dot);
+      } else if (isRoot && f <= MAX_ANCHOR){
+        const ghost = document.createElement('div');
+        ghost.className = 'dot ghost';
+        ghost.textContent = NN[pc];
+        ghost.title = 'Move the box here';
+        ghost.addEventListener('click', () => {
+          anchor = {s: si, f};
+          render();
+          pluck(s.midi + f);
+        });
+        cell.appendChild(ghost);
+      }
+      grid.appendChild(cell);
+    }
+  });
+
+  frets.innerHTML = '<div></div>';
+  for (let f = 0; f <= FRETS; f++){
+    const n = document.createElement('div');
+    n.className = 'fnum' + (INLAYS.has(f) ? ' inlay' : '');
+    n.textContent = f;
+    frets.appendChild(n);
+  }
+}
+
+/* ---------- controls ---------- */
+const keySel = document.getElementById('key');
+SHARPS.forEach((_, pc) => {
+  const o = document.createElement('option');
+  o.value = pc;
+  o.textContent = SHARPS[pc] === FLATS[pc] ? SHARPS[pc] : `${SHARPS[pc]} / ${FLATS[pc]}`;
+  keySel.appendChild(o);
+});
+keySel.value = keyPc;
+keySel.addEventListener('change', () => {
+  keyPc = +keySel.value;
+  anchor = null;          // re-anchor to the low E root for the new key
+  render();
+});
+
+const scaleSel = document.getElementById('scale');
+SCALE_GROUPS.forEach(([group, map]) => {
+  const og = document.createElement('optgroup');
+  og.label = group;
+  Object.keys(map).forEach(name => {
+    const o = document.createElement('option');
+    o.value = name; o.textContent = name;
+    og.appendChild(o);
+  });
+  scaleSel.appendChild(og);
+});
+scaleSel.value = scaleName;
+scaleSel.addEventListener('change', () => {
+  scaleName = scaleSel.value;
+  render();
+});
+
+document.getElementById('play').addEventListener('click', () => {
+  const rootMidi = STRINGS[anchor.s].midi + anchor.f;
+  const run = [...new Set(boxNotes().map(n => n.midi))]
+    .filter(m => m >= rootMidi)
+    .sort((a, b) => a - b);
+  run.forEach((m, i) => pluck(m, i * 0.16, 0.45));
+});
+
+render();
+
+/* ---------- offline support (only active when hosted over https) ---------- */
+if ('serviceWorker' in navigator && location.protocol === 'https:')
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+</script>
+</body>
+</html>
