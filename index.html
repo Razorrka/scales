@@ -136,13 +136,17 @@
   .swatch.ghosted{background:transparent;border:2px dashed var(--root-soft)}
   .hint{color:var(--muted);font-size:13px;margin-top:20px}
 
-  /* ---------- theme orbs (unique to this app: tap a glowing orb) ---------- */
-  .themes{position:fixed;top:max(14px, env(safe-area-inset-top));right:16px;display:flex;gap:10px;z-index:50}
-  .orb{width:26px;height:26px;border-radius:50%;cursor:pointer;
-    border:2px solid rgba(255,255,255,.28);
+  /* ---------- theme tray: tap an orb · + mixes your own ---------- */
+  .themes{position:fixed;top:max(10px, env(safe-area-inset-top));right:14px;z-index:50;
+    display:flex;align-items:center;gap:9px;
+    background:rgba(10,14,26,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:7px 10px}
+  .orb{width:24px;height:24px;border-radius:50%;cursor:pointer;
+    border:2px solid rgba(255,255,255,.25);
     transition:transform .15s, box-shadow .15s, border-color .15s}
-  .orb:hover{transform:scale(1.18)}
+  .orb:hover{transform:scale(1.16)}
   .orb.active{border-color:#fff}
+  .orb[hidden]{display:none}
   .orb[data-t="classic"]{background:linear-gradient(135deg,#5b8cff,#f2a65a)}
   .orb[data-t="classic"].active{box-shadow:0 0 14px rgba(91,140,255,.7)}
   .orb[data-t="pom"]{background:linear-gradient(135deg,#5c0d22,#ff2e63)}
@@ -151,6 +155,27 @@
   .orb[data-t="peach"].active{box-shadow:0 0 14px rgba(255,125,100,.8)}
   .orb[data-t="tokyo"]{background:linear-gradient(135deg,#ff3ddc,#8a3dff)}
   .orb[data-t="tokyo"].active{box-shadow:0 0 14px rgba(255,61,220,.8)}
+  .orb[data-t="custom"].active{box-shadow:0 0 14px rgba(255,255,255,.55)}
+  .orb-add{width:24px;height:24px;border-radius:50%;cursor:pointer;flex:none;
+    display:flex;align-items:center;justify-content:center;
+    border:2px dashed rgba(255,255,255,.4);color:rgba(255,255,255,.75);
+    font-size:15px;font-weight:700;line-height:1;user-select:none;-webkit-user-select:none;
+    transition:transform .15s,border-color .15s,color .15s}
+  .orb-add:hover{transform:scale(1.12);border-color:#fff;color:#fff}
+  @media (pointer:coarse){.orb,.orb-add{width:28px;height:28px}}
+
+  /* your-colors popover */
+  #sv-mixer{position:fixed;top:calc(max(10px, env(safe-area-inset-top)) + 48px);right:14px;z-index:60;
+    width:212px;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:14px;box-shadow:var(--shadow);font-size:13px;color:var(--ink)}
+  #sv-mixer[hidden]{display:none}
+  #sv-mixer .mx-title{font-weight:800;font-size:13px;margin-bottom:8px;letter-spacing:.02em}
+  #sv-mixer label{display:flex;align-items:center;justify-content:space-between;margin:8px 0;gap:10px;color:var(--muted)}
+  #sv-mixer input[type=color]{width:50px;height:30px;border:none;border-radius:8px;padding:0;background:none;cursor:pointer}
+  #sv-mixer .mx-row{display:flex;gap:8px;margin-top:12px}
+  #sv-mixer .mx-row button{flex:1;font:inherit;font-size:12px;font-weight:700;color:var(--ink);
+    background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:8px 4px;cursor:pointer}
+  #sv-mixer .mx-row button:hover{border-color:var(--scale)}
 
   /* ---------- POMEGRANATE: burgundy ombre, pink letters ---------- */
   html.theme-pom{
@@ -237,6 +262,19 @@
   <div class="orb" data-t="pom" title="pomegranate"></div>
   <div class="orb" data-t="peach" title="peach glow"></div>
   <div class="orb" data-t="tokyo" title="tokyo"></div>
+  <div class="orb" data-t="custom" title="yours" hidden></div>
+  <div class="orb-add" id="orb-add" title="make your own colors">+</div>
+</div>
+<div id="sv-mixer" hidden>
+  <div class="mx-title">🎛 your colors</div>
+  <label>background <input type="color" id="mx-bg" value="#0d1220"></label>
+  <label>letters <input type="color" id="mx-ink" value="#eef2fb"></label>
+  <label>scale dots <input type="color" id="mx-scale" value="#5b8cff"></label>
+  <label>root dots <input type="color" id="mx-root" value="#f2a65a"></label>
+  <div class="mx-row">
+    <button id="mx-reset" title="delete your colors, back to classic">↺ reset</button>
+    <button id="mx-done">✓ done</button>
+  </div>
 </div>
 <div class="wrap">
   <div class="mark">Scale&nbsp;<b>Visualizer</b></div>
@@ -492,21 +530,104 @@ document.getElementById('play').addEventListener('click', () => {
 
 render();
 
-/* ---------- themes: tap an orb ---------- */
+/* ---------- themes: tap an orb · + mixes your own ---------- */
 const THEME_BG = {classic:'#0d1220', pom:'#1c060f', peach:'#241008', tokyo:'#120521'};
+const mixEl = document.getElementById('sv-mixer');
+const mxBg = document.getElementById('mx-bg'), mxInk = document.getElementById('mx-ink'),
+      mxScale = document.getElementById('mx-scale'), mxRoot = document.getElementById('mx-root');
+const customOrb = document.querySelector('.orb[data-t="custom"]');
+
+function hexMix(a, b, t){
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const r = Math.round(((pa>>16)&255)*(1-t) + ((pb>>16)&255)*t),
+        g = Math.round(((pa>>8)&255)*(1-t) + ((pb>>8)&255)*t),
+        bl = Math.round((pa&255)*(1-t) + (pb&255)*t);
+  return '#' + ((1<<24) + (r<<16) + (g<<8) + bl).toString(16).slice(1);
+}
+function hexA(h, a){
+  const p = parseInt(h.slice(1), 16);
+  return `rgba(${(p>>16)&255},${(p>>8)&255},${p&255},${a})`;
+}
+function loadCustom(){
+  try{
+    const c = JSON.parse(localStorage.getItem('sv-theme-custom') || 'null');
+    if (c && c.bg && c.ink && c.scale && c.root) return c;
+  }catch(e){}
+  return null;
+}
+function customCss(c){
+  const P = t => hexMix(c.bg, c.ink, t);
+  return `html.theme-custom{--bg:${c.bg};--panel:${P(.06)};--panel-2:${P(.11)};--line:${P(.24)};
+--ink:${c.ink};--muted:${hexMix(c.ink, c.bg, .38)};--scale:${c.scale};--root:${c.root};
+--root-soft:${hexA(c.root,.5)};--root-strong:${hexA(c.root,.85)};--root-faint:${hexA(c.root,.15)};
+--glow-scale:${hexA(c.scale,.5)};--glow-root:${hexA(c.root,.7)};
+--shadow:0 10px 34px ${hexA(c.scale,.14)}}
+html.theme-custom body{background:
+radial-gradient(900px 520px at 80% -12%, ${hexA(c.root,.26)} 0%, transparent 55%),
+radial-gradient(820px 500px at 5% 108%, ${hexA(c.scale,.24)} 0%, transparent 58%),
+linear-gradient(168deg, ${hexMix(c.bg, c.scale, .12)} 0%, ${c.bg} 65%)}
+html.theme-custom #title{background:linear-gradient(92deg,${c.scale},${c.root});
+-webkit-background-clip:text;background-clip:text;color:transparent;
+filter:drop-shadow(0 0 16px ${hexA(c.root,.35)})}
+html.theme-custom button.primary{background:linear-gradient(92deg,${c.root},${c.scale});
+color:#fff;box-shadow:0 0 18px ${hexA(c.root,.4)}}`;
+}
+function setCustomStyle(c){
+  let el = document.getElementById('sv-custom-css');
+  if (!el){ el = document.createElement('style'); el.id = 'sv-custom-css'; document.head.appendChild(el); }
+  el.textContent = customCss(c);
+  customOrb.hidden = false;
+  customOrb.style.background = `linear-gradient(135deg,${c.scale},${c.root})`;
+}
 function setTheme(t){
-  if (!THEME_BG[t]) t = 'classic';
-  document.documentElement.className = t === 'classic' ? '' : 'theme-' + t;
+  const c = loadCustom();
+  if (t === 'custom' && !c) t = 'classic';
+  if (t !== 'custom' && !THEME_BG[t]) t = 'classic';
+  if (t === 'custom') setCustomStyle(c);
+  document.documentElement.className =
+    t === 'classic' ? '' : 'theme-' + (t === 'custom' ? 'custom' : t);
   document.querySelectorAll('.orb').forEach(o =>
     o.classList.toggle('active', o.dataset.t === t));
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = THEME_BG[t];
+  if (meta) meta.content = t === 'custom' ? c.bg : THEME_BG[t];
   localStorage.setItem('sv-theme', t);
 }
+function cssVar(v){
+  const x = getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  return /^#[0-9a-f]{6}$/i.test(x) ? x : null;
+}
+function openMixer(){
+  const c = loadCustom();
+  mxBg.value = (c && c.bg) || cssVar('--bg') || '#0d1220';
+  mxInk.value = (c && c.ink) || cssVar('--ink') || '#eef2fb';
+  mxScale.value = (c && c.scale) || cssVar('--scale') || '#5b8cff';
+  mxRoot.value = (c && c.root) || cssVar('--root') || '#f2a65a';
+  mixEl.hidden = false;
+}
+function applyMixer(){
+  const c = {bg: mxBg.value, ink: mxInk.value, scale: mxScale.value, root: mxRoot.value};
+  localStorage.setItem('sv-theme-custom', JSON.stringify(c));
+  setCustomStyle(c);
+  setTheme('custom');
+}
 document.getElementById('themes').addEventListener('click', e => {
+  if (e.target.closest('.orb-add')){ openMixer(); return; }
   const orb = e.target.closest('.orb');
   if (orb) setTheme(orb.dataset.t);
 });
+[mxBg, mxInk, mxScale, mxRoot].forEach(el => el.addEventListener('input', applyMixer));
+document.getElementById('mx-reset').addEventListener('click', () => {
+  localStorage.removeItem('sv-theme-custom');
+  const el = document.getElementById('sv-custom-css');
+  if (el) el.remove();
+  customOrb.hidden = true;
+  mixEl.hidden = true;
+  setTheme('classic');
+});
+document.getElementById('mx-done').addEventListener('click', () => { mixEl.hidden = true; });
+
+const bootCustom = loadCustom();
+if (bootCustom) setCustomStyle(bootCustom);
 setTheme(localStorage.getItem('sv-theme') || 'classic');
 
 /* ---------- offline support (only active when hosted over https) ---------- */
