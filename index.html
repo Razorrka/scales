@@ -184,7 +184,7 @@
   /* decoder card — full-screen take on the physical Decoder */
   .dcard{position:relative;margin-top:14px;border-radius:22px;border:1px solid var(--line);
     background:linear-gradient(180deg,var(--panel),var(--panel-2));box-shadow:var(--shadow);
-    min-height:min(72svh,720px);display:flex;flex-direction:column;
+    min-height:min(64svh,660px);display:flex;flex-direction:column;
     padding:0 12px 16px;overflow:hidden;touch-action:pan-y;
     -webkit-user-select:none;user-select:none}
   .d-in{display:flex;flex-direction:column;align-items:center;width:100%;flex:1}
@@ -236,8 +236,7 @@
   .d-axis{display:flex;flex-direction:column;align-items:flex-start;gap:30px;z-index:1;
     font-size:15px;color:var(--muted)}
   .d-axis b{color:var(--ink);font-size:17px;letter-spacing:.04em}
-  .d-rel{font-size:10px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin:8px 0 14px}
-  .d-minors{display:flex;align-items:center;gap:30px;margin-bottom:14px}
+  .d-minors{display:flex;align-items:flex-end;gap:30px;margin:10px 0 14px}
   .d-minors .sm{transform:translateY(-16px)}
   .d-minors .sm:hover{transform:translateY(-16px) scale(1.07)}
   .d-mark{position:absolute;left:14px;bottom:12px;background:rgba(5,8,15,.7);
@@ -257,8 +256,46 @@
     #d-key{font-size:46px}
     .d-minors{gap:20px}
   }
-  .dec-bar{display:flex;gap:12px;align-items:center;justify-content:center;margin:18px 0 6px}
-  .dec-bar input[type=range]{width:min(56vw,300px);accent-color:var(--root)}
+  /* signature flow: b ——▶  BEADGCF  ◀—— # */
+  .d-sigflow{margin-top:9px;width:158px;font-size:12px;color:var(--muted);font-weight:700}
+  .d-sf{display:flex;align-items:center;gap:7px}
+  .d-line{flex:1;height:2px;background:var(--line);border-radius:2px;position:relative}
+  .d-line.r::after{content:"";position:absolute;right:-2px;top:-3px;
+    border:4px solid transparent;border-left:6px solid var(--line)}
+  .d-line.l::before{content:"";position:absolute;left:-2px;top:-3px;
+    border:4px solid transparent;border-right:6px solid var(--line)}
+  .d-sigletters{text-align:center;font-weight:800;font-size:13px;letter-spacing:.3em;
+    color:var(--ink);margin:2px 0 2px .3em}
+  .d-sigletters span.on{color:var(--root);text-shadow:0 0 10px var(--glow-root)}
+
+  /* curved "relative minor" label */
+  .d-viwrap{display:flex;flex-direction:column;align-items:center}
+  .d-arc-lab{width:150px;height:46px;margin-bottom:-8px}
+  .d-arc-lab text{fill:var(--muted);font-size:12px;font-weight:700;
+    letter-spacing:.22em;text-transform:uppercase;font-family:inherit}
+
+  /* dual names like G♭/F♯ shrink to fit */
+  #d-key.long{font-size:30px;line-height:2}
+  #d-n4.long,#d-n5.long{font-size:14px}
+  .d-ghost.long{font-size:11px}
+
+  /* key tape: drag the letters as one unit */
+  .d-tape{position:relative;margin:18px auto 8px;max-width:430px;height:58px;
+    overflow:hidden;border:1px solid var(--line);border-radius:16px;
+    background:var(--panel);touch-action:pan-y;cursor:grab;
+    -webkit-user-select:none;user-select:none}
+  .d-tape.grabbing{cursor:grabbing}
+  .d-tape::before,.d-tape::after{content:"";position:absolute;top:0;bottom:0;width:64px;
+    z-index:1;pointer-events:none}
+  .d-tape::before{left:0;background:linear-gradient(90deg,var(--panel),transparent)}
+  .d-tape::after{right:0;background:linear-gradient(270deg,var(--panel),transparent)}
+  .d-tape-strip{position:absolute;top:0;left:0;height:100%;display:flex;will-change:transform}
+  .d-cell{width:56px;flex:none;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:16px;color:var(--muted);transition:color .15s}
+  .d-cell.cur{color:var(--root);font-size:19px;text-shadow:0 0 12px var(--glow-root)}
+  .d-tape-cursor{position:absolute;left:50%;top:5px;bottom:5px;transform:translateX(-50%);
+    width:52px;border:2px solid var(--root-soft);border-radius:12px;pointer-events:none}
+
   .dec-info{text-align:center;color:var(--muted);font-size:14px;line-height:1.8}
   .dec-info b{color:var(--ink)}
 
@@ -517,6 +554,11 @@
             <div class="d-keycap">Key <b>1</b> &middot; 3 5</div>
             <div class="d-siglab">Signature</div>
             <div class="d-sigwin" id="d-sig"></div>
+            <div class="d-sigflow" aria-hidden="true">
+              <div class="d-sf"><span>&#9837;</span><span class="d-line r"></span></div>
+              <div class="d-sigletters" id="d-sigletters"></div>
+              <div class="d-sf"><span class="d-line l"></span><span>&#9839;</span></div>
+            </div>
           </div>
           <div class="d-bub d-v" data-deg="5"><span id="d-n5"></span><span class="fam"><b>5</b> &middot; 7 2</span></div>
           <div class="d-ghost gr" id="d-gnext" title="Two keys ahead"></div>
@@ -525,29 +567,33 @@
           <div class="d-bub d-dim" data-deg="7"><span id="d-n7"></span><span class="fam"><b>7</b> &middot; 2 4</span></div>
           <div class="d-axis">
             <div>&#9650; <b>MAJOR</b> chords</div>
-            <div>minor chords &#9660;</div>
+            <div><b>minor</b> chords &#9660;</div>
           </div>
         </div>
-        <div class="d-rel">relative minor</div>
         <div class="d-minors">
           <div class="d-bub sm" data-deg="3"><span id="d-n3"></span><span class="fam"><b>3</b> &middot; 5 7</span></div>
-          <div class="d-bub lg" data-deg="6"><span id="d-n6"></span><span class="fam"><b>6</b> &middot; 1 3</span></div>
+          <div class="d-viwrap">
+            <svg class="d-arc-lab" viewBox="0 0 150 46" aria-hidden="true">
+              <path id="d-relarc" d="M12 44 A84 84 0 0 1 138 44" fill="none"/>
+              <text><textPath href="#d-relarc" startOffset="50%" text-anchor="middle">relative minor</textPath></text>
+            </svg>
+            <div class="d-bub lg" data-deg="6"><span id="d-n6"></span><span class="fam"><b>6</b> &middot; 1 3</span></div>
+          </div>
           <div class="d-bub sm" data-deg="2"><span id="d-n2"></span><span class="fam"><b>2</b> &middot; 4 6</span></div>
         </div>
         <div class="d-mark">DECODER</div>
       </div>
     </div>
 
-    <div class="dec-bar">
-      <button id="dec-prev" aria-label="Previous key">&#8249;</button>
-      <input type="range" id="dec-slider" min="0" max="11" step="1" value="0" aria-label="Key slider">
-      <button id="dec-next" aria-label="Next key">&#8250;</button>
+    <div class="d-tape" id="d-tape" aria-label="Key picker — drag the letters">
+      <div class="d-tape-strip" id="d-tape-strip"></div>
+      <div class="d-tape-cursor"></div>
     </div>
 
     <div class="dec-info">
       <div id="dec-chords"></div>
     </div>
-    <p class="hint">Swipe left or right anywhere on the card to change key — it moves through the circle of fifths, just like spinning the real wheel. The pills under each bubble are the chord's scale degrees.</p>
+    <p class="hint">Swipe the card or drag the letter tape to turn the wheel — it moves through the circle of fifths like the real disc. The pills under each bubble are the chord's scale degrees.</p>
   </div><!-- /view-decoder -->
 </div>
 
@@ -981,7 +1027,6 @@ const TRIADS = {maj:[0,4,7], min:[0,3,7], dim:[0,3,6]};
 
 let decKey = 0;
 const dcard = document.getElementById('dcard');
-const decSlider = document.getElementById('dec-slider');
 
 function sigText(k){
   if (k === 0) return 'no ♯ / ♭';
@@ -989,28 +1034,41 @@ function sigText(k){
   return '♭ ' + SIG_FLAT.slice(0, 12 - k).split('').join(' ');
 }
 function noteFmt(s){ return s.replace('#','♯').replace(/b$/,'♭'); }
+function majLabel(pc){                          // majors show both names on the 6-accidental key
+  return pc === 6 ? 'G♭/F♯' : noteFmt((FLAT_KEYS.has(pc) ? FLATS : SHARPS)[pc]);
+}
 function keyLabel(i){
-  const p = FIFTHS_PC[((i % 12) + 12) % 12];
-  return noteFmt((FLAT_KEYS.has(p) ? FLATS : SHARPS)[p]);
+  return majLabel(FIFTHS_PC[((i % 12) + 12) % 12]);
+}
+function setNote(id, label){
+  const el = document.getElementById(id);
+  el.textContent = label;
+  el.classList.toggle('long', label.length > 3);
 }
 function renderDecoder(dir){
   const pc = FIFTHS_PC[decKey];
   const NN = FLAT_KEYS.has(pc) ? FLATS : SHARPS;
   const el = id => document.getElementById(id);
   const deg = (d, lower) => {
-    const n = noteFmt(NN[(pc + DEG_INFO[d][0]) % 12]);
-    return lower ? n.toLowerCase() : n;
+    const p = (pc + DEG_INFO[d][0]) % 12;
+    return lower ? noteFmt(NN[p]).toLowerCase() : majLabel(p);
   };
-  el('d-key').textContent = deg(1);
+  setNote('d-key', deg(1));
   el('d-sig').textContent = sigText(decKey);
-  el('d-n4').textContent = deg(4);
-  el('d-n5').textContent = deg(5);
+  setNote('d-n4', deg(4));
+  setNote('d-n5', deg(5));
   el('d-n7').textContent = deg(7, true) + '°';
   el('d-n3').textContent = deg(3, true) + 'm';
   el('d-n6').textContent = deg(6, true) + 'm';
   el('d-n2').textContent = deg(2, true) + 'm';
-  el('d-gprev').textContent = keyLabel(decKey - 2);
-  el('d-gnext').textContent = keyLabel(decKey + 2);
+  setNote('d-gprev', keyLabel(decKey - 2));
+  setNote('d-gnext', keyLabel(decKey + 2));
+  // light up the accidentals of this key on the BEADGCF strip
+  el('d-sigletters').innerHTML = [...SIG_FLAT].map((ch, i) => {
+    const on = decKey >= 1 && decKey <= 6 ? i >= 7 - decKey    // sharps fill from the right
+             : decKey > 6 ? i < 12 - decKey : false;           // flats fill from the left
+    return `<span${on ? ' class="on"' : ''}>${ch}</span>`;
+  }).join('');
   const qual = {1:'',2:'m',3:'m',4:'',5:'',6:'m',7:'°'};
   el('dec-chords').innerHTML = `${deg(1)} major: ` +
     [1,2,3,4,5,6,7].map(d => `<b>${deg(d)}${qual[d]}</b>`).join(' · ');
@@ -1023,8 +1081,8 @@ function renderDecoder(dir){
 }
 function setDecKey(k, dir){
   decKey = ((k % 12) + 12) % 12;
-  decSlider.value = decKey;
   renderDecoder(dir || 0);
+  updateTape(true);
 }
 /* tap a bubble (or the key notch) to hear the chord */
 document.querySelectorAll('#dcard [data-deg]').forEach(b =>
@@ -1047,9 +1105,67 @@ document.getElementById('d-gprev').addEventListener('click', () => setDecKey(dec
 document.getElementById('d-gnext').addEventListener('click', () => setDecKey(decKey + 2, 1));
 document.getElementById('d-chl').addEventListener('click', () => setDecKey(decKey - 1, -1));
 document.getElementById('d-chr').addEventListener('click', () => setDecKey(decKey + 1, 1));
-decSlider.addEventListener('input', () => setDecKey(+decSlider.value));
-document.getElementById('dec-prev').addEventListener('click', () => setDecKey(decKey - 1, -1));
-document.getElementById('dec-next').addEventListener('click', () => setDecKey(decKey + 1, 1));
+
+/* key tape: all 12 letters slide as one unit, selected letter under the cursor */
+const CELL = 56, TAPE_MID = 24;                 // 5 copies of the 12 keys; middle copy starts at 24
+const tapeEl = document.getElementById('d-tape');
+const stripEl = document.getElementById('d-tape-strip');
+let tapeX = 0;
+for (let r = 0; r < 5; r++)
+  for (let i = 0; i < 12; i++){
+    const c = document.createElement('div');
+    c.className = 'd-cell';
+    c.textContent = keyLabel(i);
+    c.dataset.i = i;
+    stripEl.appendChild(c);
+  }
+function tapeCenter(idx, animate){
+  tapeX = tapeEl.clientWidth / 2 - CELL / 2 - idx * CELL;
+  stripEl.style.transition = animate ? 'transform .25s ease' : 'none';
+  stripEl.style.transform = `translateX(${tapeX}px)`;
+}
+function updateTape(animate){
+  if (!tapeEl.clientWidth) return;              // decoder tab not visible yet
+  stripEl.querySelectorAll('.d-cell').forEach(c =>
+    c.classList.toggle('cur', +c.dataset.i === decKey));
+  tapeCenter(TAPE_MID + decKey, animate);
+}
+function tapeNearest(){
+  return Math.round((tapeEl.clientWidth / 2 - CELL / 2 - tapeX) / CELL);
+}
+let tapeDrag = null;
+tapeEl.addEventListener('pointerdown', e => {
+  tapeDrag = {x: e.clientX, base: tapeX, moved: false};
+  tapeEl.setPointerCapture(e.pointerId);
+  tapeEl.classList.add('grabbing');
+  stripEl.style.transition = 'none';
+});
+tapeEl.addEventListener('pointermove', e => {
+  if (!tapeDrag) return;
+  const dx = e.clientX - tapeDrag.x;
+  if (Math.abs(dx) > 6) tapeDrag.moved = true;
+  tapeX = tapeDrag.base + dx;
+  stripEl.style.transform = `translateX(${tapeX}px)`;
+  const k = ((tapeNearest() % 12) + 12) % 12;
+  if (k !== decKey){                        // live-update the card while dragging
+    decKey = k;
+    renderDecoder(0);
+    stripEl.querySelectorAll('.d-cell').forEach(c =>
+      c.classList.toggle('cur', +c.dataset.i === decKey));
+  }
+});
+['pointerup','pointercancel'].forEach(ev => tapeEl.addEventListener(ev, e => {
+  if (!tapeDrag) return;
+  const wasDrag = tapeDrag.moved;
+  tapeDrag = null;
+  tapeEl.classList.remove('grabbing');
+  if (!wasDrag){
+    const cell = document.elementFromPoint(e.clientX, e.clientY);
+    if (cell && cell.classList.contains('d-cell')){ setDecKey(+cell.dataset.i); return; }
+  }
+  setDecKey(tapeNearest());
+}));
+window.addEventListener('resize', () => updateTape(false));
 renderDecoder(0);
 
 /* ---------- tabs ---------- */
@@ -1069,6 +1185,7 @@ function showTab(t){
   } else if (t === 'decoder'){
     document.getElementById('title').textContent = 'Decoder';
     renderDecoder(0);
+    updateTape(false);          // tape can only be measured once visible
   } else {
     render();               // restores the scale title + sub line
   }
