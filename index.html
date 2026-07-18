@@ -174,6 +174,36 @@
   .qresult.good{color:#2ecc8f}
   .qresult.bad{color:#ff5d6c}
   .qresult.progress{color:var(--muted);font-weight:600}
+  [hidden]{display:none!important}
+
+  /* double stops */
+  button.toggle.on{border-color:var(--root);color:var(--root);box-shadow:0 0 10px var(--glow-root)}
+  .dot.mate{transform:scale(1.16);box-shadow:0 0 0 3px var(--root-soft), 0 2px 8px rgba(0,0,0,.35)}
+  #ds-opts{display:flex;gap:12px}
+
+  /* decoder wheel */
+  .decoder-wrap{display:flex;justify-content:center;margin-top:10px}
+  #wheel{width:min(92vw,440px);height:auto;touch-action:none;cursor:grab;
+    -webkit-user-select:none;user-select:none}
+  #wheel.grabbing{cursor:grabbing}
+  #wheel text{font-family:inherit;pointer-events:none;user-select:none;-webkit-user-select:none}
+  #wheel .w-bg{fill:var(--panel-2);stroke:var(--line);stroke-width:2}
+  #wheel .w-ring{fill:none;stroke:var(--line);stroke-width:1.5}
+  #wheel .w-win{fill:var(--root-faint);stroke:var(--root-soft);stroke-width:1.5;cursor:pointer;
+    transition:fill .15s}
+  #wheel .w-win:hover{fill:var(--root-soft)}
+  #wheel .w-dim{stroke-dasharray:4 3}
+  #wheel .w-maj{fill:var(--ink);font-weight:800;font-size:19px}
+  #wheel .w-min{fill:var(--muted);font-weight:700;font-size:13.5px}
+  #wheel .w-badge-c{fill:var(--bg);stroke:var(--root-soft);stroke-width:1.5}
+  #wheel .w-badge-t{fill:var(--root);font-size:12px;font-weight:800}
+  #wheel .w-hub{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
+  #wheel .w-key{fill:var(--ink);font-size:30px;font-weight:800}
+  #wheel .w-sub2{fill:var(--muted);font-size:12.5px;font-weight:600}
+  .dec-bar{display:flex;gap:12px;align-items:center;justify-content:center;margin:18px 0 6px}
+  .dec-bar input[type=range]{width:min(56vw,300px);accent-color:var(--root)}
+  .dec-info{text-align:center;color:var(--muted);font-size:14px;line-height:1.8}
+  .dec-info b{color:var(--ink)}
 
   /* ---------- theme tray: tap an orb · + mixes your own ---------- */
   .themes{position:fixed;top:max(10px, env(safe-area-inset-top));right:14px;z-index:50;
@@ -320,6 +350,7 @@
   <div class="tabs">
     <button class="tab active" id="tab-explore">Explore</button>
     <button class="tab" id="tab-quiz">Neck quiz</button>
+    <button class="tab" id="tab-decoder">Decoder</button>
   </div>
   <h1 id="title"></h1>
 
@@ -339,6 +370,31 @@
     <div>
       <span class="lab">&nbsp;</span>
       <button class="primary" id="play">&#9654;&nbsp; Play the box</button>
+    </div>
+    <div>
+      <span class="lab">&nbsp;</span>
+      <button class="toggle" id="dstops">Double stops</button>
+    </div>
+    <div id="ds-opts" hidden>
+      <div>
+        <span class="lab">Interval</span>
+        <select id="ds-interval" aria-label="Double stop interval">
+          <option value="3" selected>3rds</option>
+          <option value="4">4ths</option>
+          <option value="5">5ths</option>
+          <option value="6">6ths</option>
+        </select>
+      </div>
+      <div>
+        <span class="lab">Strings</span>
+        <select id="ds-pair" aria-label="String pair">
+          <option value="0" selected>e + B</option>
+          <option value="1">B + G</option>
+          <option value="2">G + D</option>
+          <option value="3">D + A</option>
+          <option value="4">A + E</option>
+        </select>
+      </div>
     </div>
   </div>
 
@@ -388,6 +444,26 @@
     <p class="qresult" id="qresult"></p>
     <p class="hint">Fret 0 is the open string. Tap a filled dot to change your answer before checking.</p>
   </div><!-- /view-quiz -->
+
+  <div id="view-decoder" hidden>
+    <p class="sub">Spin the wheel — or slide the key — and the lit windows decode the key:
+      the <b>1&#8209;4&#8209;5</b> majors up top, the <b>2&#8209;3&#8209;6</b> minors inside, and the <b>7</b> diminished. Tap a window to hear that chord.</p>
+
+    <div class="decoder-wrap">
+      <svg id="wheel" viewBox="0 0 420 420" aria-label="Circle of fifths decoder wheel"></svg>
+    </div>
+
+    <div class="dec-bar">
+      <button id="dec-prev" aria-label="Previous key">&#8249;</button>
+      <input type="range" id="dec-slider" min="0" max="11" step="1" value="0" aria-label="Key slider">
+      <button id="dec-next" aria-label="Next key">&#8250;</button>
+    </div>
+
+    <div class="dec-info">
+      <div id="dec-chords"></div>
+    </div>
+    <p class="hint">Drag the wheel like the real thing — it snaps to the nearest key. Numbers are the chord degrees of the key at the top.</p>
+  </div><!-- /view-decoder -->
 </div>
 
 <script>
@@ -502,9 +578,41 @@ function boxNotes(){
   return notes;
 }
 
+/* ---------- double stops ---------- */
+let dstopOn = false, dsInterval = 3, dsPair = 0;
+const DS_PAIRS = [[0,1],[1,2],[2,3],[3,4],[4,5]];   // [higher string, lower string] display indices
+const DS_NAMES = {3:'3rds', 4:'4ths', 5:'5ths', 6:'6ths'};
+const DS_SEMIS = {3:[3,4], 4:[5], 5:[6,7], 6:[8,9]}; // 5ths include the b5 for blues
+
+function dstopPairs(){
+  // every playable two-note pair on the string pair where both notes are in
+  // the scale and the gap matches the chosen interval (max 4-fret stretch)
+  const iv = ALL_SCALES[scaleName];
+  const pcs = new Set(iv.map(i => (keyPc + i) % 12));
+  const [hiIdx, loIdx] = DS_PAIRS[dsPair];
+  const loS = STRINGS[loIdx], hiS = STRINGS[hiIdx];
+  const semis = DS_SEMIS[dsInterval];
+  const pairs = [];
+  for (let f = 0; f <= FRETS; f++){
+    if (!pcs.has((loS.pc + f) % 12)) continue;
+    for (let f2 = Math.max(0, f - 4); f2 <= Math.min(FRETS, f + 4); f2++){
+      if (!pcs.has((hiS.pc + f2) % 12)) continue;
+      if (semis.includes(hiS.midi + f2 - loS.midi - f))
+        pairs.push({lo: loIdx, hi: hiIdx, fLo: f, fHi: f2,
+                    midiLo: loS.midi + f, midiHi: hiS.midi + f2});
+    }
+  }
+  return pairs;
+}
+function playPair(p, when = 0, vel = 0.5){
+  pluck(p.midiLo, when, vel);
+  pluck(p.midiHi, when + 0.02, vel);
+}
+
 /* ---------- render ---------- */
 const grid  = document.getElementById('grid');
 const frets = document.getElementById('frets');
+const playBtn = document.getElementById('play');
 
 function render(){
   const NN = noteNames();
@@ -515,10 +623,18 @@ function render(){
 
   document.getElementById('title').textContent = `${NN[keyPc]} ${scaleName}`;
   const as = STRINGS[anchor.s];
-  document.getElementById('sub').textContent =
-    `One box, anchored on the root at ${anchor.f === 0 ? 'the open' : 'fret ' + anchor.f + ' on the'} ${as.say} string.`;
+  const [dhi, dlo] = DS_PAIRS[dsPair];
+  document.getElementById('sub').textContent = dstopOn
+    ? `Every ${DS_NAMES[dsInterval]} double stop on the ${STRINGS[dlo].lbl} + ${STRINGS[dhi].lbl} strings — tap a dot to hear both notes.`
+    : `One box, anchored on the root at ${anchor.f === 0 ? 'the open' : 'fret ' + anchor.f + ' on the'} ${as.say} string.`;
   document.getElementById('noteset').textContent = iv.map(i => NN[(keyPc + i) % 12]).join(' · ');
   document.getElementById('degrees').textContent = iv.map(i => DEG[i]).join(' ');
+  playBtn.innerHTML = dstopOn ? '&#9654;&nbsp; Play the pairs' : '&#9654;&nbsp; Play the box';
+
+  const pairs = dstopOn ? dstopPairs() : [];
+  const at = new Map();                    // "string:fret" -> pair index
+  const pairDots = pairs.map(() => []);
+  pairs.forEach((p, i) => { at.set(p.lo + ':' + p.fLo, i); at.set(p.hi + ':' + p.fHi, i); });
 
   grid.innerHTML = '';
   STRINGS.forEach((s, si) => {
@@ -531,8 +647,28 @@ function render(){
       cell.className = 'cell' + (f === 0 ? ' fret0' : '') + (f === 1 ? ' nut' : '');
       const pc = (s.pc + f) % 12;
       const isRoot = pc === keyPc;
-      const inWindow = f >= lo && f <= hi && pcs.has(pc);
 
+      if (dstopOn){
+        const pi = at.get(si + ':' + f);
+        if (pi !== undefined){
+          const dot = document.createElement('div');
+          dot.className = 'dot' + (isRoot ? ' root' : '');
+          dot.textContent = NN[pc];
+          pairDots[pi].push(dot);
+          dot.addEventListener('mouseenter', () => {
+            pairDots[pi].forEach(d => d.classList.add('mate'));
+            playPair(pairs[pi]);
+          });
+          dot.addEventListener('mouseleave', () =>
+            pairDots[pi].forEach(d => d.classList.remove('mate')));
+          dot.addEventListener('click', () => playPair(pairs[pi]));
+          cell.appendChild(dot);
+        }
+        grid.appendChild(cell);
+        continue;
+      }
+
+      const inWindow = f >= lo && f <= hi && pcs.has(pc);
       if (inWindow){
         const dot = document.createElement('div');
         dot.className = 'dot' + (isRoot ? ' root' : '') +
@@ -599,12 +735,32 @@ scaleSel.addEventListener('change', () => {
   render();
 });
 
-document.getElementById('play').addEventListener('click', () => {
+playBtn.addEventListener('click', () => {
+  if (dstopOn){
+    dstopPairs().forEach((p, i) => playPair(p, i * 0.28, 0.45));
+    return;
+  }
   const rootMidi = STRINGS[anchor.s].midi + anchor.f;
   const run = [...new Set(boxNotes().map(n => n.midi))]
     .filter(m => m >= rootMidi)
     .sort((a, b) => a - b);
   run.forEach((m, i) => pluck(m, i * 0.16, 0.45));
+});
+
+const dstopBtn = document.getElementById('dstops');
+dstopBtn.addEventListener('click', () => {
+  dstopOn = !dstopOn;
+  dstopBtn.classList.toggle('on', dstopOn);
+  document.getElementById('ds-opts').hidden = !dstopOn;
+  render();
+});
+document.getElementById('ds-interval').addEventListener('change', e => {
+  dsInterval = +e.target.value;
+  render();
+});
+document.getElementById('ds-pair').addEventListener('change', e => {
+  dsPair = +e.target.value;
+  render();
 });
 
 render();
@@ -730,27 +886,164 @@ qcheckBtn.addEventListener('click', () => {
   if (perfect) [0, 4, 7, 12].forEach((iv, i) => pluck(60 + iv, i * 0.12, 0.4));
 });
 
-/* ---------- tabs ---------- */
-const tabExplore = document.getElementById('tab-explore');
-const tabQuiz = document.getElementById('tab-quiz');
-const viewExplore = document.getElementById('view-explore');
-const viewQuiz = document.getElementById('view-quiz');
+/* ---------- decoder: digital circle-of-fifths wheel ---------- */
+const FIFTHS_PC = [0,7,2,9,4,11,6,1,8,3,10,5];      // C G D A E B F# Db Ab Eb Bb F
+const MAJ_LABELS = ['C','G','D','A','E','B','F♯·G♭','D♭','A♭','E♭','B♭','F'];
+const MIN_LABELS = ['am','em','bm','f♯m','c♯m','g♯m','e♭m','b♭m','fm','cm','gm','dm'];
+const SIG_SHARP = 'FCGDAEB', SIG_FLAT = 'BEADGCF';
+// windows sit at fixed slots; the disc rotates behind them (slot = 30°)
+const DEC_WINS = [
+  {band:'outer', slot:-1, deg:'4'}, {band:'outer', slot:0, deg:'1'}, {band:'outer', slot:1, deg:'5'},
+  {band:'inner', slot:-1, deg:'2'}, {band:'inner', slot:0, deg:'6'}, {band:'inner', slot:1, deg:'3'},
+  {band:'inner', slot:2, deg:'7'},
+];
+// window degree -> [fifths offset of the chord root from the key, triad quality]
+const DEC_CHORD = {'1':[0,'maj'],'4':[-1,'maj'],'5':[1,'maj'],
+                   '2':[2,'min'],'6':[3,'min'],'3':[4,'min'],'7':[5,'dim']};
+const TRIADS = {maj:[0,4,7], min:[0,3,7], dim:[0,3,6]};
 
+let decKey = 0, decRot = 0;
+const wheelEl = document.getElementById('wheel');
+const decSlider = document.getElementById('dec-slider');
+
+function decPolar(r, deg){
+  const a = (deg - 90) * Math.PI / 180;
+  return [210 + r * Math.cos(a), 210 + r * Math.sin(a)];
+}
+function decArc(r1, r2, a0, a1){
+  const [x0, y0] = decPolar(r2, a0), [x1, y1] = decPolar(r2, a1);
+  const [x2, y2] = decPolar(r1, a1), [x3, y3] = decPolar(r1, a0);
+  return `M${x0} ${y0} A${r2} ${r2} 0 0 1 ${x1} ${y1} L${x2} ${y2} A${r1} ${r1} 0 0 0 ${x3} ${y3} Z`;
+}
+function buildWheel(){
+  let s = `<circle cx="210" cy="210" r="196" class="w-bg"/>
+    <circle cx="210" cy="210" r="130" class="w-ring"/>`;
+  DEC_WINS.forEach(w => {
+    const [r1, r2] = w.band === 'outer' ? [132, 190] : [76, 128];
+    s += `<path d="${decArc(r1, r2, w.slot*30 - 14, w.slot*30 + 14)}"
+      class="w-win${w.deg === '7' ? ' w-dim' : ''}" data-deg="${w.deg}"><title>chord ${w.deg}</title></path>`;
+  });
+  s += `<g id="disc">`;
+  for (let i = 0; i < 12; i++){
+    s += `<g transform="rotate(${i*30} 210 210)">
+      <text x="210" y="68" text-anchor="middle" class="w-maj">${MAJ_LABELS[i]}</text>
+      <text x="210" y="116" text-anchor="middle" class="w-min">${MIN_LABELS[i]}</text>
+    </g>`;
+  }
+  s += `</g>`;
+  DEC_WINS.forEach(w => {
+    const [bx, by] = decPolar(w.band === 'outer' ? 196 : 130, w.slot * 30);
+    s += `<circle cx="${bx}" cy="${by}" r="11" class="w-badge-c"/>
+      <text x="${bx}" y="${by + 4.5}" text-anchor="middle" class="w-badge-t">${w.deg}</text>`;
+  });
+  s += `<circle cx="210" cy="210" r="72" class="w-hub"/>
+    <text x="210" y="200" text-anchor="middle" class="w-key" id="dec-key"></text>
+    <text x="210" y="224" text-anchor="middle" class="w-sub2" id="dec-rel"></text>
+    <text x="210" y="244" text-anchor="middle" class="w-sub2" id="dec-sig"></text>`;
+  wheelEl.innerHTML = s;
+}
+function sigText(k){
+  if (k === 0) return 'no ♯ / ♭';
+  if (k <= 6) return '♯ ' + SIG_SHARP.slice(0, k).split('').join(' ');
+  return '♭ ' + SIG_FLAT.slice(0, 12 - k).split('').join(' ');
+}
+function renderWheel(){
+  document.getElementById('disc').setAttribute('transform', `rotate(${decRot} 210 210)`);
+  const pc = FIFTHS_PC[decKey];
+  const NN = FLAT_KEYS.has(pc) ? FLATS : SHARPS;
+  document.getElementById('dec-key').textContent = NN[pc];
+  document.getElementById('dec-rel').textContent = 'rel. minor ' + NN[(pc + 9) % 12] + 'm';
+  document.getElementById('dec-sig').textContent = sigText(decKey);
+  const degs = [0,2,4,5,7,9,11], qual = ['','m','m','','','m','°'];
+  document.getElementById('dec-chords').innerHTML =
+    `${NN[pc]} major: ` + degs.map((d, i) => `<b>${NN[(pc + d) % 12]}${qual[i]}</b>`).join(' · ');
+}
+let decAnim = null;
+function animateRotTo(target){
+  const from = decRot;
+  const d = ((target - from) % 360 + 540) % 360 - 180;
+  const t0 = performance.now();
+  cancelAnimationFrame(decAnim);
+  (function step(t){
+    const p = Math.min(1, (t - t0) / 180);
+    decRot = from + d * (1 - Math.pow(1 - p, 3));
+    renderWheel();
+    if (p < 1) decAnim = requestAnimationFrame(step);
+  })(t0);
+}
+function setDecKey(k){
+  decKey = ((k % 12) + 12) % 12;
+  decSlider.value = decKey;
+  animateRotTo(-decKey * 30);
+}
+/* drag the disc like the real thing */
+let decDrag = null;
+function dragAngle(e){
+  const r = wheelEl.getBoundingClientRect();
+  return Math.atan2(e.clientY - (r.top + r.height/2), e.clientX - (r.left + r.width/2)) * 180 / Math.PI;
+}
+wheelEl.addEventListener('pointerdown', e => {
+  cancelAnimationFrame(decAnim);
+  decDrag = {ang: dragAngle(e), rot: decRot, moved: 0};
+  wheelEl.setPointerCapture(e.pointerId);
+  wheelEl.classList.add('grabbing');
+});
+wheelEl.addEventListener('pointermove', e => {
+  if (!decDrag) return;
+  const a = dragAngle(e);
+  decDrag.moved += Math.abs(a - decDrag.ang - (decRot - decDrag.rot));
+  decRot = decDrag.rot + (a - decDrag.ang);
+  decKey = ((Math.round(-decRot / 30) % 12) + 12) % 12;
+  decSlider.value = decKey;
+  renderWheel();
+});
+['pointerup','pointercancel'].forEach(ev => wheelEl.addEventListener(ev, () => {
+  if (!decDrag) return;
+  const wasDrag = decDrag.moved > 6;
+  decDrag = null;
+  wheelEl.classList.remove('grabbing');
+  setDecKey(Math.round(-decRot / 30));
+  if (wasDrag) suppressWinTap = true;
+}));
+let suppressWinTap = false;
+wheelEl.addEventListener('click', e => {
+  if (suppressWinTap){ suppressWinTap = false; return; }
+  const win = e.target.closest('.w-win');
+  if (!win) return;
+  const [off, quality] = DEC_CHORD[win.dataset.deg];
+  const pc = FIFTHS_PC[((decKey + off) % 12 + 12) % 12];
+  const root = 52 + ((pc - 4 + 12) % 12);
+  TRIADS[quality].forEach((iv, i) => pluck(root + iv, i * 0.04, 0.45));
+});
+decSlider.addEventListener('input', () => setDecKey(+decSlider.value));
+document.getElementById('dec-prev').addEventListener('click', () => setDecKey(decKey - 1));
+document.getElementById('dec-next').addEventListener('click', () => setDecKey(decKey + 1));
+buildWheel();
+renderWheel();
+
+/* ---------- tabs ---------- */
+const TAB_VIEWS = {
+  explore: [document.getElementById('tab-explore'), document.getElementById('view-explore')],
+  quiz:    [document.getElementById('tab-quiz'),    document.getElementById('view-quiz')],
+  decoder: [document.getElementById('tab-decoder'), document.getElementById('view-decoder')],
+};
 function showTab(t){
-  const isQuiz = t === 'quiz';
-  tabExplore.classList.toggle('active', !isQuiz);
-  tabQuiz.classList.toggle('active', isQuiz);
-  viewExplore.hidden = isQuiz;
-  viewQuiz.hidden = !isQuiz;
-  if (isQuiz){
+  Object.entries(TAB_VIEWS).forEach(([name, [tab, view]]) => {
+    tab.classList.toggle('active', name === t);
+    view.hidden = name !== t;
+  });
+  if (t === 'quiz'){
     document.getElementById('title').textContent = 'Name the Neck';
     if (!quiz.length) newQuiz();
+  } else if (t === 'decoder'){
+    document.getElementById('title').textContent = 'Decoder';
+    renderWheel();
   } else {
     render();               // restores the scale title + sub line
   }
 }
-tabExplore.addEventListener('click', () => showTab('explore'));
-tabQuiz.addEventListener('click', () => showTab('quiz'));
+Object.keys(TAB_VIEWS).forEach(t =>
+  TAB_VIEWS[t][0].addEventListener('click', () => showTab(t)));
 
 /* ---------- themes: tap an orb · + mixes your own ---------- */
 const THEME_BG = {classic:'#0d1220', pom:'#1c060f', peach:'#241008', tokyo:'#120521'};
