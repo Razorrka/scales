@@ -1,4 +1,4 @@
-const CACHE = 'scales-v4';
+const CACHE = 'scales-v5';
 const ASSETS = ['./', './index.html', './manifest.webmanifest',
                 './apple-touch-icon.png', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
@@ -10,5 +10,18 @@ self.addEventListener('activate', e => {
     .then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', e => {
-  e.respondWith(caches.match(e.request, {ignoreSearch: true}).then(r => r || fetch(e.request)));
+  const isPage = e.request.mode === 'navigate' ||
+    new URL(e.request.url).pathname.endsWith('/index.html');
+  if (isPage){
+    // network-first: always show the newest app when online, cache only as offline fallback
+    e.respondWith(
+      fetch(e.request).then(r => {
+        const copy = r.clone();
+        caches.open(CACHE).then(c => c.put('./index.html', copy));
+        return r;
+      }).catch(() => caches.match('./index.html'))
+    );
+  } else {
+    e.respondWith(caches.match(e.request, {ignoreSearch: true}).then(r => r || fetch(e.request)));
+  }
 });
