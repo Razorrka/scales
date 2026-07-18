@@ -20,6 +20,11 @@
     --muted:#8a97b4;
     --scale:#5b8cff;   /* scale tones */
     --root:#f2a65a;    /* root tones */
+    --root-soft:rgba(242,166,90,.5);
+    --root-strong:rgba(242,166,90,.8);
+    --root-faint:rgba(242,166,90,.15);
+    --glow-scale:rgba(91,140,255,0);   /* dot glow (off in classic) */
+    --glow-root:rgba(242,166,90,0);
     --shadow:0 10px 30px rgba(0,0,0,.35);
   }
   *{box-sizing:border-box}
@@ -98,39 +103,141 @@
   }
   .cell::before{
     content:"";position:absolute;left:0;right:0;top:50%;height:2px;
-    background:linear-gradient(90deg,#3a466b,#4a5680);opacity:.55;
+    background:var(--line);opacity:.65;
   }
-  .cell.nut{border-left:4px solid #6b7699}
+  .cell.nut{border-left:4px solid var(--muted)}
   .fret0{border-left:none}
   .dot{
     position:relative;z-index:2;width:34px;height:34px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
     font-size:12px;font-weight:700;color:#fff;
-    background:var(--scale);box-shadow:0 2px 8px rgba(0,0,0,.35);
+    background:var(--scale);
+    box-shadow:0 2px 8px rgba(0,0,0,.35), 0 0 12px var(--glow-scale);
     cursor:pointer;transition:transform .12s, box-shadow .12s;
   }
-  .dot.root{background:var(--root);color:#2a1400}
-  .dot.anchor{box-shadow:0 0 0 3px rgba(242,166,90,.45), 0 2px 8px rgba(0,0,0,.35)}
-  .dot:hover{transform:scale(1.16);box-shadow:0 4px 14px rgba(0,0,0,.5)}
+  .dot.root{background:var(--root);color:#2a1400;
+    box-shadow:0 2px 8px rgba(0,0,0,.35), 0 0 14px var(--glow-root)}
+  .dot.anchor{box-shadow:0 0 0 3px var(--root-soft), 0 2px 8px rgba(0,0,0,.35), 0 0 16px var(--glow-root)}
+  .dot:hover{transform:scale(1.16)}
   .dot.ghost{
-    background:transparent;border:2px dashed rgba(242,166,90,.55);
-    color:rgba(242,166,90,.8);box-shadow:none;
+    background:transparent;border:2px dashed var(--root-soft);
+    color:var(--root-strong);box-shadow:none;
   }
-  .dot.ghost:hover{border-style:solid;background:rgba(242,166,90,.15)}
+  .dot.ghost:hover{border-style:solid;background:var(--root-faint)}
 
   /* inlays + fret numbers */
   .frets{display:grid;grid-template-columns:34px repeat(16,minmax(40px,1fr));min-width:760px;margin-top:6px}
   .fnum{text-align:center;font-size:11px;color:var(--muted);position:relative;height:24px}
   .fnum.inlay::after{content:"";position:absolute;left:50%;bottom:2px;transform:translateX(-50%);
-    width:6px;height:6px;border-radius:50%;background:#3c496b}
+    width:6px;height:6px;border-radius:50%;background:var(--line)}
   .legend{display:flex;gap:18px;margin-top:16px;font-size:13px;color:var(--muted);flex-wrap:wrap;align-items:center}
   .chip{display:inline-flex;align-items:center;gap:7px}
   .swatch{width:13px;height:13px;border-radius:50%}
-  .swatch.ghosted{background:transparent;border:2px dashed rgba(242,166,90,.6)}
+  .swatch.ghosted{background:transparent;border:2px dashed var(--root-soft)}
   .hint{color:var(--muted);font-size:13px;margin-top:20px}
+
+  /* ---------- theme orbs (unique to this app: tap a glowing orb) ---------- */
+  .themes{position:fixed;top:max(14px, env(safe-area-inset-top));right:16px;display:flex;gap:10px;z-index:50}
+  .orb{width:26px;height:26px;border-radius:50%;cursor:pointer;
+    border:2px solid rgba(255,255,255,.28);
+    transition:transform .15s, box-shadow .15s, border-color .15s}
+  .orb:hover{transform:scale(1.18)}
+  .orb.active{border-color:#fff}
+  .orb[data-t="classic"]{background:linear-gradient(135deg,#5b8cff,#f2a65a)}
+  .orb[data-t="classic"].active{box-shadow:0 0 14px rgba(91,140,255,.7)}
+  .orb[data-t="pom"]{background:linear-gradient(135deg,#5c0d22,#ff2e63)}
+  .orb[data-t="pom"].active{box-shadow:0 0 14px rgba(255,46,99,.8)}
+  .orb[data-t="peach"]{background:linear-gradient(135deg,#ff5e82,#ff9d5c)}
+  .orb[data-t="peach"].active{box-shadow:0 0 14px rgba(255,125,100,.8)}
+  .orb[data-t="tokyo"]{background:linear-gradient(135deg,#ff3ddc,#8a3dff)}
+  .orb[data-t="tokyo"].active{box-shadow:0 0 14px rgba(255,61,220,.8)}
+
+  /* ---------- POMEGRANATE: burgundy ombre, pink letters ---------- */
+  html.theme-pom{
+    --bg:#1c060f; --panel:#2b0a18; --panel-2:#360d1f; --line:#571631;
+    --ink:#ffd9e6; --muted:#c77d97;
+    --scale:#e0507a; --root:#ff2e63;
+    --root-soft:rgba(255,46,99,.5); --root-strong:rgba(255,110,150,.9); --root-faint:rgba(255,46,99,.14);
+    --glow-scale:rgba(224,80,122,.5); --glow-root:rgba(255,46,99,.75);
+    --shadow:0 10px 34px rgba(255,46,99,.14);
+  }
+  html.theme-pom body{
+    background:
+      radial-gradient(900px 520px at 78% -12%, rgba(255,46,99,.30) 0%, transparent 55%),
+      radial-gradient(760px 460px at 6% 108%, rgba(150,22,64,.38) 0%, transparent 60%),
+      linear-gradient(170deg,#2c0716 0%, #14030b 70%);
+  }
+  html.theme-pom #title{
+    background:linear-gradient(92deg,#ffa3c0,#ff2e63);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,46,99,.4));
+  }
+  html.theme-pom button.primary{
+    background:linear-gradient(92deg,#ff2e63,#c2184a);color:#fff;
+    box-shadow:0 0 18px rgba(255,46,99,.4);
+  }
+  html.theme-pom .dot.root{color:#2a020f}
+
+  /* ---------- PEACH GLOW: peachy pink to peachy orange ombre ---------- */
+  html.theme-peach{
+    --bg:#241008; --panel:#331810; --panel-2:#3d1c12; --line:#6b3624;
+    --ink:#ffe6d4; --muted:#d49a7e;
+    --scale:#ff9d5c; --root:#ff5e82;
+    --root-soft:rgba(255,94,130,.5); --root-strong:rgba(255,140,165,.9); --root-faint:rgba(255,94,130,.14);
+    --glow-scale:rgba(255,157,92,.5); --glow-root:rgba(255,94,130,.75);
+    --shadow:0 10px 34px rgba(255,125,100,.15);
+  }
+  html.theme-peach body{
+    background:
+      radial-gradient(880px 500px at 12% -10%, rgba(255,94,130,.32) 0%, transparent 55%),
+      radial-gradient(820px 500px at 92% 110%, rgba(255,157,92,.30) 0%, transparent 58%),
+      linear-gradient(165deg,#331520 0%, #1f0e07 55%, #2b1408 100%);
+  }
+  html.theme-peach #title{
+    background:linear-gradient(92deg,#ff8fa8,#ffb36b);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,125,100,.4));
+  }
+  html.theme-peach button.primary{
+    background:linear-gradient(92deg,#ff5e82,#ff9d5c);color:#33100a;
+    box-shadow:0 0 18px rgba(255,125,100,.42);
+  }
+  html.theme-peach .dot.root{color:#33060f}
+
+  /* ---------- TOKYO: glowing pink and purple ---------- */
+  html.theme-tokyo{
+    --bg:#120521; --panel:#1e0a33; --panel-2:#26103f; --line:#45207a;
+    --ink:#f0dcff; --muted:#a883cc;
+    --scale:#b45cff; --root:#ff3ddc;
+    --root-soft:rgba(255,61,220,.5); --root-strong:rgba(255,130,235,.9); --root-faint:rgba(255,61,220,.14);
+    --glow-scale:rgba(180,92,255,.55); --glow-root:rgba(255,61,220,.8);
+    --shadow:0 10px 34px rgba(180,92,255,.16);
+  }
+  html.theme-tokyo body{
+    background:
+      radial-gradient(900px 520px at 82% -12%, rgba(255,61,220,.30) 0%, transparent 55%),
+      radial-gradient(820px 500px at 4% 106%, rgba(122,61,255,.34) 0%, transparent 58%),
+      linear-gradient(160deg,#20073a 0%, #0d0318 60%, #180524 100%);
+  }
+  html.theme-tokyo #title{
+    background:linear-gradient(92deg,#ff5ce1,#9a5cff);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 18px rgba(255,61,220,.45));
+  }
+  html.theme-tokyo button.primary{
+    background:linear-gradient(92deg,#ff3ddc,#8a3dff);color:#fff;
+    box-shadow:0 0 18px rgba(255,61,220,.45);
+  }
+  html.theme-tokyo .dot.root{color:#2a0322}
 </style>
 </head>
 <body>
+<div class="themes" id="themes">
+  <div class="orb" data-t="classic" title="classic"></div>
+  <div class="orb" data-t="pom" title="pomegranate"></div>
+  <div class="orb" data-t="peach" title="peach glow"></div>
+  <div class="orb" data-t="tokyo" title="tokyo"></div>
+</div>
 <div class="wrap">
   <div class="mark">Scale&nbsp;<b>Visualizer</b></div>
   <h1 id="title"></h1>
@@ -384,6 +491,23 @@ document.getElementById('play').addEventListener('click', () => {
 });
 
 render();
+
+/* ---------- themes: tap an orb ---------- */
+const THEME_BG = {classic:'#0d1220', pom:'#1c060f', peach:'#241008', tokyo:'#120521'};
+function setTheme(t){
+  if (!THEME_BG[t]) t = 'classic';
+  document.documentElement.className = t === 'classic' ? '' : 'theme-' + t;
+  document.querySelectorAll('.orb').forEach(o =>
+    o.classList.toggle('active', o.dataset.t === t));
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = THEME_BG[t];
+  localStorage.setItem('sv-theme', t);
+}
+document.getElementById('themes').addEventListener('click', e => {
+  const orb = e.target.closest('.orb');
+  if (orb) setTheme(orb.dataset.t);
+});
+setTheme(localStorage.getItem('sv-theme') || 'classic');
 
 /* ---------- offline support (only active when hosted over https) ---------- */
 if ('serviceWorker' in navigator && location.protocol === 'https:')
