@@ -136,6 +136,45 @@
   .swatch.ghosted{background:transparent;border:2px dashed var(--root-soft)}
   .hint{color:var(--muted);font-size:13px;margin-top:20px}
 
+  /* tabs */
+  .tabs{display:flex;gap:8px;margin:16px 0 0}
+  .tab{
+    font:inherit;font-size:13px;font-weight:700;letter-spacing:.04em;
+    color:var(--muted);background:transparent;border:1px solid var(--line);
+    border-radius:999px;padding:8px 18px;cursor:pointer;
+    transition:color .15s,border-color .15s,background .15s;
+  }
+  .tab:hover{border-color:#3d4b73;color:var(--ink)}
+  .tab.active{background:var(--scale);border-color:transparent;color:var(--bg)}
+
+  /* neck quiz */
+  #qgrid,#qfrets{grid-template-columns:34px repeat(13,minmax(44px,1fr));min-width:640px}
+  .dot.blank{
+    background:transparent;border:2px dashed var(--line);
+    color:var(--muted);box-shadow:none;font-size:14px;
+  }
+  .dot.blank:hover{border-color:var(--scale);color:var(--ink)}
+  .dot.sel{box-shadow:0 0 0 3px var(--root-soft), 0 2px 8px rgba(0,0,0,.35), 0 0 14px var(--glow-root)}
+  .dot.blank.sel{border-style:solid;border-color:var(--root);color:var(--ink)}
+  .dot.correct{background:#2ecc8f;color:#04130c;box-shadow:0 2px 8px rgba(0,0,0,.35), 0 0 12px rgba(46,204,143,.5)}
+  .dot.wrong{background:#ff5d6c;color:#2a0308;box-shadow:0 2px 8px rgba(0,0,0,.35), 0 0 12px rgba(255,93,108,.5)}
+  .palette{display:grid;grid-template-columns:repeat(12,minmax(44px,1fr));gap:6px;margin:16px 0 4px}
+  @media (max-width:640px){.palette{grid-template-columns:repeat(6,1fr)}}
+  .pal{
+    font:inherit;font-weight:700;font-size:14px;line-height:1.15;color:var(--ink);
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:9px 2px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:1px;
+    transition:border-color .15s, opacity .15s;
+  }
+  .pal small{font-weight:600;font-size:10px;color:var(--muted)}
+  .pal:hover:not(:disabled){border-color:var(--scale)}
+  .pal:disabled{opacity:.35;cursor:default}
+  .qresult{margin-top:14px;font-weight:700;font-size:15px;min-height:1.4em}
+  .qresult.good{color:#2ecc8f}
+  .qresult.bad{color:#ff5d6c}
+  .qresult.progress{color:var(--muted);font-weight:600}
+
   /* ---------- theme tray: tap an orb · + mixes your own ---------- */
   .themes{position:fixed;top:max(10px, env(safe-area-inset-top));right:14px;z-index:50;
     display:flex;align-items:center;gap:9px;
@@ -278,7 +317,13 @@
 </div>
 <div class="wrap">
   <div class="mark">Scale&nbsp;<b>Visualizer</b></div>
+  <div class="tabs">
+    <button class="tab active" id="tab-explore">Explore</button>
+    <button class="tab" id="tab-quiz">Neck quiz</button>
+  </div>
   <h1 id="title"></h1>
+
+  <div id="view-explore">
   <p class="sub" id="sub"></p>
   <p class="formula">Notes: <b id="noteset"></b> &nbsp;·&nbsp; Formula: <b id="degrees"></b></p>
 
@@ -309,6 +354,40 @@
   </div>
 
   <p class="hint">Hover or tap any dot to hear the actual note.</p>
+  </div><!-- /view-explore -->
+
+  <div id="view-quiz" hidden>
+    <p class="sub">A blank neck. Tap a dashed circle, then pick the note that lives there. Fill them all, then hit Check.</p>
+
+    <div class="bar">
+      <div>
+        <span class="lab">Notes to fill</span>
+        <select id="qcount" aria-label="How many notes to fill in">
+          <option value="5">5 notes</option>
+          <option value="10" selected>10 notes</option>
+          <option value="15">15 notes</option>
+          <option value="20">20 notes</option>
+        </select>
+      </div>
+      <div>
+        <span class="lab">&nbsp;</span>
+        <button id="qnew">&#8635;&nbsp; New quiz</button>
+      </div>
+      <div>
+        <span class="lab">&nbsp;</span>
+        <button class="primary" id="qcheck" disabled>&#10003;&nbsp; Check answers</button>
+      </div>
+    </div>
+
+    <div class="board">
+      <div class="grid" id="qgrid"></div>
+      <div class="frets" id="qfrets"></div>
+    </div>
+
+    <div class="palette" id="palette"></div>
+    <p class="qresult" id="qresult"></p>
+    <p class="hint">Fret 0 is the open string. Tap a filled dot to change your answer before checking.</p>
+  </div><!-- /view-quiz -->
 </div>
 
 <script>
@@ -529,6 +608,149 @@ document.getElementById('play').addEventListener('click', () => {
 });
 
 render();
+
+/* ---------- neck quiz: fill in the blank neck, check at the end ---------- */
+const QFRETS = 12;                     // quiz board shows frets 0..12
+let quiz = [];                         // {s, f, pc, midi, ans}
+let qSel = -1;                         // index of the spot being answered
+let qChecked = false;
+
+const qgrid = document.getElementById('qgrid');
+const qfrets = document.getElementById('qfrets');
+const paletteEl = document.getElementById('palette');
+const qcheckBtn = document.getElementById('qcheck');
+const qresultEl = document.getElementById('qresult');
+
+SHARPS.forEach((n, pc) => {
+  const b = document.createElement('button');
+  b.className = 'pal';
+  b.innerHTML = FLATS[pc] === n ? n : `${n}<small>${FLATS[pc]}</small>`;
+  b.addEventListener('click', () => {
+    if (qChecked || qSel < 0) return;
+    quiz[qSel].ans = pc;
+    qSel = nextBlank(qSel);
+    renderQuiz();
+  });
+  paletteEl.appendChild(b);
+});
+
+function nextBlank(from){
+  for (let i = 1; i <= quiz.length; i++){
+    const j = (from + i) % quiz.length;
+    if (quiz[j].ans === null) return j;
+  }
+  return -1;
+}
+
+function newQuiz(){
+  const count = +document.getElementById('qcount').value;
+  const spots = [];
+  for (let s = 0; s < STRINGS.length; s++)
+    for (let f = 0; f <= QFRETS; f++) spots.push({s, f});
+  for (let i = spots.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [spots[i], spots[j]] = [spots[j], spots[i]];
+  }
+  quiz = spots.slice(0, count).map(({s, f}) => ({
+    s, f, pc: (STRINGS[s].pc + f) % 12, midi: STRINGS[s].midi + f, ans: null
+  }));
+  qSel = 0;
+  qChecked = false;
+  renderQuiz();
+}
+
+function renderQuiz(){
+  qgrid.innerHTML = '';
+  STRINGS.forEach((s, si) => {
+    const lab = document.createElement('div');
+    lab.className = 'slabel'; lab.textContent = s.lbl;
+    qgrid.appendChild(lab);
+
+    for (let f = 0; f <= QFRETS; f++){
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (f === 0 ? ' fret0' : '') + (f === 1 ? ' nut' : '');
+      const qi = quiz.findIndex(q => q.s === si && q.f === f);
+
+      if (qi >= 0){
+        const q = quiz[qi];
+        const dot = document.createElement('div');
+        if (qChecked){
+          const ok = q.ans === q.pc;
+          dot.className = 'dot ' + (ok ? 'correct' : 'wrong');
+          dot.textContent = SHARPS[q.pc];               // reveal the real note
+          if (!ok) dot.title = `You answered ${SHARPS[q.ans]}`;
+          dot.addEventListener('click', () => pluck(q.midi));
+        } else if (q.ans !== null){
+          dot.className = 'dot' + (qi === qSel ? ' sel' : '');
+          dot.textContent = SHARPS[q.ans];
+          dot.title = 'Tap to change this answer';
+          dot.addEventListener('click', () => { qSel = qi; renderQuiz(); });
+        } else {
+          dot.className = 'dot blank' + (qi === qSel ? ' sel' : '');
+          dot.textContent = '?';
+          dot.addEventListener('click', () => { qSel = qi; renderQuiz(); });
+        }
+        cell.appendChild(dot);
+      }
+      qgrid.appendChild(cell);
+    }
+  });
+
+  qfrets.innerHTML = '<div></div>';
+  for (let f = 0; f <= QFRETS; f++){
+    const n = document.createElement('div');
+    n.className = 'fnum' + (INLAYS.has(f) ? ' inlay' : '');
+    n.textContent = f;
+    qfrets.appendChild(n);
+  }
+
+  const filled = quiz.filter(q => q.ans !== null).length;
+  qcheckBtn.disabled = qChecked || filled < quiz.length;
+  paletteEl.querySelectorAll('.pal').forEach(b => { b.disabled = qChecked || qSel < 0; });
+  if (!qChecked){
+    qresultEl.className = 'qresult progress';
+    qresultEl.textContent = filled === 0 ? '' :
+      filled < quiz.length ? `${filled} / ${quiz.length} filled in` :
+      'All filled in — hit Check answers!';
+  }
+}
+
+document.getElementById('qnew').addEventListener('click', newQuiz);
+
+qcheckBtn.addEventListener('click', () => {
+  qChecked = true;
+  qSel = -1;
+  const right = quiz.filter(q => q.ans === q.pc).length;
+  const perfect = right === quiz.length;
+  qresultEl.className = 'qresult ' + (perfect ? 'good' : 'bad');
+  qresultEl.textContent = perfect
+    ? `Perfect — ${right} / ${quiz.length}! 🎉`
+    : `You got ${right} / ${quiz.length}. Red dots show the note that really lives there — tap any dot to hear it.`;
+  renderQuiz();
+  if (perfect) [0, 4, 7, 12].forEach((iv, i) => pluck(60 + iv, i * 0.12, 0.4));
+});
+
+/* ---------- tabs ---------- */
+const tabExplore = document.getElementById('tab-explore');
+const tabQuiz = document.getElementById('tab-quiz');
+const viewExplore = document.getElementById('view-explore');
+const viewQuiz = document.getElementById('view-quiz');
+
+function showTab(t){
+  const isQuiz = t === 'quiz';
+  tabExplore.classList.toggle('active', !isQuiz);
+  tabQuiz.classList.toggle('active', isQuiz);
+  viewExplore.hidden = isQuiz;
+  viewQuiz.hidden = !isQuiz;
+  if (isQuiz){
+    document.getElementById('title').textContent = 'Name the Neck';
+    if (!quiz.length) newQuiz();
+  } else {
+    render();               // restores the scale title + sub line
+  }
+}
+tabExplore.addEventListener('click', () => showTab('explore'));
+tabQuiz.addEventListener('click', () => showTab('quiz'));
 
 /* ---------- themes: tap an orb · + mixes your own ---------- */
 const THEME_BG = {classic:'#0d1220', pom:'#1c060f', peach:'#241008', tokyo:'#120521'};
