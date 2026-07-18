@@ -200,6 +200,9 @@
   .pal small{font-weight:600;font-size:10px;color:var(--muted)}
   .pal:hover:not(:disabled){border-color:var(--scale)}
   .pal:disabled{opacity:.35;cursor:default}
+  .qstats{color:var(--muted);font-size:14px;margin:6px 0 0}
+  .qstats b{color:var(--root)}
+  .qstats .plus{color:#2ecc8f;font-weight:800;margin-left:6px}
   .qresult{margin-top:14px;font-weight:700;font-size:15px;min-height:1.4em}
   .qresult.good{color:#2ecc8f}
   .qresult.bad{color:#ff5d6c}
@@ -542,6 +545,7 @@
 
   <div id="view-quiz" hidden>
     <p class="sub">A blank neck. Tap a dashed circle, then pick the note that lives there. Fill them all, then hit Check.</p>
+    <p class="qstats" id="qstats"></p>
 
     <div class="bar">
       <div>
@@ -952,6 +956,21 @@ const qfrets = document.getElementById('qfrets');
 const paletteEl = document.getElementById('palette');
 const qcheckBtn = document.getElementById('qcheck');
 const qresultEl = document.getElementById('qresult');
+const qstatsEl = document.getElementById('qstats');
+
+/* points: +10 per correct note, +5 x round size bonus for a perfect round.
+   streak counts perfect rounds in a row; everything survives restarts. */
+let qstats = {pts: 0, streak: 0, best: 0};
+try{
+  const s = JSON.parse(localStorage.getItem('sv-quiz-stats') || 'null');
+  if (s && typeof s.pts === 'number') qstats = s;
+}catch(e){}
+function renderQStats(gain){
+  qstatsEl.innerHTML = `🏆 <b>${qstats.pts}</b> pts` +
+    ` &nbsp;·&nbsp; 🔥 streak <b>${qstats.streak}</b>` +
+    (qstats.best ? ` &nbsp;·&nbsp; best round <b>${qstats.best}</b>` : '') +
+    (gain ? `<span class="plus">+${gain}</span>` : '');
+}
 
 SHARPS.forEach((n, pc) => {
   const b = document.createElement('button');
@@ -988,6 +1007,7 @@ function newQuiz(){
   }));
   qSel = 0;
   qChecked = false;
+  renderQStats(0);
   renderQuiz();
 }
 
@@ -1054,10 +1074,16 @@ qcheckBtn.addEventListener('click', () => {
   qSel = -1;
   const right = quiz.filter(q => q.ans === q.pc).length;
   const perfect = right === quiz.length;
+  const gain = right * 10 + (perfect ? quiz.length * 5 : 0);
+  qstats.pts += gain;
+  qstats.streak = perfect ? qstats.streak + 1 : 0;
+  qstats.best = Math.max(qstats.best, gain);
+  localStorage.setItem('sv-quiz-stats', JSON.stringify(qstats));
+  renderQStats(gain);
   qresultEl.className = 'qresult ' + (perfect ? 'good' : 'bad');
   qresultEl.textContent = perfect
-    ? `Perfect — ${right} / ${quiz.length}! 🎉`
-    : `You got ${right} / ${quiz.length}. Red dots show the note that really lives there — tap any dot to hear it.`;
+    ? `Perfect — ${right} / ${quiz.length}! 🎉 +${gain} pts (${right}×10 + perfect bonus)`
+    : `You got ${right} / ${quiz.length} (+${gain} pts). Red dots show the note that really lives there — tap any dot to hear it.`;
   renderQuiz();
   if (perfect) [0, 4, 7, 12].forEach((iv, i) => pluck(60 + iv, i * 0.12, 0.4));
 });
