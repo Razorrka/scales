@@ -136,16 +136,46 @@
   .swatch.ghosted{background:transparent;border:2px dashed var(--root-soft)}
   .hint{color:var(--muted);font-size:13px;margin-top:20px}
 
-  /* tabs */
-  .tabs{display:flex;gap:8px;margin:16px 0 0}
+  /* tabs — folded into one button, expands on tap */
+  .tabs{display:flex;gap:8px;margin:16px 0 0;align-items:center}
   .tab{
     font:inherit;font-size:13px;font-weight:700;letter-spacing:.04em;
     color:var(--muted);background:transparent;border:1px solid var(--line);
-    border-radius:999px;padding:8px 18px;cursor:pointer;
+    border-radius:999px;padding:8px 14px;cursor:pointer;
     transition:color .15s,border-color .15s,background .15s;
   }
   .tab:hover{border-color:#3d4b73;color:var(--ink)}
   .tab.active{background:var(--scale);border-color:transparent;color:var(--bg)}
+  .tf-cur{width:46px;height:40px;padding:0;font-size:19px;line-height:1;text-align:center;
+    background:var(--panel);border:1px solid var(--line);border-radius:999px;cursor:pointer;
+    transition:border-color .15s, transform .12s}
+  .tf-cur:hover{border-color:#3d4b73;transform:scale(1.06)}
+  .tf-opts{display:flex;gap:8px;flex-wrap:wrap}
+  @keyframes tfIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+  .tf-opts:not([hidden]){animation:tfIn .18s ease}
+
+  /* chord shapes */
+  .ch-head{display:flex;align-items:center;gap:12px;margin:18px 0 4px}
+  .ch-key{font-size:21px;font-weight:800;color:var(--root);min-width:150px;text-align:center;
+    filter:drop-shadow(0 0 12px var(--glow-root))}
+  .ch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:14px;margin-top:16px}
+  .ch-card{background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line);border-radius:14px;padding:10px 6px 4px;text-align:center;
+    cursor:pointer;box-shadow:var(--shadow);transition:transform .12s,border-color .15s}
+  .ch-card:hover{border-color:var(--root-soft)}
+  .ch-card:active{transform:scale(.96)}
+  .ch-top{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px}
+  .ch-degpill{background:var(--root);color:#10131f;font-size:11px;font-weight:800;
+    border-radius:999px;min-width:18px;padding:1px 6px}
+  .ch-name{font-weight:800;font-size:16px;color:var(--ink)}
+  .ch-svg{width:96px;height:112px}
+  .ch-str,.ch-fret{stroke:var(--line);stroke-width:1.4}
+  .ch-nut{stroke:var(--muted);stroke-width:4}
+  .ch-dot{fill:var(--scale)}
+  .ch-dot.rt{fill:var(--root)}
+  .ch-o{fill:none;stroke:var(--muted);stroke-width:1.4}
+  .ch-x{fill:var(--muted);font-size:10px;font-weight:700;text-anchor:middle}
+  .ch-base{fill:var(--muted);font-size:10px;font-weight:700;text-anchor:middle}
 
   /* neck quiz */
   #qgrid,#qfrets{grid-template-columns:34px repeat(13,minmax(44px,1fr));min-width:640px}
@@ -442,9 +472,13 @@
 <div class="wrap">
   <div class="mark">Scale&nbsp;<b>Visualizer</b></div>
   <div class="tabs">
-    <button class="tab active" id="tab-explore">Explore</button>
-    <button class="tab" id="tab-quiz">Neck quiz</button>
-    <button class="tab" id="tab-decoder">Decoder</button>
+    <button class="tf-cur" id="tf-cur" title="Switch view" aria-label="Switch view">&#127928;</button>
+    <div class="tf-opts" id="tf-opts" hidden>
+      <button class="tab" data-tab="explore">&#127928; Explore</button>
+      <button class="tab" data-tab="quiz">&#127919; Neck quiz</button>
+      <button class="tab" data-tab="decoder">&#129517; Decoder</button>
+      <button class="tab" data-tab="chords">&#9995; Chords</button>
+    </div>
   </div>
   <h1 id="title"></h1>
 
@@ -595,6 +629,17 @@
     </div>
     <p class="hint">Swipe the card or drag the letter tape to turn the wheel — it moves through the circle of fifths like the real disc. The pills under each bubble are the chord's scale degrees.</p>
   </div><!-- /view-decoder -->
+
+  <div id="view-chords" hidden>
+    <p class="sub">The shapes for every chord in the key — same <b>1&#8211;7</b> as the Decoder. Tap a shape to hear it.</p>
+    <div class="ch-head">
+      <button id="ch-prev" aria-label="Previous key">&#8249;</button>
+      <div class="ch-key" id="ch-key"></div>
+      <button id="ch-next" aria-label="Next key">&#8250;</button>
+    </div>
+    <div class="ch-grid" id="ch-grid"></div>
+    <p class="hint">These follow the Decoder's key — change it here or there. &times; = don't play that string, &#9675; = open string, orange dot = the root, side number = starting fret.</p>
+  </div><!-- /view-chords -->
 </div>
 
 <script>
@@ -1085,12 +1130,13 @@ function setDecKey(k, dir){
   updateTape(true);
 }
 /* tap a bubble (or the key notch) to hear the chord */
+function playDeg(d){
+  const [off, quality] = DEG_INFO[d];
+  const root = 52 + ((FIFTHS_PC[decKey] + off - 4 + 12) % 12);
+  TRIADS[quality].forEach((iv, i) => pluck(root + iv, i * 0.04, 0.45));
+}
 document.querySelectorAll('#dcard [data-deg]').forEach(b =>
-  b.addEventListener('click', () => {
-    const [off, quality] = DEG_INFO[+b.dataset.deg];
-    const root = 52 + ((FIFTHS_PC[decKey] + off - 4 + 12) % 12);
-    TRIADS[quality].forEach((iv, i) => pluck(root + iv, i * 0.04, 0.45));
-  }));
+  b.addEventListener('click', () => playDeg(+b.dataset.deg)));
 /* swipe anywhere on the card to turn the wheel */
 let swipeX = null;
 dcard.addEventListener('pointerdown', e => { swipeX = e.clientX; });
@@ -1168,17 +1214,80 @@ tapeEl.addEventListener('pointermove', e => {
 window.addEventListener('resize', () => updateTape(false));
 renderDecoder(0);
 
-/* ---------- tabs ---------- */
-const TAB_VIEWS = {
-  explore: [document.getElementById('tab-explore'), document.getElementById('view-explore')],
-  quiz:    [document.getElementById('tab-quiz'),    document.getElementById('view-quiz')],
-  decoder: [document.getElementById('tab-decoder'), document.getElementById('view-decoder')],
+/* ---------- chord shapes ---------- */
+const OPEN_SHAPES = {   // frets low E -> high e; -1 = mute
+  maj: {0:[-1,3,2,0,1,0], 2:[-1,-1,0,2,3,2], 4:[0,2,2,1,0,0], 7:[3,2,0,0,0,3], 9:[-1,0,2,2,2,0]},
+  min: {2:[-1,-1,0,2,3,1], 4:[0,2,2,0,0,0], 9:[-1,0,2,2,1,0]},
 };
-function showTab(t){
-  Object.entries(TAB_VIEWS).forEach(([name, [tab, view]]) => {
-    tab.classList.toggle('active', name === t);
-    view.hidden = name !== t;
+function getShape(pc, q){
+  if (q === 'dim'){
+    const f = (pc - 9 + 12) % 12;               // root on the A string
+    return [-1, f, f + 1, f + 2, f + 1, -1];
+  }
+  if (OPEN_SHAPES[q][pc]) return OPEN_SHAPES[q][pc];
+  const e = (pc - 4 + 12) % 12, a = (pc - 9 + 12) % 12;   // barre fret per form
+  if (e <= a) return q === 'maj' ? [e,e+2,e+2,e+1,e,e] : [e,e+2,e+2,e,e,e];
+  return q === 'maj' ? [-1,a,a+2,a+2,a+2,a] : [-1,a,a+2,a+2,a+1,a];
+}
+const TUNING = [4,9,2,7,11,4];                  // low E -> high e pitch classes
+function chordSVG(fr, rootPc){
+  const pos = fr.filter(f => f > 0);
+  const base = Math.max(...pos, 1) <= 4 ? 1 : Math.min(...pos);
+  const left = 16, top = 24, sw = 15, fh = 20;
+  let s = `<svg viewBox="0 0 96 112" class="ch-svg" aria-hidden="true">`;
+  for (let i = 0; i <= 4; i++)
+    s += `<line x1="${left}" y1="${top + i*fh}" x2="${left + 5*sw}" y2="${top + i*fh}"
+      class="ch-fret${i === 0 && base === 1 ? ' ch-nut' : ''}"/>`;
+  for (let i = 0; i < 6; i++)
+    s += `<line x1="${left + i*sw}" y1="${top}" x2="${left + i*sw}" y2="${top + 4*fh}" class="ch-str"/>`;
+  if (base > 1) s += `<text x="${left - 9}" y="${top + fh*0.66}" class="ch-base">${base}</text>`;
+  fr.forEach((f, i) => {
+    const x = left + i*sw;
+    const isRoot = f >= 0 && (TUNING[i] + f) % 12 === rootPc;
+    if (f === -1) s += `<text x="${x}" y="${top - 7}" class="ch-x">&times;</text>`;
+    else if (f === 0) s += `<circle cx="${x}" cy="${top - 10}" r="3.6" class="ch-o"${isRoot ? ' stroke-width="2.6"' : ''}/>`;
+    else s += `<circle cx="${x}" cy="${top + (f - base + 0.5)*fh}" r="6.4" class="ch-dot${isRoot ? ' rt' : ''}"/>`;
   });
+  return s + '</svg>';
+}
+function renderChords(){
+  const pc = FIFTHS_PC[decKey];
+  const NN = FLAT_KEYS.has(pc) ? FLATS : SHARPS;
+  document.getElementById('ch-key').textContent = keyLabel(decKey) + ' major';
+  document.getElementById('ch-grid').innerHTML = [1,2,3,4,5,6,7].map(d => {
+    const [off, q] = DEG_INFO[d];
+    const p = (pc + off) % 12;
+    const name = q === 'maj' ? majLabel(p)
+               : noteFmt(NN[p]).toLowerCase() + (q === 'min' ? 'm' : '°');
+    return `<div class="ch-card" data-deg="${d}">
+      <div class="ch-top"><span class="ch-degpill">${d}</span><span class="ch-name">${name}</span></div>
+      ${chordSVG(getShape(p, q), p)}
+    </div>`;
+  }).join('');
+}
+document.getElementById('ch-grid').addEventListener('click', e => {
+  const card = e.target.closest('.ch-card');
+  if (card) playDeg(+card.dataset.deg);
+});
+document.getElementById('ch-prev').addEventListener('click', () => { setDecKey(decKey - 1); renderChords(); });
+document.getElementById('ch-next').addEventListener('click', () => { setDecKey(decKey + 1); renderChords(); });
+
+/* ---------- tabs: folded into one button ---------- */
+const TAB_EMOJI = {explore:'🎸', quiz:'🎯', decoder:'🧭', chords:'✋'};
+const TAB_VIEWS = {
+  explore: document.getElementById('view-explore'),
+  quiz:    document.getElementById('view-quiz'),
+  decoder: document.getElementById('view-decoder'),
+  chords:  document.getElementById('view-chords'),
+};
+const tfCur = document.getElementById('tf-cur');
+const tfOpts = document.getElementById('tf-opts');
+function showTab(t){
+  Object.entries(TAB_VIEWS).forEach(([name, view]) => { view.hidden = name !== t; });
+  tfOpts.querySelectorAll('[data-tab]').forEach(b =>
+    b.classList.toggle('active', b.dataset.tab === t));
+  tfCur.textContent = TAB_EMOJI[t];
+  tfOpts.hidden = true;
   if (t === 'quiz'){
     document.getElementById('title').textContent = 'Name the Neck';
     if (!quiz.length) newQuiz();
@@ -1186,12 +1295,18 @@ function showTab(t){
     document.getElementById('title').textContent = 'Decoder';
     renderDecoder(0);
     updateTape(false);          // tape can only be measured once visible
+  } else if (t === 'chords'){
+    document.getElementById('title').textContent = 'Chord Shapes';
+    renderChords();
   } else {
     render();               // restores the scale title + sub line
   }
 }
-Object.keys(TAB_VIEWS).forEach(t =>
-  TAB_VIEWS[t][0].addEventListener('click', () => showTab(t)));
+tfCur.addEventListener('click', () => { tfOpts.hidden = !tfOpts.hidden; });
+tfOpts.addEventListener('click', e => {
+  const b = e.target.closest('[data-tab]');
+  if (b) showTab(b.dataset.tab);
+});
 
 /* ---------- themes: tap an orb · + mixes your own ---------- */
 const THEME_BG = {classic:'#0d1220', pom:'#1c060f', peach:'#241008', tokyo:'#120521'};
