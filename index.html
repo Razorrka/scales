@@ -204,6 +204,23 @@
   .pal small{font-weight:600;font-size:10px;color:var(--muted)}
   .pal:hover:not(:disabled){border-color:var(--scale)}
   .pal:disabled{opacity:.35;cursor:default}
+  .pal.on{border-color:var(--root);color:var(--root);box-shadow:0 0 10px var(--glow-root)}
+
+  /* fretboard map — study tool */
+  #mgrid,#mfrets{grid-template-columns:34px repeat(13,minmax(44px,1fr));min-width:640px}
+  .map-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0 2px}
+  .dot.map{width:32px;height:32px;background:var(--panel-2);border:1px solid var(--line);
+    color:var(--muted);font-size:12px;font-weight:700;box-shadow:none;
+    transition:transform .1s,background .12s,color .12s,border-color .12s}
+  .dot.map.nat{color:var(--ink)}
+  .dot.map.acc{font-size:11px}
+  .dot.map:hover{transform:scale(1.14);border-color:var(--scale)}
+  .dot.map.hl{background:var(--root);color:#2a1400;border-color:transparent;
+    box-shadow:0 2px 8px rgba(0,0,0,.35),0 0 14px var(--glow-root)}
+  .mslabel{cursor:pointer;transition:color .12s}
+  .mslabel:hover{color:var(--ink)}
+  .mslabel.iso{color:var(--root)}
+  .cell.dim .dot{opacity:.2}
   /* note hunt */
   .cell.hrow{background:var(--root-faint)}
   .dot.hunt{width:26px;height:26px;background:transparent;border:2px dashed var(--muted);
@@ -565,6 +582,7 @@
     <button class="tf-cur" id="tf-cur" title="Switch view" aria-label="Switch view">&#127928;</button>
     <div class="tf-opts" id="tf-opts" hidden>
       <button class="tab" data-tab="explore">&#127928; Explore</button>
+      <button class="tab" data-tab="map">&#128506;&#65039; Map</button>
       <button class="tab" data-tab="quiz">&#127919; Neck quiz</button>
       <button class="tab" data-tab="decoder">&#129517; Decoder</button>
       <button class="tab" data-tab="chords">&#9995; Chords</button>
@@ -629,6 +647,21 @@
 
   <p class="hint">Hover or tap any dot to hear the actual note.</p>
   </div><!-- /view-explore -->
+
+  <div id="view-map" hidden>
+    <p class="sub">Every note on every fret. Tap a note to light up all its spots across the neck — and hear it. Tap a string name on the left to focus just that string.</p>
+    <div class="map-controls">
+      <button class="toggle" id="m-nat">Naturals only</button>
+      <button class="toggle" id="m-flat">Show &#9837;</button>
+      <button id="m-clear">Clear</button>
+    </div>
+    <div class="palette" id="mpal"></div>
+    <div class="board">
+      <div class="grid" id="mgrid"></div>
+      <div class="frets" id="mfrets"></div>
+    </div>
+    <p class="hint">The 12th fret repeats the open string one octave up — learn frets 0–12 and you know the whole neck. Naturals (no sharps/flats) are brighter; those are the ones to lock in first.</p>
+  </div><!-- /view-map -->
 
   <div id="view-quiz" hidden>
     <p class="sub" id="qsub">A blank neck. Tap a dashed circle, then pick the note that lives there. Fill them all, then hit Check.</p>
@@ -1835,10 +1868,78 @@ document.getElementById('ch-grid').addEventListener('click', e => {
 document.getElementById('ch-prev').addEventListener('click', () => { setDecKey(decKey - 1); renderChords(); });
 document.getElementById('ch-next').addEventListener('click', () => { setDecKey(decKey + 1); renderChords(); });
 
+/* ---------- fretboard map: a study reference for every note ---------- */
+const MFRETS = 12;
+const mgrid = document.getElementById('mgrid');
+const mfrets = document.getElementById('mfrets');
+const mpalEl = document.getElementById('mpal');
+let mapHl = -1, mapNat = false, mapFlat = false, mapIso = -1;
+const isNatural = pc => !SHARPS[pc].includes('#');
+SHARPS.forEach((n, pc) => {
+  const b = document.createElement('button');
+  b.className = 'pal'; b.dataset.pc = pc;
+  mpalEl.appendChild(b);
+});
+mpalEl.addEventListener('click', e => {
+  const b = e.target.closest('.pal');
+  if (b){ const pc = +b.dataset.pc; mapHl = (mapHl === pc ? -1 : pc); renderMap(); }
+});
+function renderMap(){
+  const NN = mapFlat ? FLATS : SHARPS;
+  mpalEl.querySelectorAll('.pal').forEach(b => {
+    const pc = +b.dataset.pc;
+    b.textContent = NN[pc];
+    b.classList.toggle('on', pc === mapHl);
+    b.hidden = mapNat && !isNatural(pc);
+  });
+  mgrid.innerHTML = '';
+  STRINGS.forEach((s, si) => {
+    const lab = document.createElement('div');
+    lab.className = 'slabel mslabel' + (mapIso === si ? ' iso' : '');
+    lab.textContent = s.lbl;
+    lab.title = `Focus the ${s.say} string`;
+    lab.addEventListener('click', () => { mapIso = (mapIso === si ? -1 : si); renderMap(); });
+    mgrid.appendChild(lab);
+    for (let f = 0; f <= MFRETS; f++){
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (f === 0 ? ' fret0' : '') + (f === 1 ? ' nut' : '') +
+        (mapIso >= 0 && mapIso !== si ? ' dim' : '');
+      const pc = (s.pc + f) % 12, nat = isNatural(pc);
+      if (!(mapNat && !nat)){
+        const dot = document.createElement('div');
+        dot.className = 'dot map' + (nat ? ' nat' : ' acc') + (pc === mapHl ? ' hl' : '');
+        dot.textContent = NN[pc];
+        dot.addEventListener('click', () => { pluck(s.midi + f); mapHl = pc; renderMap(); });
+        cell.appendChild(dot);
+      }
+      mgrid.appendChild(cell);
+    }
+  });
+  mfrets.innerHTML = '<div></div>';
+  for (let f = 0; f <= MFRETS; f++){
+    const n = document.createElement('div');
+    n.className = 'fnum' + (INLAYS.has(f) ? ' inlay' : '');
+    n.textContent = f;
+    mfrets.appendChild(n);
+  }
+}
+document.getElementById('m-nat').addEventListener('click', e => {
+  mapNat = !mapNat; e.target.classList.toggle('on', mapNat); renderMap();
+});
+document.getElementById('m-flat').addEventListener('click', e => {
+  mapFlat = !mapFlat; e.target.classList.toggle('on', mapFlat);
+  e.target.innerHTML = mapFlat ? 'Show &#9839;' : 'Show &#9837;';
+  renderMap();
+});
+document.getElementById('m-clear').addEventListener('click', () => {
+  mapHl = -1; mapIso = -1; renderMap();
+});
+
 /* ---------- tabs: folded into one button ---------- */
-const TAB_EMOJI = {explore:'🎸', quiz:'🎯', decoder:'🧭', chords:'✋'};
+const TAB_EMOJI = {explore:'🎸', map:'🗺️', quiz:'🎯', decoder:'🧭', chords:'✋'};
 const TAB_VIEWS = {
   explore: document.getElementById('view-explore'),
+  map:     document.getElementById('view-map'),
   quiz:    document.getElementById('view-quiz'),
   decoder: document.getElementById('view-decoder'),
   chords:  document.getElementById('view-chords'),
@@ -1855,7 +1956,10 @@ function showTab(t){
     b.classList.toggle('active', b.dataset.tab === t));
   tfCur.textContent = TAB_EMOJI[t];
   tfOpts.hidden = true;
-  if (t === 'quiz'){
+  if (t === 'map'){
+    document.getElementById('title').textContent = 'Fretboard Map';
+    renderMap();
+  } else if (t === 'quiz'){
     document.getElementById('title').textContent = 'Quiz Arcade';
     if (!quizStarted) newQuiz();
   } else if (t === 'decoder'){
