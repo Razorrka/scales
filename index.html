@@ -236,6 +236,7 @@
     border:1px solid var(--line);border-radius:12px;padding:13px 20px;cursor:pointer;margin:4px 0}
   .qbtn-replay:hover{border-color:var(--scale)}
   .dot.want{border-color:var(--scale);color:var(--scale)}
+  .qpair-sel{display:flex;gap:8px}
 
   /* double stops */
   button.toggle.on{border-color:var(--root);color:var(--root);box-shadow:0 0 10px var(--glow-root)}
@@ -642,6 +643,7 @@
             <option value="flash">Name the fret</option>
             <option value="hunt">Note hunt</option>
             <option value="findall">Find all</option>
+            <option value="strings">String pair</option>
           </optgroup>
           <optgroup label="Intervals &amp; chords">
             <option value="interval">Interval trainer</option>
@@ -661,6 +663,13 @@
           <option value="20">20 notes</option>
           <option value="78">Whole neck</option>
         </select>
+      </div>
+      <div id="qpair-wrap" hidden>
+        <span class="lab">Strings</span>
+        <div class="qpair-sel">
+          <select id="qs1" aria-label="First string"></select>
+          <select id="qs2" aria-label="Second string"></select>
+        </div>
       </div>
       <div>
         <span class="lab">&nbsp;</span>
@@ -1527,6 +1536,65 @@ function earGuess(opt, btn){
   }
 }
 
+/* ---------------- game 8: String pair (alternate two strings) ---------------- */
+const qs1 = document.getElementById('qs1'), qs2 = document.getElementById('qs2');
+STRINGS.forEach((s, i) => {
+  [qs1, qs2].forEach(sel => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = s.say;
+    sel.appendChild(o);
+  });
+});
+qs1.value = 5; qs2.value = 4;            // low E + A by default
+[qs1, qs2].forEach(sel => sel.addEventListener('change', () => { if (qMode === 'strings') newQuiz(); }));
+
+function startStrings(){
+  say('Two strings, back and forth — a dot lights on one, name it, then the other. Nail your anchor strings cold.',
+      '+15 first try, +5 after a miss. Pick the two strings above, then New game.');
+  setQUI({board:true, palette:true});
+  game = {mode:'strings', pair:[+qs1.value, +qs2.value], idx:0, round:0, total:12,
+          score:0, firstTry:0, id:Date.now()};
+  palHandler = (pc, btn) => stringsGuess(pc, btn);
+  nextStrings();
+}
+function nextStrings(){
+  game.round++;
+  const s = game.pair[game.idx % 2]; game.idx++;
+  const f = rand(QFRETS + 1);
+  game.pos = {s, f, pc:(STRINGS[s].pc + f) % 12, midi: STRINGS[s].midi + f};
+  game.miss = false; game.solved = false;
+  renderStrings();
+}
+function renderStrings(){
+  buildQBoard((si, f) => {
+    if (si !== game.pos.s) return null;
+    if (f === game.pos.f)
+      return {rowlit:true, dot:{cls:'lit' + (game.solved ? ' correct' : ''),
+        text: game.solved ? SHARPS[game.pos.pc] : '?'}};
+    return {rowlit:true};
+  });
+  paletteEl.querySelectorAll('.pal').forEach(b => { b.disabled = game.solved; });
+  if (!game.solved)
+    progress(`Name the note on the ${STRINGS[game.pos.s].say} string — round ${game.round} / ${game.total}`);
+}
+function stringsGuess(pc, btn){
+  if (game.solved) return;
+  if (pc === game.pos.pc){
+    game.solved = true;
+    game.score += game.miss ? 5 : 15;
+    if (!game.miss) game.firstTry++;
+    pluck(game.pos.midi, 0, 0.5);
+    renderStrings();
+    const id = game.id;
+    if (game.round >= game.total) finishRounds('String pair');
+    else setTimeout(() => { if (game && game.id === id && !game.done) nextStrings(); }, 620);
+  } else {
+    game.miss = true;
+    if (btn) palFlash(btn, 'bad');
+    pluck(60 + pc, 0, 0.25);
+  }
+}
+
 /* ---------------- shared finish for round-based games ---------------- */
 function finishRounds(label, cleanCount){
   game.done = true;
@@ -1541,7 +1609,7 @@ function finishRounds(label, cleanCount){
 
 /* ---------------- dispatch ---------------- */
 const QGAMES = {fill:startFill, flash:startFlash, hunt:startHunt, findall:startFindall,
-                interval:startInterval, triad:startTriad, ear:startEar};
+                strings:startStrings, interval:startInterval, triad:startTriad, ear:startEar};
 let qMode = 'fill';
 function newQuiz(){
   quizStarted = true;
@@ -1552,7 +1620,8 @@ function newQuiz(){
 document.getElementById('qnew').addEventListener('click', newQuiz);
 document.getElementById('qmode').addEventListener('change', e => {
   qMode = e.target.value;
-  document.getElementById('qcount-wrap').style.visibility = qMode === 'fill' ? '' : 'hidden';
+  document.getElementById('qcount-wrap').hidden = qMode !== 'fill';
+  document.getElementById('qpair-wrap').hidden = qMode !== 'strings';
   newQuiz();
 });
 
