@@ -200,6 +200,13 @@
   .pal small{font-weight:600;font-size:10px;color:var(--muted)}
   .pal:hover:not(:disabled){border-color:var(--scale)}
   .pal:disabled{opacity:.35;cursor:default}
+  /* note hunt */
+  .cell.hrow{background:var(--root-faint)}
+  .dot.hunt{width:26px;height:26px;background:transparent;border:2px dashed var(--muted);
+    color:transparent;box-shadow:none;font-size:11px}
+  .dot.hunt:hover{border-color:var(--root);transform:scale(1.2)}
+  .dot.hunt.correct{width:34px;height:34px;color:#04130c;border-color:transparent;border-style:solid}
+  .dot.hunt.wrong{width:34px;height:34px;color:#2a0308;border-color:transparent;border-style:solid}
   .qstats{color:var(--muted);font-size:14px;margin:6px 0 0}
   .qstats b{color:var(--root)}
   .qstats .plus{color:#2ecc8f;font-weight:800;margin-left:6px}
@@ -366,14 +373,17 @@
 
   /* your-colors popover */
   #sv-mixer{position:fixed;top:calc(max(10px, env(safe-area-inset-top)) + 48px);right:14px;z-index:60;
-    width:212px;background:var(--panel);border:1px solid var(--line);border-radius:14px;
-    padding:14px;box-shadow:var(--shadow);font-size:13px;color:var(--ink)}
+    width:222px;max-height:min(72svh,540px);overflow-y:auto;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:12px 14px;box-shadow:var(--shadow);font-size:13px;color:var(--ink)}
   #sv-mixer[hidden]{display:none}
   #sv-mixer .mx-title{font-weight:800;font-size:13px;letter-spacing:.02em}
-  #sv-mixer .mx-sub{font-size:11px;color:var(--muted);margin:2px 0 8px}
-  #sv-mixer label{display:flex;align-items:center;justify-content:space-between;margin:8px 0;gap:10px;color:var(--muted)}
-  #sv-mixer input[type=color]{width:50px;height:30px;border:none;border-radius:8px;padding:0;background:none;cursor:pointer}
-  #sv-mixer input[type=range]{flex:1;max-width:104px;accent-color:var(--root)}
+  #sv-mixer .mx-sub{font-size:11px;color:var(--muted);margin:2px 0 4px}
+  #sv-mixer .mx-sec{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);margin:10px 0 0;border-top:1px solid var(--line);padding-top:8px}
+  #sv-mixer label{display:flex;align-items:center;justify-content:space-between;margin:6px 0;gap:10px;color:var(--muted)}
+  #sv-mixer input[type=color]{width:46px;height:28px;border:none;border-radius:8px;padding:0;background:none;cursor:pointer}
+  #sv-mixer input[type=range]{flex:1;max-width:100px;accent-color:var(--root)}
   #sv-mixer .mx-row{display:flex;gap:8px;margin-top:12px}
   #sv-mixer .mx-row button{flex:1;font:inherit;font-size:12px;font-weight:700;color:var(--ink);
     background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:8px 4px;cursor:pointer}
@@ -471,15 +481,23 @@
   <div class="orb main" id="orb-main" data-t="classic" title="Colors for this tab"></div>
 </div>
 <div id="sv-mixer" hidden>
-  <div class="mx-title">🎛 your colors</div>
+  <div class="mx-title">🎛 color panel</div>
   <div class="mx-sub">just for this tab</div>
+  <div class="mx-sec">base</div>
   <label>background <input type="color" id="mx-bg" value="#0d1220"></label>
+  <label>panels <input type="color" id="mx-panel" value="#161f31"></label>
+  <label>lines <input type="color" id="mx-line" value="#2b3652"></label>
+  <div class="mx-sec">letters</div>
   <label>letters <input type="color" id="mx-ink" value="#eef2fb"></label>
+  <label>faded text <input type="color" id="mx-muted" value="#8a97b4"></label>
+  <label>logo <input type="color" id="mx-logo" value="#8a97b4"></label>
+  <div class="mx-sec">dots &amp; accents</div>
   <label>scale dots <input type="color" id="mx-scale" value="#5b8cff"></label>
   <label>root dots <input type="color" id="mx-root" value="#f2a65a"></label>
   <label class="mx-gl">✨ glow <input type="range" id="mx-glow" min="0" max="100" value="50"></label>
   <div class="mx-row">
     <button id="mx-reset" title="delete this tab's colors, back to classic">↺ reset</button>
+    <button id="mx-all" title="copy these colors to every tab">⧉ all tabs</button>
     <button id="mx-done">✓ done</button>
   </div>
 </div>
@@ -555,17 +573,25 @@
   </div><!-- /view-explore -->
 
   <div id="view-quiz" hidden>
-    <p class="sub">A blank neck. Tap a dashed circle, then pick the note that lives there. Fill them all, then hit Check.</p>
+    <p class="sub" id="qsub">A blank neck. Tap a dashed circle, then pick the note that lives there. Fill them all, then hit Check.</p>
     <p class="qstats" id="qstats"></p>
 
     <div class="bar">
       <div>
+        <span class="lab">Mode</span>
+        <select id="qmode" aria-label="Quiz mode">
+          <option value="fill" selected>Fill the blanks</option>
+          <option value="hunt">Note hunt</option>
+        </select>
+      </div>
+      <div id="qcount-wrap">
         <span class="lab">Notes to fill</span>
         <select id="qcount" aria-label="How many notes to fill in">
           <option value="5">5 notes</option>
           <option value="10" selected>10 notes</option>
           <option value="15">15 notes</option>
           <option value="20">20 notes</option>
+          <option value="78">Whole neck</option>
         </select>
       </div>
       <div>
@@ -585,7 +611,7 @@
 
     <div class="palette" id="palette"></div>
     <p class="qresult" id="qresult"></p>
-    <p class="hint">Fret 0 is the open string. Tap a filled dot to change your answer before checking.</p>
+    <p class="hint" id="qhint">Fret 0 is the open string. Tap a filled dot to change your answer before checking.</p>
   </div><!-- /view-quiz -->
 
   <div id="view-decoder" hidden>
@@ -1004,7 +1030,24 @@ function nextBlank(from){
   return -1;
 }
 
+function renderQFrets(){
+  qfrets.innerHTML = '<div></div>';
+  for (let f = 0; f <= QFRETS; f++){
+    const n = document.createElement('div');
+    n.className = 'fnum' + (INLAYS.has(f) ? ' inlay' : '');
+    n.textContent = f;
+    qfrets.appendChild(n);
+  }
+}
+
+let qMode = 'fill';
 function newQuiz(){
+  renderQStats(0);
+  if (qMode === 'hunt'){ startHunt(); return; }
+  document.getElementById('qsub').textContent =
+    'A blank neck. Tap a dashed circle, then pick the note that lives there. Fill them all, then hit Check.';
+  document.getElementById('qhint').textContent =
+    'Fret 0 is the open string. Tap a filled dot to change your answer before checking.';
   const count = +document.getElementById('qcount').value;
   const spots = [];
   for (let s = 0; s < STRINGS.length; s++)
@@ -1018,8 +1061,91 @@ function newQuiz(){
   }));
   qSel = 0;
   qChecked = false;
-  renderQStats(0);
   renderQuiz();
+}
+
+/* --- note hunt: find the asked note on the lit string, 10 rounds --- */
+let hunt = null;
+function noteBoth(pc){ return SHARPS[pc] === FLATS[pc] ? SHARPS[pc] : SHARPS[pc] + '/' + FLATS[pc]; }
+function startHunt(){
+  hunt = {id: Date.now(), round: 0, score: 0, firstTry: 0, total: 10,
+          target: null, miss: false, marks: {}, done: false};
+  document.getElementById('qsub').textContent =
+    'Note hunt: tap the asked note on the lit string. First try = 15 pts, after a miss = 5.';
+  document.getElementById('qhint').textContent =
+    'Wrong taps turn red and show what they really are — the round keeps going until you find it.';
+  nextHuntTarget();
+}
+function nextHuntTarget(){
+  hunt.round++;
+  const s = Math.floor(Math.random() * STRINGS.length);
+  const f = Math.floor(Math.random() * (QFRETS + 1));
+  hunt.target = {s, pc: (STRINGS[s].pc + f) % 12};
+  hunt.miss = false;
+  hunt.marks = {};
+  renderHunt();
+}
+function finishHunt(){
+  hunt.done = true;
+  const perfect = hunt.firstTry === hunt.total;
+  qstats.pts += hunt.score;
+  qstats.streak = perfect ? qstats.streak + 1 : 0;
+  qstats.best = Math.max(qstats.best, hunt.score);
+  localStorage.setItem('sv-quiz-stats', JSON.stringify(qstats));
+  renderQStats(hunt.score);
+  qresultEl.className = 'qresult ' + (perfect ? 'good' : 'bad');
+  qresultEl.textContent = (perfect ? 'Perfect hunt! 🎉 ' : '') +
+    `${hunt.firstTry} / ${hunt.total} on the first try — +${hunt.score} pts. Hit New quiz to go again.`;
+  if (perfect) [0, 4, 7, 12].forEach((iv, i) => pluck(60 + iv, i * 0.12, 0.4));
+}
+function renderHunt(){
+  qgrid.innerHTML = '';
+  STRINGS.forEach((s, si) => {
+    const lab = document.createElement('div');
+    lab.className = 'slabel'; lab.textContent = s.lbl;
+    qgrid.appendChild(lab);
+    for (let f = 0; f <= QFRETS; f++){
+      const cell = document.createElement('div');
+      const onRow = si === hunt.target.s && !hunt.done;
+      cell.className = 'cell' + (f === 0 ? ' fret0' : '') + (f === 1 ? ' nut' : '') +
+        (onRow ? ' hrow' : '');
+      if (onRow){
+        const dot = document.createElement('div');
+        const mark = hunt.marks[f];
+        dot.className = 'dot hunt' + (mark ? ' ' + mark : '');
+        dot.textContent = mark ? SHARPS[(s.pc + f) % 12] : '·';
+        dot.addEventListener('click', () => huntTap(si, f));
+        cell.appendChild(dot);
+      }
+      qgrid.appendChild(cell);
+    }
+  });
+  renderQFrets();
+  paletteEl.hidden = true;
+  qcheckBtn.hidden = true;
+  if (!hunt.done){
+    qresultEl.className = 'qresult progress';
+    qresultEl.textContent =
+      `Find ${noteBoth(hunt.target.pc)} on the ${STRINGS[hunt.target.s].say} string — round ${hunt.round} / ${hunt.total}`;
+  }
+}
+function huntTap(si, f){
+  if (hunt.done || hunt.marks[f]) return;
+  const pc = (STRINGS[si].pc + f) % 12;
+  pluck(STRINGS[si].midi + f, 0, pc === hunt.target.pc ? 0.5 : 0.3);
+  if (pc === hunt.target.pc){
+    hunt.marks[f] = 'correct';
+    hunt.score += hunt.miss ? 5 : 15;
+    if (!hunt.miss) hunt.firstTry++;
+    renderHunt();
+    const id = hunt.id;
+    if (hunt.round >= hunt.total) finishHunt();
+    else setTimeout(() => { if (hunt && hunt.id === id && !hunt.done) nextHuntTarget(); }, 750);
+  } else {
+    hunt.marks[f] = 'wrong';
+    hunt.miss = true;
+    renderHunt();
+  }
 }
 
 function renderQuiz(){
@@ -1059,13 +1185,9 @@ function renderQuiz(){
     }
   });
 
-  qfrets.innerHTML = '<div></div>';
-  for (let f = 0; f <= QFRETS; f++){
-    const n = document.createElement('div');
-    n.className = 'fnum' + (INLAYS.has(f) ? ' inlay' : '');
-    n.textContent = f;
-    qfrets.appendChild(n);
-  }
+  renderQFrets();
+  paletteEl.hidden = false;
+  qcheckBtn.hidden = false;
 
   const filled = quiz.filter(q => q.ans !== null).length;
   qcheckBtn.disabled = qChecked || filled < quiz.length;
@@ -1079,6 +1201,11 @@ function renderQuiz(){
 }
 
 document.getElementById('qnew').addEventListener('click', newQuiz);
+document.getElementById('qmode').addEventListener('change', e => {
+  qMode = e.target.value;
+  document.getElementById('qcount-wrap').style.visibility = qMode === 'hunt' ? 'hidden' : '';
+  newQuiz();
+});
 
 qcheckBtn.addEventListener('click', () => {
   qChecked = true;
@@ -1354,7 +1481,9 @@ const THEME_BG = {classic:'#0d1220', pom:'#1c060f', peach:'#241008', tokyo:'#120
 const mixEl = document.getElementById('sv-mixer');
 const mxBg = document.getElementById('mx-bg'), mxInk = document.getElementById('mx-ink'),
       mxScale = document.getElementById('mx-scale'), mxRoot = document.getElementById('mx-root'),
-      mxGlow = document.getElementById('mx-glow');
+      mxGlow = document.getElementById('mx-glow'), mxPanel = document.getElementById('mx-panel'),
+      mxLine = document.getElementById('mx-line'), mxMuted = document.getElementById('mx-muted'),
+      mxLogo = document.getElementById('mx-logo');
 const customOrb = document.querySelector('.orb[data-t="custom"]');
 const orbMain = document.getElementById('orb-main');
 const thOpts = document.getElementById('th-opts');
@@ -1389,8 +1518,10 @@ function hexA(h, a){
 function customCss(c){
   const g = (c.glow == null ? 50 : c.glow) / 100;   // glow meter 0..1
   const P = t => hexMix(c.bg, c.ink, t);
-  return `html.theme-custom{--bg:${c.bg};--panel:${P(.06)};--panel-2:${P(.11)};--line:${P(.24)};
---ink:${c.ink};--muted:${hexMix(c.ink, c.bg, .38)};--scale:${c.scale};--root:${c.root};
+  const panel = c.panel || P(.06), line = c.line || P(.24);
+  const muted = c.muted || hexMix(c.ink, c.bg, .38);
+  return `html.theme-custom{--bg:${c.bg};--panel:${panel};--panel-2:${hexMix(panel, c.ink, .05)};--line:${line};
+--ink:${c.ink};--muted:${muted};--scale:${c.scale};--root:${c.root};
 --root-soft:${hexA(c.root,.5)};--root-strong:${hexA(c.root,.85)};--root-faint:${hexA(c.root,.15)};
 --glow-scale:${hexA(c.scale,.7*g)};--glow-root:${hexA(c.root,.85*g)};
 --shadow:0 10px 34px ${hexA(c.scale,.1+.15*g)}}
@@ -1403,7 +1534,8 @@ html.theme-custom #title{background:linear-gradient(92deg,${c.scale},${c.root});
 filter:drop-shadow(0 0 ${6+14*g}px ${hexA(c.root,.15+.5*g)})}
 html.theme-custom button.primary{background:linear-gradient(92deg,${c.root},${c.scale});
 color:#fff;box-shadow:0 0 ${8+14*g}px ${hexA(c.root,.2+.35*g)}}
-html.theme-custom .wrap{text-shadow:0 0 ${Math.round(14*g)}px ${hexA(c.ink,.55*g)}}`;
+html.theme-custom .wrap{text-shadow:0 0 ${Math.round(14*g)}px ${hexA(c.ink,.55*g)}}
+html.theme-custom .mark{color:${c.logo || muted}${c.glow ? `;filter:drop-shadow(0 0 ${Math.round(10*g)}px ${hexA(c.logo || muted,.6*g)})` : ''}}`;
 }
 function setCustomStyle(c){
   let el = document.getElementById('sv-custom-css');
@@ -1444,15 +1576,20 @@ function cssVar(v){
 function openMixer(){
   const c = customs[curTab] || {};
   mxBg.value = c.bg || cssVar('--bg') || '#0d1220';
+  mxPanel.value = c.panel || cssVar('--panel') || '#161f31';
+  mxLine.value = c.line || cssVar('--line') || '#2b3652';
   mxInk.value = c.ink || cssVar('--ink') || '#eef2fb';
+  mxMuted.value = c.muted || cssVar('--muted') || '#8a97b4';
+  mxLogo.value = c.logo || c.muted || cssVar('--muted') || '#8a97b4';
   mxScale.value = c.scale || cssVar('--scale') || '#5b8cff';
   mxRoot.value = c.root || cssVar('--root') || '#f2a65a';
   mxGlow.value = c.glow == null ? 50 : c.glow;
   mixEl.hidden = false;
 }
 function applyMixer(){
-  customs[curTab] = {bg: mxBg.value, ink: mxInk.value, scale: mxScale.value,
-                     root: mxRoot.value, glow: +mxGlow.value};
+  customs[curTab] = {bg: mxBg.value, panel: mxPanel.value, line: mxLine.value,
+                     ink: mxInk.value, muted: mxMuted.value, logo: mxLogo.value,
+                     scale: mxScale.value, root: mxRoot.value, glow: +mxGlow.value};
   setTheme('custom');
 }
 orbMain.addEventListener('click', () => { thOpts.hidden = !thOpts.hidden; });
@@ -1461,7 +1598,18 @@ thOpts.addEventListener('click', e => {
   const orb = e.target.closest('.orb');
   if (orb){ setTheme(orb.dataset.t); thOpts.hidden = true; }
 });
-[mxBg, mxInk, mxScale, mxRoot, mxGlow].forEach(el => el.addEventListener('input', applyMixer));
+[mxBg, mxPanel, mxLine, mxInk, mxMuted, mxLogo, mxScale, mxRoot, mxGlow]
+  .forEach(el => el.addEventListener('input', applyMixer));
+document.getElementById('mx-all').addEventListener('click', e => {
+  applyMixer();
+  Object.keys(tabThemes).forEach(k => {
+    customs[k] = {...customs[curTab]};
+    tabThemes[k] = 'custom';
+  });
+  saveThemes();
+  e.target.textContent = '✓ copied';
+  setTimeout(() => { e.target.textContent = '⧉ all tabs'; }, 1200);
+});
 document.getElementById('mx-reset').addEventListener('click', () => {
   delete customs[curTab];
   mixEl.hidden = true;
