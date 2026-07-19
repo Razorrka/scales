@@ -343,6 +343,10 @@
   .orb:hover{transform:scale(1.16)}
   .orb.active{border-color:#fff}
   .orb[hidden]{display:none}
+  .orb.main{border-color:rgba(255,255,255,.55)}
+  .th-opts{display:flex;gap:9px;align-items:center}
+  @keyframes thIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
+  .th-opts:not([hidden]){animation:thIn .18s ease}
   .orb[data-t="classic"]{background:linear-gradient(135deg,#5b8cff,#f2a65a)}
   .orb[data-t="classic"].active{box-shadow:0 0 14px rgba(91,140,255,.7)}
   .orb[data-t="pom"]{background:linear-gradient(135deg,#5c0d22,#ff2e63)}
@@ -365,9 +369,11 @@
     width:212px;background:var(--panel);border:1px solid var(--line);border-radius:14px;
     padding:14px;box-shadow:var(--shadow);font-size:13px;color:var(--ink)}
   #sv-mixer[hidden]{display:none}
-  #sv-mixer .mx-title{font-weight:800;font-size:13px;margin-bottom:8px;letter-spacing:.02em}
+  #sv-mixer .mx-title{font-weight:800;font-size:13px;letter-spacing:.02em}
+  #sv-mixer .mx-sub{font-size:11px;color:var(--muted);margin:2px 0 8px}
   #sv-mixer label{display:flex;align-items:center;justify-content:space-between;margin:8px 0;gap:10px;color:var(--muted)}
   #sv-mixer input[type=color]{width:50px;height:30px;border:none;border-radius:8px;padding:0;background:none;cursor:pointer}
+  #sv-mixer input[type=range]{flex:1;max-width:104px;accent-color:var(--root)}
   #sv-mixer .mx-row{display:flex;gap:8px;margin-top:12px}
   #sv-mixer .mx-row button{flex:1;font:inherit;font-size:12px;font-weight:700;color:var(--ink);
     background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:8px 4px;cursor:pointer}
@@ -454,21 +460,26 @@
 </head>
 <body>
 <div class="themes" id="themes">
-  <div class="orb" data-t="classic" title="classic"></div>
-  <div class="orb" data-t="pom" title="pomegranate"></div>
-  <div class="orb" data-t="peach" title="peach glow"></div>
-  <div class="orb" data-t="tokyo" title="tokyo"></div>
-  <div class="orb" data-t="custom" title="yours" hidden></div>
-  <div class="orb-add" id="orb-add" title="make your own colors">+</div>
+  <div class="th-opts" id="th-opts" hidden>
+    <div class="orb" data-t="classic" title="classic"></div>
+    <div class="orb" data-t="pom" title="pomegranate"></div>
+    <div class="orb" data-t="peach" title="peach glow"></div>
+    <div class="orb" data-t="tokyo" title="tokyo"></div>
+    <div class="orb" data-t="custom" title="yours" hidden></div>
+    <div class="orb-add" id="orb-add" title="mix your own colors">+</div>
+  </div>
+  <div class="orb main" id="orb-main" data-t="classic" title="Colors for this tab"></div>
 </div>
 <div id="sv-mixer" hidden>
   <div class="mx-title">🎛 your colors</div>
+  <div class="mx-sub">just for this tab</div>
   <label>background <input type="color" id="mx-bg" value="#0d1220"></label>
   <label>letters <input type="color" id="mx-ink" value="#eef2fb"></label>
   <label>scale dots <input type="color" id="mx-scale" value="#5b8cff"></label>
   <label>root dots <input type="color" id="mx-root" value="#f2a65a"></label>
+  <label class="mx-gl">✨ glow <input type="range" id="mx-glow" min="0" max="100" value="50"></label>
   <div class="mx-row">
-    <button id="mx-reset" title="delete your colors, back to classic">↺ reset</button>
+    <button id="mx-reset" title="delete this tab's colors, back to classic">↺ reset</button>
     <button id="mx-done">✓ done</button>
   </div>
 </div>
@@ -1308,8 +1319,12 @@ const TAB_VIEWS = {
 };
 const tfCur = document.getElementById('tf-cur');
 const tfOpts = document.getElementById('tf-opts');
+let curTab = 'explore';
 function showTab(t){
+  curTab = t;
   Object.entries(TAB_VIEWS).forEach(([name, view]) => { view.hidden = name !== t; });
+  applyTheme();               // every tab wears its own colors
+  mixEl.hidden = true;        // don't leave the mixer editing another tab
   tfOpts.querySelectorAll('[data-tab]').forEach(b =>
     b.classList.toggle('active', b.dataset.tab === t));
   tfCur.textContent = TAB_EMOJI[t];
@@ -1334,13 +1349,32 @@ tfOpts.addEventListener('click', e => {
   if (b) showTab(b.dataset.tab);
 });
 
-/* ---------- themes: tap an orb · + mixes your own ---------- */
+/* ---------- themes: every tab keeps its own colors ---------- */
 const THEME_BG = {classic:'#0d1220', pom:'#1c060f', peach:'#241008', tokyo:'#120521'};
 const mixEl = document.getElementById('sv-mixer');
 const mxBg = document.getElementById('mx-bg'), mxInk = document.getElementById('mx-ink'),
-      mxScale = document.getElementById('mx-scale'), mxRoot = document.getElementById('mx-root');
+      mxScale = document.getElementById('mx-scale'), mxRoot = document.getElementById('mx-root'),
+      mxGlow = document.getElementById('mx-glow');
 const customOrb = document.querySelector('.orb[data-t="custom"]');
+const orbMain = document.getElementById('orb-main');
+const thOpts = document.getElementById('th-opts');
 
+function loadJSON(k){
+  try{ return JSON.parse(localStorage.getItem(k) || 'null'); }catch(e){ return null; }
+}
+let tabThemes = loadJSON('sv-tab-themes');
+let customs = loadJSON('sv-tab-customs') || {};
+if (!tabThemes){
+  // migrate the old single shared theme into every tab
+  const legacy = localStorage.getItem('sv-theme') || 'classic';
+  tabThemes = {explore:legacy, quiz:legacy, decoder:legacy, chords:legacy};
+  const lc = loadJSON('sv-theme-custom');
+  if (lc) Object.keys(tabThemes).forEach(k => { customs[k] = {...lc}; });
+}
+function saveThemes(){
+  localStorage.setItem('sv-tab-themes', JSON.stringify(tabThemes));
+  localStorage.setItem('sv-tab-customs', JSON.stringify(customs));
+}
 function hexMix(a, b, t){
   const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
   const r = Math.round(((pa>>16)&255)*(1-t) + ((pb>>16)&255)*t),
@@ -1352,87 +1386,90 @@ function hexA(h, a){
   const p = parseInt(h.slice(1), 16);
   return `rgba(${(p>>16)&255},${(p>>8)&255},${p&255},${a})`;
 }
-function loadCustom(){
-  try{
-    const c = JSON.parse(localStorage.getItem('sv-theme-custom') || 'null');
-    if (c && c.bg && c.ink && c.scale && c.root) return c;
-  }catch(e){}
-  return null;
-}
 function customCss(c){
+  const g = (c.glow == null ? 50 : c.glow) / 100;   // glow meter 0..1
   const P = t => hexMix(c.bg, c.ink, t);
   return `html.theme-custom{--bg:${c.bg};--panel:${P(.06)};--panel-2:${P(.11)};--line:${P(.24)};
 --ink:${c.ink};--muted:${hexMix(c.ink, c.bg, .38)};--scale:${c.scale};--root:${c.root};
 --root-soft:${hexA(c.root,.5)};--root-strong:${hexA(c.root,.85)};--root-faint:${hexA(c.root,.15)};
---glow-scale:${hexA(c.scale,.5)};--glow-root:${hexA(c.root,.7)};
---shadow:0 10px 34px ${hexA(c.scale,.14)}}
+--glow-scale:${hexA(c.scale,.7*g)};--glow-root:${hexA(c.root,.85*g)};
+--shadow:0 10px 34px ${hexA(c.scale,.1+.15*g)}}
 html.theme-custom body{background:
-radial-gradient(900px 520px at 80% -12%, ${hexA(c.root,.26)} 0%, transparent 55%),
-radial-gradient(820px 500px at 5% 108%, ${hexA(c.scale,.24)} 0%, transparent 58%),
+radial-gradient(900px 520px at 80% -12%, ${hexA(c.root,.16+.2*g)} 0%, transparent 55%),
+radial-gradient(820px 500px at 5% 108%, ${hexA(c.scale,.14+.2*g)} 0%, transparent 58%),
 linear-gradient(168deg, ${hexMix(c.bg, c.scale, .12)} 0%, ${c.bg} 65%)}
 html.theme-custom #title{background:linear-gradient(92deg,${c.scale},${c.root});
 -webkit-background-clip:text;background-clip:text;color:transparent;
-filter:drop-shadow(0 0 16px ${hexA(c.root,.35)})}
+filter:drop-shadow(0 0 ${6+14*g}px ${hexA(c.root,.15+.5*g)})}
 html.theme-custom button.primary{background:linear-gradient(92deg,${c.root},${c.scale});
-color:#fff;box-shadow:0 0 18px ${hexA(c.root,.4)}}`;
+color:#fff;box-shadow:0 0 ${8+14*g}px ${hexA(c.root,.2+.35*g)}}
+html.theme-custom .wrap{text-shadow:0 0 ${Math.round(14*g)}px ${hexA(c.ink,.55*g)}}`;
 }
 function setCustomStyle(c){
   let el = document.getElementById('sv-custom-css');
   if (!el){ el = document.createElement('style'); el.id = 'sv-custom-css'; document.head.appendChild(el); }
   el.textContent = customCss(c);
-  customOrb.hidden = false;
-  customOrb.style.background = `linear-gradient(135deg,${c.scale},${c.root})`;
 }
-function setTheme(t){
-  const c = loadCustom();
+function applyTheme(){
+  let t = tabThemes[curTab] || 'classic';
+  const c = customs[curTab];
   if (t === 'custom' && !c) t = 'classic';
-  if (t !== 'custom' && !THEME_BG[t]) t = 'classic';
+  else if (t !== 'custom' && !THEME_BG[t]) t = 'classic';
   if (t === 'custom') setCustomStyle(c);
-  document.documentElement.className =
-    t === 'classic' ? '' : 'theme-' + (t === 'custom' ? 'custom' : t);
-  document.querySelectorAll('.orb').forEach(o =>
+  document.documentElement.className = t === 'classic' ? '' : 'theme-' + t;
+  thOpts.querySelectorAll('.orb').forEach(o =>
     o.classList.toggle('active', o.dataset.t === t));
+  customOrb.hidden = !c;
+  if (c) customOrb.style.background = `linear-gradient(135deg,${c.scale},${c.root})`;
+  if (t === 'custom'){
+    orbMain.removeAttribute('data-t');
+    orbMain.style.background = customOrb.style.background;
+  } else {
+    orbMain.style.background = '';
+    orbMain.dataset.t = t;
+  }
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.content = t === 'custom' ? c.bg : THEME_BG[t];
-  localStorage.setItem('sv-theme', t);
+  tabThemes[curTab] = t;
+  saveThemes();
+}
+function setTheme(t){
+  tabThemes[curTab] = t;
+  applyTheme();
 }
 function cssVar(v){
   const x = getComputedStyle(document.documentElement).getPropertyValue(v).trim();
   return /^#[0-9a-f]{6}$/i.test(x) ? x : null;
 }
 function openMixer(){
-  const c = loadCustom();
-  mxBg.value = (c && c.bg) || cssVar('--bg') || '#0d1220';
-  mxInk.value = (c && c.ink) || cssVar('--ink') || '#eef2fb';
-  mxScale.value = (c && c.scale) || cssVar('--scale') || '#5b8cff';
-  mxRoot.value = (c && c.root) || cssVar('--root') || '#f2a65a';
+  const c = customs[curTab] || {};
+  mxBg.value = c.bg || cssVar('--bg') || '#0d1220';
+  mxInk.value = c.ink || cssVar('--ink') || '#eef2fb';
+  mxScale.value = c.scale || cssVar('--scale') || '#5b8cff';
+  mxRoot.value = c.root || cssVar('--root') || '#f2a65a';
+  mxGlow.value = c.glow == null ? 50 : c.glow;
   mixEl.hidden = false;
 }
 function applyMixer(){
-  const c = {bg: mxBg.value, ink: mxInk.value, scale: mxScale.value, root: mxRoot.value};
-  localStorage.setItem('sv-theme-custom', JSON.stringify(c));
-  setCustomStyle(c);
+  customs[curTab] = {bg: mxBg.value, ink: mxInk.value, scale: mxScale.value,
+                     root: mxRoot.value, glow: +mxGlow.value};
   setTheme('custom');
 }
-document.getElementById('themes').addEventListener('click', e => {
-  if (e.target.closest('.orb-add')){ openMixer(); return; }
+orbMain.addEventListener('click', () => { thOpts.hidden = !thOpts.hidden; });
+thOpts.addEventListener('click', e => {
+  if (e.target.closest('.orb-add')){ thOpts.hidden = true; openMixer(); return; }
   const orb = e.target.closest('.orb');
-  if (orb) setTheme(orb.dataset.t);
+  if (orb){ setTheme(orb.dataset.t); thOpts.hidden = true; }
 });
-[mxBg, mxInk, mxScale, mxRoot].forEach(el => el.addEventListener('input', applyMixer));
+[mxBg, mxInk, mxScale, mxRoot, mxGlow].forEach(el => el.addEventListener('input', applyMixer));
 document.getElementById('mx-reset').addEventListener('click', () => {
-  localStorage.removeItem('sv-theme-custom');
-  const el = document.getElementById('sv-custom-css');
-  if (el) el.remove();
-  customOrb.hidden = true;
+  delete customs[curTab];
   mixEl.hidden = true;
   setTheme('classic');
 });
 document.getElementById('mx-done').addEventListener('click', () => { mixEl.hidden = true; });
 
-const bootCustom = loadCustom();
-if (bootCustom) setCustomStyle(bootCustom);
-setTheme(localStorage.getItem('sv-theme') || 'classic');
+applyTheme();
 
 /* ---------- offline support (only active when hosted over https) ---------- */
 if ('serviceWorker' in navigator && location.protocol === 'https:')
