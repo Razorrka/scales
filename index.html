@@ -26,6 +26,9 @@
     --glow-scale:rgba(91,140,255,0);   /* dot glow (off in classic) */
     --glow-root:rgba(242,166,90,0);
     --shadow:0 10px 30px rgba(0,0,0,.35);
+    --radius:16px;      /* admin-tunable corner roundness */
+    --good:#2ecc8f;     /* correct answers */
+    --bad:#ff5d6c;      /* wrong answers */
   }
   *{box-sizing:border-box}
   html,body{margin:0}
@@ -83,7 +86,7 @@
   /* fretboard */
   .board{
     background:linear-gradient(180deg,var(--panel),var(--panel-2));
-    border:1px solid var(--line);border-radius:16px;
+    border:1px solid var(--line);border-radius:var(--radius);
     padding:22px 20px 14px;box-shadow:var(--shadow);
     overflow-x:auto;
   }
@@ -160,7 +163,7 @@
     filter:drop-shadow(0 0 12px var(--glow-root))}
   .ch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:14px;margin-top:16px}
   .ch-card{background:linear-gradient(180deg,var(--panel),var(--panel-2));
-    border:1px solid var(--line);border-radius:14px;padding:10px 6px 4px;text-align:center;
+    border:1px solid var(--line);border-radius:var(--radius);padding:10px 6px 4px;text-align:center;
     cursor:pointer;box-shadow:var(--shadow);transition:transform .12s,border-color .15s}
   .ch-card:hover{border-color:var(--root-soft)}
   .ch-card:active{transform:scale(.96)}
@@ -186,8 +189,9 @@
   .dot.blank:hover{border-color:var(--scale);color:var(--ink)}
   .dot.sel{box-shadow:0 0 0 3px var(--root-soft), 0 2px 8px rgba(0,0,0,.35), 0 0 14px var(--glow-root)}
   .dot.blank.sel{border-style:solid;border-color:var(--root);color:var(--ink)}
-  .dot.correct{background:#2ecc8f;color:#04130c;box-shadow:0 2px 8px rgba(0,0,0,.35), 0 0 12px rgba(46,204,143,.5)}
-  .dot.wrong{background:#ff5d6c;color:#2a0308;box-shadow:0 2px 8px rgba(0,0,0,.35), 0 0 12px rgba(255,93,108,.5)}
+  .dot.correct{background:var(--good);color:#04130c;box-shadow:0 2px 8px rgba(0,0,0,.35), 0 0 12px var(--good)}
+  .dot.wrong{background:var(--bad);color:#2a0308;box-shadow:0 2px 8px rgba(0,0,0,.35), 0 0 12px var(--bad)}
+  .dot.lit{background:var(--root);color:#2a1400;box-shadow:0 0 0 3px var(--root-soft),0 2px 8px rgba(0,0,0,.35),0 0 16px var(--glow-root)}
   .palette{display:grid;grid-template-columns:repeat(12,minmax(44px,1fr));gap:6px;margin:16px 0 4px}
   @media (max-width:640px){.palette{grid-template-columns:repeat(6,1fr)}}
   .pal{
@@ -209,12 +213,29 @@
   .dot.hunt.wrong{width:34px;height:34px;color:#2a0308;border-color:transparent;border-style:solid}
   .qstats{color:var(--muted);font-size:14px;margin:6px 0 0}
   .qstats b{color:var(--root)}
-  .qstats .plus{color:#2ecc8f;font-weight:800;margin-left:6px}
+  .qstats .plus{color:var(--good);font-weight:800;margin-left:6px}
   .qresult{margin-top:14px;font-weight:700;font-size:15px;min-height:1.4em}
-  .qresult.good{color:#2ecc8f}
-  .qresult.bad{color:#ff5d6c}
+  .qresult.good{color:var(--good)}
+  .qresult.bad{color:var(--bad)}
   .qresult.progress{color:var(--muted);font-weight:600}
   [hidden]{display:none!important}
+
+  /* quiz: prompt line + multiple-choice games */
+  .qprompt{font-weight:800;font-size:19px;color:var(--ink);margin:14px 0 2px;line-height:1.3}
+  .qprompt small{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-top:2px}
+  .qchoices{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 4px}
+  .qchoice{font:inherit;font-weight:700;font-size:15px;color:var(--ink);background:var(--panel);
+    border:1px solid var(--line);border-radius:12px;padding:15px 18px;cursor:pointer;
+    flex:1 1 120px;text-align:center;transition:border-color .15s,transform .1s,background .15s}
+  .qchoice:hover:not(:disabled){border-color:var(--scale)}
+  .qchoice:active{transform:scale(.97)}
+  .qchoice.good{border-color:transparent;background:var(--good);color:#04130c}
+  .qchoice.bad{border-color:transparent;background:var(--bad);color:#2a0308}
+  .qchoice:disabled{cursor:default}
+  .qbtn-replay{font:inherit;font-weight:700;color:var(--ink);background:var(--panel);
+    border:1px solid var(--line);border-radius:12px;padding:13px 20px;cursor:pointer;margin:4px 0}
+  .qbtn-replay:hover{border-color:var(--scale)}
+  .dot.want{border-color:var(--scale);color:var(--scale)}
 
   /* double stops */
   button.toggle.on{border-color:var(--root);color:var(--root);box-shadow:0 0 10px var(--glow-root)}
@@ -222,7 +243,7 @@
   #ds-opts{display:flex;gap:12px}
 
   /* decoder card — full-screen take on the physical Decoder */
-  .dcard{position:relative;margin-top:14px;border-radius:22px;border:1px solid var(--line);
+  .dcard{position:relative;margin-top:14px;border-radius:calc(var(--radius) + 6px);border:1px solid var(--line);
     background:linear-gradient(180deg,var(--panel),var(--panel-2));box-shadow:var(--shadow);
     min-height:min(64svh,660px);display:flex;flex-direction:column;
     padding:0 12px 16px;overflow:hidden;touch-action:pan-y;
@@ -377,8 +398,23 @@
     background:var(--panel);border:1px solid var(--line);border-radius:14px;
     padding:12px 14px;box-shadow:var(--shadow);font-size:13px;color:var(--ink)}
   #sv-mixer[hidden]{display:none}
+  #sv-mixer .mx-titlebar{display:flex;align-items:center;justify-content:space-between}
   #sv-mixer .mx-title{font-weight:800;font-size:13px;letter-spacing:.02em}
-  #sv-mixer .mx-sub{font-size:11px;color:var(--muted);margin:2px 0 4px}
+  #sv-mixer .mx-dice{padding:2px 7px;font-size:15px;line-height:1;border-radius:8px;
+    background:var(--panel-2);border:1px solid var(--line);cursor:pointer}
+  #sv-mixer .mx-dice:hover{border-color:var(--scale)}
+  #sv-mixer .mx-sub{font-size:11px;color:var(--muted);margin:2px 0 8px}
+  #sv-mixer .mx-seeds{display:flex;align-items:center;gap:6px;margin:2px 0 2px}
+  #sv-mixer .mx-seedlab{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+  #sv-mixer .mx-seed{width:20px;height:20px;padding:0;border-radius:50%;cursor:pointer;
+    border:1px solid rgba(255,255,255,.25)}
+  #sv-mixer .mx-seed:hover{transform:scale(1.15)}
+  #sv-mixer .mx-seed[data-seed="classic"]{background:linear-gradient(135deg,#5b8cff,#f2a65a)}
+  #sv-mixer .mx-seed[data-seed="pom"]{background:linear-gradient(135deg,#5c0d22,#ff2e63)}
+  #sv-mixer .mx-seed[data-seed="peach"]{background:linear-gradient(135deg,#ff5e82,#ff9d5c)}
+  #sv-mixer .mx-seed[data-seed="tokyo"]{background:linear-gradient(135deg,#ff3ddc,#8a3dff)}
+  #sv-mixer .mx-select{font:inherit;font-size:12px;color:var(--ink);background:var(--panel-2);
+    border:1px solid var(--line);border-radius:8px;padding:5px 8px;cursor:pointer}
   #sv-mixer .mx-sec{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
     color:var(--muted);margin:10px 0 0;border-top:1px solid var(--line);padding-top:8px}
   #sv-mixer label{display:flex;align-items:center;justify-content:space-between;margin:6px 0;gap:10px;color:var(--muted)}
@@ -481,12 +517,31 @@
   <div class="orb main" id="orb-main" data-t="classic" title="Colors for this tab"></div>
 </div>
 <div id="sv-mixer" hidden>
-  <div class="mx-title">🎛 color panel</div>
+  <div class="mx-titlebar">
+    <div class="mx-title">🎛 admin panel</div>
+    <button class="mx-dice" id="mx-random" title="random palette">🎲</button>
+  </div>
   <div class="mx-sub">just for this tab</div>
+  <div class="mx-seeds" id="mx-seeds">
+    <span class="mx-seedlab">seed:</span>
+    <button class="mx-seed" data-seed="classic" title="classic"></button>
+    <button class="mx-seed" data-seed="pom" title="pomegranate"></button>
+    <button class="mx-seed" data-seed="peach" title="peach"></button>
+    <button class="mx-seed" data-seed="tokyo" title="tokyo"></button>
+  </div>
   <div class="mx-sec">base</div>
   <label>background <input type="color" id="mx-bg" value="#0d1220"></label>
+  <label>bg style
+    <select id="mx-bgstyle" class="mx-select">
+      <option value="aurora" selected>Aurora</option>
+      <option value="vignette">Vignette</option>
+      <option value="mesh">Mesh</option>
+      <option value="flat">Flat</option>
+    </select>
+  </label>
   <label>panels <input type="color" id="mx-panel" value="#161f31"></label>
   <label>lines <input type="color" id="mx-line" value="#2b3652"></label>
+  <label class="mx-gl">corners <input type="range" id="mx-radius" min="0" max="26" value="16"></label>
   <div class="mx-sec">letters</div>
   <label>letters <input type="color" id="mx-ink" value="#eef2fb"></label>
   <label>faded text <input type="color" id="mx-muted" value="#8a97b4"></label>
@@ -494,6 +549,8 @@
   <div class="mx-sec">dots &amp; accents</div>
   <label>scale dots <input type="color" id="mx-scale" value="#5b8cff"></label>
   <label>root dots <input type="color" id="mx-root" value="#f2a65a"></label>
+  <label>correct ✓ <input type="color" id="mx-good" value="#2ecc8f"></label>
+  <label>wrong ✗ <input type="color" id="mx-bad" value="#ff5d6c"></label>
   <label class="mx-gl">✨ glow <input type="range" id="mx-glow" min="0" max="100" value="50"></label>
   <div class="mx-row">
     <button id="mx-reset" title="delete this tab's colors, back to classic">↺ reset</button>
@@ -578,10 +635,21 @@
 
     <div class="bar">
       <div>
-        <span class="lab">Mode</span>
-        <select id="qmode" aria-label="Quiz mode">
-          <option value="fill" selected>Fill the blanks</option>
-          <option value="hunt">Note hunt</option>
+        <span class="lab">Game</span>
+        <select id="qmode" aria-label="Quiz game">
+          <optgroup label="Note recognition">
+            <option value="fill" selected>Fill the blanks</option>
+            <option value="flash">Name the fret</option>
+            <option value="hunt">Note hunt</option>
+            <option value="findall">Find all</option>
+          </optgroup>
+          <optgroup label="Intervals &amp; chords">
+            <option value="interval">Interval trainer</option>
+            <option value="triad">Triad builder</option>
+          </optgroup>
+          <optgroup label="Ear training">
+            <option value="ear">Interval ear</option>
+          </optgroup>
         </select>
       </div>
       <div id="qcount-wrap">
@@ -596,7 +664,7 @@
       </div>
       <div>
         <span class="lab">&nbsp;</span>
-        <button id="qnew">&#8635;&nbsp; New quiz</button>
+        <button id="qnew">&#8635;&nbsp; New game</button>
       </div>
       <div>
         <span class="lab">&nbsp;</span>
@@ -604,12 +672,17 @@
       </div>
     </div>
 
-    <div class="board">
-      <div class="grid" id="qgrid"></div>
-      <div class="frets" id="qfrets"></div>
+    <p class="qprompt" id="qprompt" hidden></p>
+
+    <div id="qboard">
+      <div class="board">
+        <div class="grid" id="qgrid"></div>
+        <div class="frets" id="qfrets"></div>
+      </div>
     </div>
 
     <div class="palette" id="palette"></div>
+    <div class="qchoices" id="qchoices" hidden></div>
     <p class="qresult" id="qresult"></p>
     <p class="hint" id="qhint">Fret 0 is the open string. Tap a filled dot to change your answer before checking.</p>
   </div><!-- /view-quiz -->
@@ -982,21 +1055,27 @@ document.getElementById('ds-pair').addEventListener('change', e => {
 
 render();
 
-/* ---------- neck quiz: fill in the blank neck, check at the end ---------- */
+/* ==========================================================================
+   QUIZ ARCADE — a set of fretboard learning games sharing one board,
+   palette, scoreboard and points system.
+   ========================================================================== */
 const QFRETS = 12;                     // quiz board shows frets 0..12
-let quiz = [];                         // {s, f, pc, midi, ans}
-let qSel = -1;                         // index of the spot being answered
-let qChecked = false;
-
 const qgrid = document.getElementById('qgrid');
 const qfrets = document.getElementById('qfrets');
 const paletteEl = document.getElementById('palette');
 const qcheckBtn = document.getElementById('qcheck');
 const qresultEl = document.getElementById('qresult');
 const qstatsEl = document.getElementById('qstats');
+const qpromptEl = document.getElementById('qprompt');
+const qboardEl = document.getElementById('qboard');
+const qchoicesEl = document.getElementById('qchoices');
+const qsubEl = document.getElementById('qsub');
+const qhintEl = document.getElementById('qhint');
 
-/* points: +10 per correct note, +5 x round size bonus for a perfect round.
-   streak counts perfect rounds in a row; everything survives restarts. */
+let game = null;                       // current game state
+let quizStarted = false;
+
+/* points + streak, saved across sessions */
 let qstats = {pts: 0, streak: 0, best: 0};
 try{
   const s = JSON.parse(localStorage.getItem('sv-quiz-stats') || 'null');
@@ -1008,29 +1087,54 @@ function renderQStats(gain){
     (qstats.best ? ` &nbsp;·&nbsp; best round <b>${qstats.best}</b>` : '') +
     (gain ? `<span class="plus">+${gain}</span>` : '');
 }
-
-SHARPS.forEach((n, pc) => {
-  const b = document.createElement('button');
-  b.className = 'pal';
-  b.innerHTML = FLATS[pc] === n ? n : `${n}<small>${FLATS[pc]}</small>`;
-  b.addEventListener('click', () => {
-    if (qChecked || qSel < 0) return;
-    quiz[qSel].ans = pc;
-    qSel = nextBlank(qSel);
-    renderQuiz();
-  });
-  paletteEl.appendChild(b);
-});
-
-function nextBlank(from){
-  for (let i = 1; i <= quiz.length; i++){
-    const j = (from + i) % quiz.length;
-    if (quiz[j].ans === null) return j;
-  }
-  return -1;
+function award(gain, perfect){
+  qstats.pts += gain;
+  qstats.streak = perfect ? qstats.streak + 1 : 0;
+  qstats.best = Math.max(qstats.best, gain);
+  localStorage.setItem('sv-quiz-stats', JSON.stringify(qstats));
+  renderQStats(gain);
 }
 
-function renderQFrets(){
+/* helpers */
+const rand = n => Math.floor(Math.random() * n);
+function noteBoth(pc){ return SHARPS[pc] === FLATS[pc] ? SHARPS[pc] : SHARPS[pc] + '/' + FLATS[pc]; }
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function say(sub, hint){ qsubEl.textContent = sub; qhintEl.textContent = hint; }
+function setQUI(o){
+  qboardEl.hidden = !o.board;
+  paletteEl.hidden = !o.palette;
+  qchoicesEl.hidden = !o.choices;
+  qcheckBtn.hidden = !o.check;
+  qpromptEl.hidden = !o.prompt;
+}
+function progress(txt){ qresultEl.className = 'qresult progress'; qresultEl.textContent = txt; }
+function arpeggio(){ [0, 4, 7, 12].forEach((iv, i) => pluck(60 + iv, i * 0.12, 0.4)); }
+
+/* shared board renderer: cellFn(si,f) returns null, {rowlit},
+   {cellClick}, and/or {dot:{cls,text,title,onClick}} */
+function buildQBoard(cellFn){
+  qgrid.innerHTML = '';
+  STRINGS.forEach((s, si) => {
+    const lab = document.createElement('div');
+    lab.className = 'slabel'; lab.textContent = s.lbl;
+    qgrid.appendChild(lab);
+    for (let f = 0; f <= QFRETS; f++){
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (f === 0 ? ' fret0' : '') + (f === 1 ? ' nut' : '');
+      const spec = cellFn(si, f) || {};
+      if (spec.rowlit) cell.classList.add('hrow');
+      if (spec.cellClick){ cell.style.cursor = 'pointer'; cell.addEventListener('click', spec.cellClick); }
+      if (spec.dot){
+        const dot = document.createElement('div');
+        dot.className = 'dot ' + (spec.dot.cls || '');
+        if (spec.dot.text != null) dot.textContent = spec.dot.text;
+        if (spec.dot.title) dot.title = spec.dot.title;
+        if (spec.dot.onClick) dot.addEventListener('click', spec.dot.onClick);
+        cell.appendChild(dot);
+      }
+      qgrid.appendChild(cell);
+    }
+  });
   qfrets.innerHTML = '<div></div>';
   for (let f = 0; f <= QFRETS; f++){
     const n = document.createElement('div');
@@ -1040,190 +1144,416 @@ function renderQFrets(){
   }
 }
 
-let qMode = 'fill';
-function newQuiz(){
-  renderQStats(0);
-  if (qMode === 'hunt'){ startHunt(); return; }
-  document.getElementById('qsub').textContent =
-    'A blank neck. Tap a dashed circle, then pick the note that lives there. Fill them all, then hit Check.';
-  document.getElementById('qhint').textContent =
-    'Fret 0 is the open string. Tap a filled dot to change your answer before checking.';
+/* palette buttons built once; each game routes taps through palHandler */
+let palHandler = null;
+SHARPS.forEach((n, pc) => {
+  const b = document.createElement('button');
+  b.className = 'pal';
+  b.dataset.pc = pc;
+  b.innerHTML = FLATS[pc] === n ? n : `${n}<small>${FLATS[pc]}</small>`;
+  b.addEventListener('click', () => { if (palHandler) palHandler(pc, b); });
+  paletteEl.appendChild(b);
+});
+function palFlash(btn, cls){
+  btn.classList.add(cls);
+  setTimeout(() => btn.classList.remove(cls), 350);
+}
+
+const INTERVALS = [
+  {n:'minor 2nd', s:1}, {n:'major 2nd', s:2}, {n:'minor 3rd', s:3}, {n:'major 3rd', s:4},
+  {n:'perfect 4th', s:5}, {n:'tritone', s:6}, {n:'perfect 5th', s:7},
+  {n:'minor 6th', s:8}, {n:'major 6th', s:9}, {n:'minor 7th', s:10},
+  {n:'major 7th', s:11}, {n:'octave', s:12},
+];
+
+/* ---------------- game 1: Fill the blanks ---------------- */
+function startFill(){
+  say('A blank neck. Tap a dashed circle, then pick the note that lives there. Fill them all, then hit Check.',
+      'Fret 0 is the open string. Tap a filled dot to change your answer before checking.');
+  setQUI({board:true, palette:true, check:true});
   const count = +document.getElementById('qcount').value;
   const spots = [];
   for (let s = 0; s < STRINGS.length; s++)
     for (let f = 0; f <= QFRETS; f++) spots.push({s, f});
-  for (let i = spots.length - 1; i > 0; i--){
-    const j = Math.floor(Math.random() * (i + 1));
-    [spots[i], spots[j]] = [spots[j], spots[i]];
-  }
-  quiz = spots.slice(0, count).map(({s, f}) => ({
+  shuffle(spots);
+  const items = spots.slice(0, count).map(({s, f}) => ({
     s, f, pc: (STRINGS[s].pc + f) % 12, midi: STRINGS[s].midi + f, ans: null
   }));
-  qSel = 0;
-  qChecked = false;
-  renderQuiz();
+  game = {mode:'fill', items, sel:0, checked:false};
+  palHandler = pc => {
+    if (game.checked || game.sel < 0) return;
+    game.items[game.sel].ans = pc;
+    game.sel = fillNextBlank(game.sel);
+    renderFill();
+  };
+  renderFill();
+}
+function fillNextBlank(from){
+  const it = game.items;
+  for (let i = 1; i <= it.length; i++){
+    const j = (from + i) % it.length;
+    if (it[j].ans === null) return j;
+  }
+  return -1;
+}
+function renderFill(){
+  const {items, sel, checked} = game;
+  buildQBoard((si, f) => {
+    const qi = items.findIndex(q => q.s === si && q.f === f);
+    if (qi < 0) return null;
+    const q = items[qi];
+    if (checked){
+      const ok = q.ans === q.pc;
+      return {dot:{cls: ok ? 'correct' : 'wrong', text: SHARPS[q.pc],
+        title: ok ? '' : `You answered ${q.ans == null ? '—' : SHARPS[q.ans]}`,
+        onClick: () => pluck(q.midi)}};
+    }
+    if (q.ans !== null)
+      return {dot:{cls: qi === sel ? 'sel' : '', text: SHARPS[q.ans],
+        title:'Tap to change', onClick: () => { game.sel = qi; renderFill(); }}};
+    return {dot:{cls: 'blank' + (qi === sel ? ' sel' : ''), text:'?',
+      onClick: () => { game.sel = qi; renderFill(); }}};
+  });
+  const filled = items.filter(q => q.ans !== null).length;
+  qcheckBtn.disabled = checked || filled < items.length;
+  paletteEl.querySelectorAll('.pal').forEach(b => { b.disabled = checked || sel < 0; });
+  if (!checked)
+    progress(filled === 0 ? '' :
+      filled < items.length ? `${filled} / ${items.length} filled in` :
+      'All filled in — hit Check answers!');
+}
+function checkFill(){
+  game.checked = true; game.sel = -1;
+  const right = game.items.filter(q => q.ans === q.pc).length;
+  const total = game.items.length;
+  const perfect = right === total;
+  const gain = right * 10 + (perfect ? total * 5 : 0);
+  award(gain, perfect);
+  renderFill();
+  qresultEl.className = 'qresult ' + (perfect ? 'good' : 'bad');
+  qresultEl.textContent = perfect
+    ? `Perfect — ${right} / ${total}! 🎉 +${gain} pts (${right}×10 + perfect bonus)`
+    : `You got ${right} / ${total} (+${gain} pts). Red dots show the note that really lives there — tap any dot to hear it.`;
+  if (perfect) arpeggio();
+}
+qcheckBtn.addEventListener('click', () => { if (game && game.mode === 'fill' && !game.checked) checkFill(); });
+
+/* ---------------- game 2: Name the fret ---------------- */
+function startFlash(){
+  say('A dot lights up on the neck — tap its note name below, quick as you can.',
+      '+15 first try, +5 after a miss. Wrong taps flash red and reveal the answer.');
+  setQUI({board:true, palette:true});
+  game = {mode:'flash', round:0, total:12, score:0, firstTry:0, id:Date.now()};
+  palHandler = (pc, btn) => flashGuess(pc, btn);
+  nextFlash();
+}
+function nextFlash(){
+  game.round++;
+  const s = rand(6), f = rand(QFRETS + 1);
+  game.pos = {s, f, pc:(STRINGS[s].pc + f) % 12, midi: STRINGS[s].midi + f};
+  game.miss = false; game.solved = false;
+  renderFlash();
+}
+function renderFlash(){
+  buildQBoard((si, f) => (si === game.pos.s && f === game.pos.f)
+    ? {dot:{cls:'lit' + (game.solved ? ' correct' : ''), text: game.solved ? SHARPS[game.pos.pc] : '?'}}
+    : null);
+  paletteEl.querySelectorAll('.pal').forEach(b => { b.disabled = game.solved; });
+  if (!game.solved) progress(`Name the lit note — round ${game.round} / ${game.total}`);
+}
+function flashGuess(pc, btn){
+  if (game.solved) return;
+  if (pc === game.pos.pc){
+    game.solved = true;
+    game.score += game.miss ? 5 : 15;
+    if (!game.miss) game.firstTry++;
+    pluck(game.pos.midi, 0, 0.5);
+    renderFlash();
+    const id = game.id;
+    if (game.round >= game.total) finishRounds('Name the fret');
+    else setTimeout(() => { if (game && game.id === id && !game.done) nextFlash(); }, 620);
+  } else {
+    game.miss = true;
+    if (btn) palFlash(btn, 'bad');
+    pluck(60 + pc, 0, 0.25);
+  }
 }
 
-/* --- note hunt: find the asked note on the lit string, 10 rounds --- */
-let hunt = null;
-function noteBoth(pc){ return SHARPS[pc] === FLATS[pc] ? SHARPS[pc] : SHARPS[pc] + '/' + FLATS[pc]; }
+/* ---------------- game 3: Note hunt ---------------- */
 function startHunt(){
-  hunt = {id: Date.now(), round: 0, score: 0, firstTry: 0, total: 10,
-          target: null, miss: false, marks: {}, done: false};
-  document.getElementById('qsub').textContent =
-    'Note hunt: tap the asked note on the lit string. First try = 15 pts, after a miss = 5.';
-  document.getElementById('qhint').textContent =
-    'Wrong taps turn red and show what they really are — the round keeps going until you find it.';
-  nextHuntTarget();
+  say('Tap the asked note on the lit string.',
+      'First try = 15 pts, after a miss = 5. Wrong taps turn red and show what they really are.');
+  setQUI({board:true});
+  game = {mode:'hunt', round:0, total:10, score:0, firstTry:0, id:Date.now()};
+  nextHunt();
 }
-function nextHuntTarget(){
-  hunt.round++;
-  const s = Math.floor(Math.random() * STRINGS.length);
-  const f = Math.floor(Math.random() * (QFRETS + 1));
-  hunt.target = {s, pc: (STRINGS[s].pc + f) % 12};
-  hunt.miss = false;
-  hunt.marks = {};
+function nextHunt(){
+  game.round++;
+  const s = rand(6), f = rand(QFRETS + 1);
+  game.target = {s, pc:(STRINGS[s].pc + f) % 12};
+  game.miss = false; game.marks = {};
   renderHunt();
 }
-function finishHunt(){
-  hunt.done = true;
-  const perfect = hunt.firstTry === hunt.total;
-  qstats.pts += hunt.score;
-  qstats.streak = perfect ? qstats.streak + 1 : 0;
-  qstats.best = Math.max(qstats.best, hunt.score);
-  localStorage.setItem('sv-quiz-stats', JSON.stringify(qstats));
-  renderQStats(hunt.score);
-  qresultEl.className = 'qresult ' + (perfect ? 'good' : 'bad');
-  qresultEl.textContent = (perfect ? 'Perfect hunt! 🎉 ' : '') +
-    `${hunt.firstTry} / ${hunt.total} on the first try — +${hunt.score} pts. Hit New quiz to go again.`;
-  if (perfect) [0, 4, 7, 12].forEach((iv, i) => pluck(60 + iv, i * 0.12, 0.4));
-}
 function renderHunt(){
-  qgrid.innerHTML = '';
-  STRINGS.forEach((s, si) => {
-    const lab = document.createElement('div');
-    lab.className = 'slabel'; lab.textContent = s.lbl;
-    qgrid.appendChild(lab);
-    for (let f = 0; f <= QFRETS; f++){
-      const cell = document.createElement('div');
-      const onRow = si === hunt.target.s && !hunt.done;
-      cell.className = 'cell' + (f === 0 ? ' fret0' : '') + (f === 1 ? ' nut' : '') +
-        (onRow ? ' hrow' : '');
-      if (onRow){
-        const dot = document.createElement('div');
-        const mark = hunt.marks[f];
-        dot.className = 'dot hunt' + (mark ? ' ' + mark : '');
-        dot.textContent = mark ? SHARPS[(s.pc + f) % 12] : '·';
-        dot.addEventListener('click', () => huntTap(si, f));
-        cell.appendChild(dot);
-      }
-      qgrid.appendChild(cell);
-    }
+  buildQBoard((si, f) => {
+    if (si !== game.target.s) return null;
+    const mark = game.marks[f];
+    return {rowlit:true, dot:{cls:'hunt' + (mark ? ' ' + mark : ''),
+      text: mark ? SHARPS[(STRINGS[si].pc + f) % 12] : '·',
+      onClick: () => huntTap(si, f)}};
   });
-  renderQFrets();
-  paletteEl.hidden = true;
-  qcheckBtn.hidden = true;
-  if (!hunt.done){
-    qresultEl.className = 'qresult progress';
-    qresultEl.textContent =
-      `Find ${noteBoth(hunt.target.pc)} on the ${STRINGS[hunt.target.s].say} string — round ${hunt.round} / ${hunt.total}`;
-  }
+  progress(`Find ${noteBoth(game.target.pc)} on the ${STRINGS[game.target.s].say} string — round ${game.round} / ${game.total}`);
 }
 function huntTap(si, f){
-  if (hunt.done || hunt.marks[f]) return;
+  if (game.done || game.marks[f]) return;
   const pc = (STRINGS[si].pc + f) % 12;
-  pluck(STRINGS[si].midi + f, 0, pc === hunt.target.pc ? 0.5 : 0.3);
-  if (pc === hunt.target.pc){
-    hunt.marks[f] = 'correct';
-    hunt.score += hunt.miss ? 5 : 15;
-    if (!hunt.miss) hunt.firstTry++;
+  pluck(STRINGS[si].midi + f, 0, pc === game.target.pc ? 0.5 : 0.3);
+  if (pc === game.target.pc){
+    game.marks[f] = 'correct';
+    game.score += game.miss ? 5 : 15;
+    if (!game.miss) game.firstTry++;
     renderHunt();
-    const id = hunt.id;
-    if (hunt.round >= hunt.total) finishHunt();
-    else setTimeout(() => { if (hunt && hunt.id === id && !hunt.done) nextHuntTarget(); }, 750);
+    const id = game.id;
+    if (game.round >= game.total) finishRounds('Note hunt');
+    else setTimeout(() => { if (game && game.id === id && !game.done) nextHunt(); }, 700);
   } else {
-    hunt.marks[f] = 'wrong';
-    hunt.miss = true;
+    game.marks[f] = 'wrong'; game.miss = true;
     renderHunt();
   }
 }
 
-function renderQuiz(){
-  qgrid.innerHTML = '';
-  STRINGS.forEach((s, si) => {
-    const lab = document.createElement('div');
-    lab.className = 'slabel'; lab.textContent = s.lbl;
-    qgrid.appendChild(lab);
-
-    for (let f = 0; f <= QFRETS; f++){
-      const cell = document.createElement('div');
-      cell.className = 'cell' + (f === 0 ? ' fret0' : '') + (f === 1 ? ' nut' : '');
-      const qi = quiz.findIndex(q => q.s === si && q.f === f);
-
-      if (qi >= 0){
-        const q = quiz[qi];
-        const dot = document.createElement('div');
-        if (qChecked){
-          const ok = q.ans === q.pc;
-          dot.className = 'dot ' + (ok ? 'correct' : 'wrong');
-          dot.textContent = SHARPS[q.pc];               // reveal the real note
-          if (!ok) dot.title = `You answered ${SHARPS[q.ans]}`;
-          dot.addEventListener('click', () => pluck(q.midi));
-        } else if (q.ans !== null){
-          dot.className = 'dot' + (qi === qSel ? ' sel' : '');
-          dot.textContent = SHARPS[q.ans];
-          dot.title = 'Tap to change this answer';
-          dot.addEventListener('click', () => { qSel = qi; renderQuiz(); });
-        } else {
-          dot.className = 'dot blank' + (qi === qSel ? ' sel' : '');
-          dot.textContent = '?';
-          dot.addEventListener('click', () => { qSel = qi; renderQuiz(); });
-        }
-        cell.appendChild(dot);
-      }
-      qgrid.appendChild(cell);
-    }
+/* ---------------- game 4: Find all ---------------- */
+function startFindall(){
+  say('Tap every place the named note lives on the whole neck.',
+      'Clear a note with no wrong taps to keep your streak alive. Wrong taps flash red.');
+  setQUI({board:true, prompt:true});
+  game = {mode:'findall', round:0, total:6, score:0, clean:0, id:Date.now(), lastPc:-1};
+  nextFindall();
+}
+function nextFindall(){
+  game.round++;
+  let pc; do { pc = rand(12); } while (pc === game.lastPc);
+  game.lastPc = pc; game.pc = pc;
+  game.need = 0;
+  for (let s = 0; s < 6; s++) for (let f = 0; f <= QFRETS; f++)
+    if ((STRINGS[s].pc + f) % 12 === pc) game.need++;
+  game.found = {}; game.wrong = {}; game.dirty = false;
+  renderFindall();
+}
+function renderFindall(){
+  const foundN = Object.keys(game.found).length;
+  qpromptEl.innerHTML = `Find every <b>${noteBoth(game.pc)}</b> <small>${foundN} / ${game.need} found · round ${game.round} / ${game.total}</small>`;
+  buildQBoard((si, f) => {
+    const key = si + ':' + f;
+    if (game.found[key]) return {dot:{cls:'correct', text: SHARPS[game.pc]}};
+    if (game.wrong[key]) return {dot:{cls:'wrong', text: SHARPS[(STRINGS[si].pc + f) % 12]}};
+    return {cellClick: () => findallTap(si, f)};
   });
+  progress('');
+}
+function findallTap(si, f){
+  if (game.done) return;
+  const key = si + ':' + f, pc = (STRINGS[si].pc + f) % 12;
+  if (game.found[key] || game.wrong[key]) return;
+  pluck(STRINGS[si].midi + f, 0, pc === game.pc ? 0.5 : 0.28);
+  if (pc === game.pc){
+    game.found[key] = true;
+    game.score += 5;
+    if (Object.keys(game.found).length >= game.need){
+      if (!game.dirty) game.clean++;
+      renderFindall();
+      const id = game.id;
+      if (game.round >= game.total) finishRounds('Find all', game.clean);
+      else setTimeout(() => { if (game && game.id === id && !game.done) nextFindall(); }, 650);
+      return;
+    }
+  } else {
+    game.wrong[key] = true; game.dirty = true;
+  }
+  renderFindall();
+}
 
-  renderQFrets();
-  paletteEl.hidden = false;
-  qcheckBtn.hidden = false;
-
-  const filled = quiz.filter(q => q.ans !== null).length;
-  qcheckBtn.disabled = qChecked || filled < quiz.length;
-  paletteEl.querySelectorAll('.pal').forEach(b => { b.disabled = qChecked || qSel < 0; });
-  if (!qChecked){
-    qresultEl.className = 'qresult progress';
-    qresultEl.textContent = filled === 0 ? '' :
-      filled < quiz.length ? `${filled} / ${quiz.length} filled in` :
-      'All filled in — hit Check answers!';
+/* ---------------- game 5: Interval trainer ---------------- */
+function startInterval(){
+  say('A root note lights up. Tap any note that is the asked interval above it.',
+      'Any octave of the right note counts. +15 first try, +5 after a miss.');
+  setQUI({board:true, prompt:true});
+  game = {mode:'interval', round:0, total:10, score:0, firstTry:0, id:Date.now()};
+  nextInterval();
+}
+function nextInterval(){
+  game.round++;
+  const s = rand(6), f = rand(QFRETS - 1);           // leave room above
+  game.root = {s, f, pc:(STRINGS[s].pc + f) % 12, midi: STRINGS[s].midi + f};
+  game.iv = INTERVALS[2 + rand(INTERVALS.length - 2)]; // 3rds and wider — the useful ones
+  game.targetPc = (game.root.pc + game.iv.s) % 12;
+  game.miss = false; game.marks = {}; game.solved = false;
+  renderInterval();
+}
+function renderInterval(){
+  buildQBoard((si, f) => {
+    const key = si + ':' + f;
+    if (si === game.root.s && f === game.root.f)
+      return {dot:{cls:'lit', text: SHARPS[game.root.pc]}};
+    if (game.marks[key]) return {dot:{cls: game.marks[key],
+      text: SHARPS[(STRINGS[si].pc + f) % 12]}};
+    return {cellClick: () => intervalTap(si, f)};
+  });
+  qpromptEl.innerHTML = `Find a <b>${game.iv.n}</b> above <b>${noteBoth(game.root.pc)}</b> ` +
+    `<small>that's ${noteBoth(game.targetPc)} · round ${game.round} / ${game.total}</small>`;
+  progress('');
+}
+function intervalTap(si, f){
+  if (game.done || game.solved) return;
+  const key = si + ':' + f, pc = (STRINGS[si].pc + f) % 12;
+  pluck(STRINGS[si].midi + f, 0, pc === game.targetPc ? 0.5 : 0.28);
+  if (pc === game.targetPc){
+    game.marks[key] = 'correct'; game.solved = true;
+    pluck(game.root.midi, 0, 0.4);
+    game.score += game.miss ? 5 : 15;
+    if (!game.miss) game.firstTry++;
+    renderInterval();
+    const id = game.id;
+    if (game.round >= game.total) finishRounds('Interval trainer');
+    else setTimeout(() => { if (game && game.id === id && !game.done) nextInterval(); }, 720);
+  } else {
+    game.marks[key] = 'wrong'; game.miss = true;
+    renderInterval();
   }
 }
 
+/* ---------------- game 6: Triad builder ---------------- */
+function startTriad(){
+  say('Build the named chord — tap its three notes anywhere on the neck.',
+      'Root, 3rd and 5th. Any octave of each counts. +20 clean, +10 after a wrong note.');
+  setQUI({board:true, prompt:true});
+  game = {mode:'triad', round:0, total:8, score:0, firstTry:0, id:Date.now()};
+  nextTriad();
+}
+function nextTriad(){
+  game.round++;
+  game.rootPc = rand(12);
+  game.qual = Math.random() < 0.5 ? 'maj' : 'min';
+  game.tones = new Set(TRIADS[game.qual].map(iv => (game.rootPc + iv) % 12));
+  game.foundTones = new Set(); game.marks = {}; game.miss = false;
+  renderTriad();
+}
+function renderTriad(){
+  buildQBoard((si, f) => {
+    const key = si + ':' + f;
+    if (game.marks[key]) return {dot:{cls: game.marks[key],
+      text: SHARPS[(STRINGS[si].pc + f) % 12]}};
+    return {cellClick: () => triadTap(si, f)};
+  });
+  qpromptEl.innerHTML = `Build <b>${noteBoth(game.rootPc)} ${game.qual === 'maj' ? 'major' : 'minor'}</b> ` +
+    `<small>${game.foundTones.size} / 3 tones · round ${game.round} / ${game.total}</small>`;
+  progress('');
+}
+function triadTap(si, f){
+  if (game.done) return;
+  const key = si + ':' + f, pc = (STRINGS[si].pc + f) % 12;
+  if (game.marks[key]) return;
+  pluck(STRINGS[si].midi + f, 0, game.tones.has(pc) ? 0.5 : 0.28);
+  if (game.tones.has(pc)){
+    game.marks[key] = 'correct';
+    game.foundTones.add(pc);
+    if (game.foundTones.size >= 3){
+      game.score += game.miss ? 10 : 20;
+      if (!game.miss) game.firstTry++;
+      renderTriad();
+      const id = game.id;
+      if (game.round >= game.total) finishRounds('Triad builder');
+      else setTimeout(() => { if (game && game.id === id && !game.done) nextTriad(); }, 720);
+      return;
+    }
+  } else {
+    game.marks[key] = 'wrong'; game.miss = true;
+  }
+  renderTriad();
+}
+
+/* ---------------- game 7: Interval ear ---------------- */
+function startEar(){
+  say('Listen to the two notes, then pick the interval between them.',
+      'Hit ▶ replay to hear it again. +15 first try, +5 after a miss.');
+  setQUI({choices:true, prompt:true});
+  game = {mode:'ear', round:0, total:10, score:0, firstTry:0, id:Date.now()};
+  nextEar();
+}
+function nextEar(){
+  game.round++;
+  game.rootMidi = 52 + rand(9);
+  game.iv = INTERVALS[2 + rand(INTERVALS.length - 2)];
+  const opts = new Set([game.iv]);
+  while (opts.size < 4) opts.add(INTERVALS[2 + rand(INTERVALS.length - 2)]);
+  game.opts = shuffle([...opts]);
+  game.miss = false; game.solved = false;
+  renderEar();
+  setTimeout(playEar, 260);
+}
+function playEar(){
+  pluck(game.rootMidi, 0, 0.5);
+  pluck(game.rootMidi + game.iv.s, 0.5, 0.5);
+}
+function renderEar(){
+  qpromptEl.innerHTML = `Which interval do you hear? <small>round ${game.round} / ${game.total}</small>`;
+  qchoicesEl.innerHTML = '';
+  const replay = document.createElement('button');
+  replay.className = 'qbtn-replay'; replay.innerHTML = '&#9654; replay';
+  replay.addEventListener('click', playEar);
+  qchoicesEl.appendChild(replay);
+  game.opts.forEach(opt => {
+    const b = document.createElement('button');
+    b.className = 'qchoice'; b.textContent = opt.n;
+    b.addEventListener('click', () => earGuess(opt, b));
+    qchoicesEl.appendChild(b);
+  });
+  progress('');
+}
+function earGuess(opt, btn){
+  if (game.solved) return;
+  if (opt.s === game.iv.s){
+    game.solved = true;
+    btn.classList.add('good');
+    game.score += game.miss ? 5 : 15;
+    if (!game.miss) game.firstTry++;
+    qchoicesEl.querySelectorAll('.qchoice').forEach(b => b.disabled = true);
+    const id = game.id;
+    if (game.round >= game.total) finishRounds('Interval ear');
+    else setTimeout(() => { if (game && game.id === id && !game.done) nextEar(); }, 820);
+  } else {
+    game.miss = true;
+    btn.classList.add('bad'); btn.disabled = true;
+  }
+}
+
+/* ---------------- shared finish for round-based games ---------------- */
+function finishRounds(label, cleanCount){
+  game.done = true;
+  const hit = cleanCount != null ? cleanCount : game.firstTry;
+  const perfect = hit === game.total;
+  award(game.score, perfect);
+  qresultEl.className = 'qresult ' + (perfect ? 'good' : 'bad');
+  qresultEl.textContent = (perfect ? `Perfect ${label}! 🎉 ` : '') +
+    `${hit} / ${game.total} clean — +${game.score} pts. Hit New game to go again.`;
+  if (perfect) arpeggio();
+}
+
+/* ---------------- dispatch ---------------- */
+const QGAMES = {fill:startFill, flash:startFlash, hunt:startHunt, findall:startFindall,
+                interval:startInterval, triad:startTriad, ear:startEar};
+let qMode = 'fill';
+function newQuiz(){
+  quizStarted = true;
+  renderQStats(0);
+  qresultEl.className = 'qresult'; qresultEl.textContent = '';
+  (QGAMES[qMode] || startFill)();
+}
 document.getElementById('qnew').addEventListener('click', newQuiz);
 document.getElementById('qmode').addEventListener('change', e => {
   qMode = e.target.value;
-  document.getElementById('qcount-wrap').style.visibility = qMode === 'hunt' ? 'hidden' : '';
+  document.getElementById('qcount-wrap').style.visibility = qMode === 'fill' ? '' : 'hidden';
   newQuiz();
-});
-
-qcheckBtn.addEventListener('click', () => {
-  qChecked = true;
-  qSel = -1;
-  const right = quiz.filter(q => q.ans === q.pc).length;
-  const perfect = right === quiz.length;
-  const gain = right * 10 + (perfect ? quiz.length * 5 : 0);
-  qstats.pts += gain;
-  qstats.streak = perfect ? qstats.streak + 1 : 0;
-  qstats.best = Math.max(qstats.best, gain);
-  localStorage.setItem('sv-quiz-stats', JSON.stringify(qstats));
-  renderQStats(gain);
-  qresultEl.className = 'qresult ' + (perfect ? 'good' : 'bad');
-  qresultEl.textContent = perfect
-    ? `Perfect — ${right} / ${quiz.length}! 🎉 +${gain} pts (${right}×10 + perfect bonus)`
-    : `You got ${right} / ${quiz.length} (+${gain} pts). Red dots show the note that really lives there — tap any dot to hear it.`;
-  renderQuiz();
-  if (perfect) [0, 4, 7, 12].forEach((iv, i) => pluck(60 + iv, i * 0.12, 0.4));
 });
 
 /* ---------- decoder: full-screen digital take on the physical card ---------- */
@@ -1457,8 +1787,8 @@ function showTab(t){
   tfCur.textContent = TAB_EMOJI[t];
   tfOpts.hidden = true;
   if (t === 'quiz'){
-    document.getElementById('title').textContent = 'Name the Neck';
-    if (!quiz.length) newQuiz();
+    document.getElementById('title').textContent = 'Quiz Arcade';
+    if (!quizStarted) newQuiz();
   } else if (t === 'decoder'){
     document.getElementById('title').textContent = 'Decoder';
     renderDecoder(0);
@@ -1483,7 +1813,19 @@ const mxBg = document.getElementById('mx-bg'), mxInk = document.getElementById('
       mxScale = document.getElementById('mx-scale'), mxRoot = document.getElementById('mx-root'),
       mxGlow = document.getElementById('mx-glow'), mxPanel = document.getElementById('mx-panel'),
       mxLine = document.getElementById('mx-line'), mxMuted = document.getElementById('mx-muted'),
-      mxLogo = document.getElementById('mx-logo');
+      mxLogo = document.getElementById('mx-logo'), mxGood = document.getElementById('mx-good'),
+      mxBad = document.getElementById('mx-bad'), mxRadius = document.getElementById('mx-radius'),
+      mxBgStyle = document.getElementById('mx-bgstyle');
+const PRESET_SEED = {
+  classic:{bg:'#0d1220',panel:'#161f31',line:'#2b3652',ink:'#eef2fb',muted:'#8a97b4',logo:'#f2a65a',
+           scale:'#5b8cff',root:'#f2a65a',good:'#2ecc8f',bad:'#ff5d6c',glow:0,radius:16,bgStyle:'aurora'},
+  pom:{bg:'#1c060f',panel:'#2b0a18',line:'#571631',ink:'#ffd9e6',muted:'#c77d97',logo:'#ff2e63',
+       scale:'#e0507a',root:'#ff2e63',good:'#2ecc8f',bad:'#ff5d6c',glow:65,radius:16,bgStyle:'mesh'},
+  peach:{bg:'#241008',panel:'#331810',line:'#6b3624',ink:'#ffe6d4',muted:'#d49a7e',logo:'#ff5e82',
+         scale:'#ff9d5c',root:'#ff5e82',good:'#2ecc8f',bad:'#ff5d6c',glow:60,radius:16,bgStyle:'mesh'},
+  tokyo:{bg:'#120521',panel:'#1e0a33',line:'#45207a',ink:'#f0dcff',muted:'#a883cc',logo:'#ff3ddc',
+         scale:'#b45cff',root:'#ff3ddc',good:'#2ecc8f',bad:'#ff5d6c',glow:70,radius:18,bgStyle:'mesh'},
+};
 const customOrb = document.querySelector('.orb[data-t="custom"]');
 const orbMain = document.getElementById('orb-main');
 const thOpts = document.getElementById('th-opts');
@@ -1515,20 +1857,34 @@ function hexA(h, a){
   const p = parseInt(h.slice(1), 16);
   return `rgba(${(p>>16)&255},${(p>>8)&255},${p&255},${a})`;
 }
+function bgCss(c, g){
+  const style = c.bgStyle || 'aurora';
+  if (style === 'flat') return c.bg;
+  if (style === 'vignette')
+    return `radial-gradient(120% 120% at 50% 0%, ${hexMix(c.bg, c.ink, .06)} 0%, ${c.bg} 45%, ${hexMix(c.bg, '#000000', .35)} 100%)`;
+  if (style === 'mesh')
+    return `radial-gradient(680px 460px at 82% -8%, ${hexA(c.root,.28+.18*g)} 0%, transparent 55%),
+radial-gradient(620px 480px at 8% 12%, ${hexA(c.scale,.24+.16*g)} 0%, transparent 55%),
+radial-gradient(720px 520px at 50% 112%, ${hexA(hexMix(c.root,c.scale,.5),.22+.16*g)} 0%, transparent 60%),
+linear-gradient(160deg, ${hexMix(c.bg, c.scale, .1)} 0%, ${c.bg} 60%)`;
+  // aurora (default)
+  return `radial-gradient(900px 520px at 80% -12%, ${hexA(c.root,.16+.2*g)} 0%, transparent 55%),
+radial-gradient(820px 500px at 5% 108%, ${hexA(c.scale,.14+.2*g)} 0%, transparent 58%),
+linear-gradient(168deg, ${hexMix(c.bg, c.scale, .12)} 0%, ${c.bg} 65%)`;
+}
 function customCss(c){
   const g = (c.glow == null ? 50 : c.glow) / 100;   // glow meter 0..1
   const P = t => hexMix(c.bg, c.ink, t);
   const panel = c.panel || P(.06), line = c.line || P(.24);
   const muted = c.muted || hexMix(c.ink, c.bg, .38);
+  const radius = (c.radius == null ? 16 : c.radius) + 'px';
+  const good = c.good || '#2ecc8f', bad = c.bad || '#ff5d6c';
   return `html.theme-custom{--bg:${c.bg};--panel:${panel};--panel-2:${hexMix(panel, c.ink, .05)};--line:${line};
---ink:${c.ink};--muted:${muted};--scale:${c.scale};--root:${c.root};
+--ink:${c.ink};--muted:${muted};--scale:${c.scale};--root:${c.root};--radius:${radius};--good:${good};--bad:${bad};
 --root-soft:${hexA(c.root,.5)};--root-strong:${hexA(c.root,.85)};--root-faint:${hexA(c.root,.15)};
 --glow-scale:${hexA(c.scale,.7*g)};--glow-root:${hexA(c.root,.85*g)};
 --shadow:0 10px 34px ${hexA(c.scale,.1+.15*g)}}
-html.theme-custom body{background:
-radial-gradient(900px 520px at 80% -12%, ${hexA(c.root,.16+.2*g)} 0%, transparent 55%),
-radial-gradient(820px 500px at 5% 108%, ${hexA(c.scale,.14+.2*g)} 0%, transparent 58%),
-linear-gradient(168deg, ${hexMix(c.bg, c.scale, .12)} 0%, ${c.bg} 65%)}
+html.theme-custom body{background:${bgCss(c, g)}}
 html.theme-custom #title{background:linear-gradient(92deg,${c.scale},${c.root});
 -webkit-background-clip:text;background-clip:text;color:transparent;
 filter:drop-shadow(0 0 ${6+14*g}px ${hexA(c.root,.15+.5*g)})}
@@ -1583,14 +1939,53 @@ function openMixer(){
   mxLogo.value = c.logo || c.muted || cssVar('--muted') || '#8a97b4';
   mxScale.value = c.scale || cssVar('--scale') || '#5b8cff';
   mxRoot.value = c.root || cssVar('--root') || '#f2a65a';
+  mxGood.value = c.good || cssVar('--good') || '#2ecc8f';
+  mxBad.value = c.bad || cssVar('--bad') || '#ff5d6c';
+  mxRadius.value = c.radius == null ? 16 : c.radius;
+  mxBgStyle.value = c.bgStyle || 'aurora';
   mxGlow.value = c.glow == null ? 50 : c.glow;
   mixEl.hidden = false;
 }
 function applyMixer(){
   customs[curTab] = {bg: mxBg.value, panel: mxPanel.value, line: mxLine.value,
                      ink: mxInk.value, muted: mxMuted.value, logo: mxLogo.value,
-                     scale: mxScale.value, root: mxRoot.value, glow: +mxGlow.value};
+                     scale: mxScale.value, root: mxRoot.value, good: mxGood.value,
+                     bad: mxBad.value, radius: +mxRadius.value, bgStyle: mxBgStyle.value,
+                     glow: +mxGlow.value};
   setTheme('custom');
+}
+function loadEditor(c){        // push a palette object into the mixer inputs + apply
+  mxBg.value = c.bg; mxPanel.value = c.panel; mxLine.value = c.line;
+  mxInk.value = c.ink; mxMuted.value = c.muted; mxLogo.value = c.logo;
+  mxScale.value = c.scale; mxRoot.value = c.root; mxGood.value = c.good;
+  mxBad.value = c.bad; mxRadius.value = c.radius; mxBgStyle.value = c.bgStyle;
+  mxGlow.value = c.glow;
+  applyMixer();
+}
+/* HSL → hex for the randomizer */
+function hsl2hex(h, s, l){
+  s /= 100; l /= 100;
+  const k = n => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => { const c = l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+    return Math.round(255 * c).toString(16).padStart(2, '0'); };
+  return '#' + f(0) + f(8) + f(4);
+}
+function randomPalette(){
+  const base = rand(360), style = ['aurora','vignette','mesh','flat'][rand(4)];
+  const acc = (base + 150 + rand(90)) % 360;      // accent hue away from the base
+  return {
+    bg: hsl2hex(base, 38, 7 + rand(4)),
+    panel: hsl2hex(base, 34, 13),
+    line: hsl2hex(base, 30, 27),
+    ink: hsl2hex(base, 22, 93),
+    muted: hsl2hex(base, 18, 62),
+    logo: hsl2hex(acc, 85, 62),
+    scale: hsl2hex(acc, 78, 63),
+    root: hsl2hex((base + 28) % 360, 88, 62),
+    good: hsl2hex(150, 62, 55), bad: hsl2hex(352, 80, 63),
+    glow: 45 + rand(45), radius: [6, 10, 14, 18, 22][rand(5)], bgStyle: style,
+  };
 }
 orbMain.addEventListener('click', () => { thOpts.hidden = !thOpts.hidden; });
 thOpts.addEventListener('click', e => {
@@ -1598,8 +1993,14 @@ thOpts.addEventListener('click', e => {
   const orb = e.target.closest('.orb');
   if (orb){ setTheme(orb.dataset.t); thOpts.hidden = true; }
 });
-[mxBg, mxPanel, mxLine, mxInk, mxMuted, mxLogo, mxScale, mxRoot, mxGlow]
+[mxBg, mxPanel, mxLine, mxInk, mxMuted, mxLogo, mxScale, mxRoot, mxGood, mxBad, mxRadius, mxGlow]
   .forEach(el => el.addEventListener('input', applyMixer));
+mxBgStyle.addEventListener('change', applyMixer);
+document.getElementById('mx-random').addEventListener('click', () => loadEditor(randomPalette()));
+document.getElementById('mx-seeds').addEventListener('click', e => {
+  const b = e.target.closest('.mx-seed');
+  if (b) loadEditor({...PRESET_SEED[b.dataset.seed]});
+});
 document.getElementById('mx-all').addEventListener('click', e => {
   applyMixer();
   Object.keys(tabThemes).forEach(k => {
