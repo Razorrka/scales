@@ -209,6 +209,24 @@
   .deg-row .nm{font-weight:800;color:var(--ink);min-width:82px;flex:none}
   .deg-row .seq{color:var(--muted);letter-spacing:.16em;font-weight:700}
   .deg-row .seq .hot{color:var(--root)}
+  /* full lessons accordion */
+  .lesson{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden}
+  .lesson>summary{list-style:none;cursor:pointer;padding:13px 15px;font-weight:800;color:var(--ink);
+    font-size:14.5px;display:flex;align-items:center;gap:10px}
+  .lesson>summary::-webkit-details-marker{display:none}
+  .lesson>summary::after{content:"+";margin-left:auto;color:var(--muted);font-size:19px;font-weight:700;line-height:1}
+  .lesson[open]>summary::after{content:"–"}
+  .lesson[open]>summary{border-bottom:1px solid var(--line)}
+  .lesson>summary .ln{width:24px;height:24px;flex:none;border-radius:50%;background:var(--root);color:#10131f;
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+  .lesson-body{padding:13px 15px 4px;color:var(--muted);font-size:13.5px;line-height:1.62}
+  .lesson-body p{margin:0 0 11px}
+  .lesson-body b{color:var(--ink)}
+  .lesson-body ul{margin:0 0 11px;padding-left:19px}
+  .lesson-body li{margin:5px 0}
+  .neo-hear{font:inherit;font-weight:700;font-size:12.5px;color:var(--bg);background:var(--root);
+    border:none;border-radius:999px;padding:7px 14px;cursor:pointer;margin:0 8px 10px 0}
+  .neo-hear:hover{filter:brightness(1.08)}
   .neo-card-cap{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.35;padding:0 2px 4px}
   .neo-chips{display:flex;flex-wrap:wrap;gap:8px}
   .neo-chip{font:inherit;font-weight:700;font-size:13px;color:var(--ink);background:var(--panel);
@@ -730,6 +748,12 @@
       <div class="deg-strip" id="neo-degs"></div>
       <p class="neo-p" style="margin-top:14px">Chords are built by <b>stacking every other note</b>, so we skip by odd numbers: <b>1 → 3 → 5 → 7 → 9 → 11 → 13</b>. The big ones are just the small ones an octave higher — the <b>9</b> is the 2, the <b>11</b> is the 4, the <b>13</b> is the 6. And a <b>♭</b> or <b>♯</b> in front (like ♭7 or ♯11) simply nudges that one note a fret down or up.</p>
       <div class="deg-build" id="neo-build"></div>
+    </div>
+
+    <div class="neo-sec">
+      <div class="neo-h"><span class="em">📚</span>Full lessons</div>
+      <p class="neo-p">The whole picture, one topic at a time — tap a lesson to open it. Read one a day, then go play it.</p>
+      <div id="neo-lessons"></div>
     </div>
 
     <div class="neo-sec">
@@ -2034,6 +2058,7 @@ const NEO_VOICE = {
   maj7s11:[[1,0],[2,4],[3,11],[5,18]],
   s69:    [[1,0],[2,4],[3,9],[4,14],[5,19]],
   add9:   [[1,0],[2,4],[3,7],[4,14],[5,16]],
+  dom7:   [[1,0],[2,4],[3,10],[4,12]],
   m7:     [[1,0],[2,7],[3,10],[4,15],[5,19]],
   m9:     [[1,0],[2,3],[3,10],[4,14],[5,19]],
   m11:    [[1,0],[2,5],[3,10],[4,15]],
@@ -2044,7 +2069,7 @@ const NEO_VOICE = {
   m7b5:   [[1,0],[2,6],[3,10],[4,15]],
   dim7:   [[1,0],[2,6],[3,9],[4,15]],
 };
-const NEO_SUFFIX = {maj7:'maj7', maj9:'maj9', maj7s11:'maj7♯11', s69:'6/9', add9:'add9',
+const NEO_SUFFIX = {maj7:'maj7', maj9:'maj9', maj7s11:'maj7♯11', s69:'6/9', add9:'add9', dom7:'7',
   m7:'m7', m9:'m9', m11:'m11', dom9:'9', dom13:'13', d7s9:'7♯9', d7b9:'7♭9', m7b5:'m7♭5', dim7:'°7'};
 function neoVoicing(type, rootPc){
   let rootFret = ((rootPc - 9) % 12 + 12) % 12;        // root note on the A string
@@ -2125,12 +2150,96 @@ const NEO_BUILD = [
   ['13th chord', ['1','3','5','7','9','11','13']],
 ];
 
+// short demo sequences for the "hear it" buttons: [rootPc, voicing type]
+const NEO_HEAR = {
+  sevenths: [[0,'maj7'],[0,'dom7'],[0,'m7']],
+  voicelead: [[2,'m9'],[7,'dom13'],[0,'maj9']],
+  twofive: [[2,'m9'],[7,'dom13'],[0,'maj9']],
+  mtwofive: [[2,'m7b5'],[7,'d7b9'],[0,'m9']],
+};
+const NEO_LESSONS = [
+  ['What makes it "neo soul"?', `
+    <p>Neo soul is R&amp;B that borrowed the <b>harmony of jazz</b> and the <b>feel of gospel</b>, then slowed everything down and gave it space. Where pop guitar leans on plain major and minor chords and busy strumming, neo soul leans on <b>lush, extended chords played sparsely</b>, with lots of room between the notes — think D'Angelo, Erykah Badu, Isaiah Sharkey, Mac Ayres, Tom Misch.</p>
+    <p>The guitar is usually a <b>texture</b>: a few rich chords, a little melodic fill, and a deep pocket — not a wall of sound. So if you feel stuck in the pentatonic box, the way out isn't faster licks. It's <b>richer chords and better time.</b> That's what this whole tab is built to teach.</p>`],
+  ['The major scale is your ruler', `
+    <p>Every chord name and number comes from one place: the <b>major scale</b>. In C that's C D E F G A B — numbered 1 2 3 4 5 6 7. The trick that unlocks everything is to think of notes as <b>numbers in a key</b>, not just letters.</p>
+    <p>Why? Because the numbers stay the same when you change keys. A "3rd" is the 3rd note of the scale whether you're in C (E) or G (B). Once you hear chords as stacks of these numbers, every chord name stops being a code and becomes a <b>recipe</b>. Tap through <b>What the numbers mean</b> above until it feels automatic.</p>`],
+  ['Triads, then 7ths — the doorway', `
+    <p>Stack the 1, 3 and 5 of the scale and you get a <b>triad</b>: major (1&nbsp;3&nbsp;5) or minor (1&nbsp;♭3&nbsp;5). That's most pop music. Neo soul almost never stops there — it adds the <b>7th</b>, and <i>which</i> 7th changes the whole mood:</p>
+    <ul>
+      <li><b>Major 7</b> (1 3 5 7) — dreamy, warm, resolved. The "floating" sound.</li>
+      <li><b>Dominant 7</b> (1 3 5 ♭7) — the 7 flattened a half step. Instantly bluesy and funky, wanting to move.</li>
+      <li><b>Minor 7</b> (1 ♭3 5 ♭7) — mellow and smooth, the R&amp;B default.</li>
+    </ul>
+    <p>Going from triads to 7th chords is the single biggest step toward this sound. Everything richer — 9ths, 11ths, 13ths — is just more scale notes piled on top of a 7th chord.</p>
+    <button class="neo-hear" data-hear="sevenths">&#9654; hear maj7 · 7 · m7</button>`],
+  ['Extensions: 9, 11, 13 (the color)', `
+    <p>Keep stacking past the 7 and you reach the <b>extensions</b>: the <b>9</b> (shimmer), the <b>11</b> (suspended, floaty), and the <b>13</b> (full, lush). Three rules make them usable:</p>
+    <ul>
+      <li><b>Add color, drop the 5th.</b> The perfect 5th is the least interesting note in a chord — it's the first thing to leave out to make room for a 9 or 13. Nobody misses it.</li>
+      <li><b>Careful with the 11 on major chords.</b> A natural 11 (the 4) clashes with the major 3rd. Fix it by raising it to a <b>♯11</b> (the dreamy Lydian sound) or dropping the 3rd for a <b>sus</b> feel. On <i>minor</i> chords the natural 11 is gorgeous — that's the m11 sound.</li>
+      <li><b>You don't need all of them.</b> A "13th chord" isn't 1-3-5-7-9-11-13 at once. On guitar you pick <b>four notes that imply it</b> — usually root, 3rd, 7th and one color tone. That's why the library voicings are only 4–5 notes.</li>
+    </ul>`],
+  ['Where neo soul lives on the guitar', `
+    <p>Big barre chords are too thick and boomy for this music. Neo soul lives on the <b>middle and top strings</b> (D-G-B-e), played as tight <b>close voicings</b> — notes bunched within a few frets so they blend like a pianist's right hand.</p>
+    <ul>
+      <li>Put the <b>root on the A string</b> (like every library voicing) so the shape is <b>movable</b> — learn it once, slide it to any key.</li>
+      <li><b>Mute what you're not playing</b> with the flat of your fingers. Clean silence around a chord is part of the sound.</li>
+      <li>Use your <b>thumb</b> over the top for a bass note when you want a fuller voicing, freeing fingers for color tones.</li>
+    </ul>`],
+  ['Voice leading — the secret sauce', `
+    <p>This is what separates "playing the right chords" from "sounding pro." <b>Voice leading</b> means moving to the next chord by the <b>smallest possible distance</b>: keep the notes two chords share, and move the rest to their nearest neighbor.</p>
+    <p>Big jumps sound clunky; tiny moves sound smooth and expensive. In <b>Dm9 → G13 → Cmaj9</b>, most notes barely move and one or two slide a half step. Train your hands to find the <b>closest</b> voicing of the next chord, not the first shape you happen to know.</p>
+    <button class="neo-hear" data-hear="voicelead">&#9654; hear Dm9 · G13 · Cmaj9</button>`],
+  ['The engine: ii–V–I', `
+    <p>Most neo-soul and jazz harmony runs on one progression: <b>ii–V–I</b>. In C major that's <b>Dm7 → G7 → Cmaj7</b> — dressed up, <b>Dm9 → G13 → Cmaj9</b>.</p>
+    <p>Why it works: the roots move in <b>fourths</b> (D→G→C), the strongest motion in music, and each chord's notes lead smoothly into the next. Learn to <b>spot ii–V–I everywhere</b> — tunes are often chains of them. The <b>minor</b> version is <b>ii°–V–i</b> (Dm7♭5 → G7♭9 → Cm9): darker and cinematic. Master those two and you can play through a huge amount of this music.</p>
+    <button class="neo-hear" data-hear="twofive">&#9654; hear major ii–V–I</button>
+    <button class="neo-hear" data-hear="mtwofive">&#9654; hear minor ii–V–i</button>`],
+  ['Feel &amp; embellishments', `
+    <p>Neo soul is 60% feel. The notes are simple; the <b>delivery</b> is everything.</p>
+    <ul>
+      <li><b>Play behind the beat.</b> Relax so you sit slightly late in the pocket — it reads as lazy and confident. Rushing kills the vibe.</li>
+      <li><b>Leave space.</b> Let chords ring; don't fill every gap. Silence is an instrument.</li>
+      <li><b>The gospel "curl."</b> Hammer or slide into a chord tone from a half or whole step below — a tiny ornament that makes a held chord breathe.</li>
+      <li><b>3rds and 6ths.</b> Two-note double stops moving in parallel are the classic R&amp;B fill — try the Double Stops toggle in Explore.</li>
+      <li><b>Dynamics.</b> Play some chords soft, some with a dig. Flat, even volume is the enemy.</li>
+    </ul>`],
+  ['Soloing — getting out of the box', `
+    <p>When it's time for single notes, stop running scales and start <b>aiming</b>:</p>
+    <ul>
+      <li><b>Target chord tones.</b> Land on the 3rd, 7th and 9th of whatever chord is under you and you'll always sound "right." Arpeggios are your friend.</li>
+      <li><b>Dorian for minor grooves, Mixolydian for dominants.</b> Over a minor vamp use Dorian; over a funky dominant use Mixolydian. Both are one tap away in the Scales chips below.</li>
+      <li><b>Blur the pentatonics.</b> Mix the minor pentatonic's ♭3 with the major pentatonic's major 3rd for that vocal, in-between blues-R&amp;B sound.</li>
+      <li><b>Chromatic approach notes.</b> Slide into a target from a fret above or below — that's how you connect ideas smoothly instead of stabbing at scale tones.</li>
+    </ul>`],
+  ['How to actually get good', `
+    <p>Knowledge without reps is trivia. A simple daily loop, using this app:</p>
+    <ul>
+      <li><b>Notes</b> — 5 min on the <b>Map</b> tab, then a round of <b>Note hunt</b> in the quiz.</li>
+      <li><b>Chords</b> — pick 3 library voicings and move between them with good voice leading. Say each name out loud as you play it.</li>
+      <li><b>Groove</b> — loop one vamp (start with the <b>Dorian vamp</b>) with great time for 10 minutes. This builds your pocket.</li>
+      <li><b>Solo</b> — over that same vamp, improvise with chord tones + Dorian. Slow and melodic beats fast and scaley.</li>
+      <li><b>Ears</b> — finish with a round of <b>Interval ear</b>.</li>
+    </ul>
+    <p>Do a little every day. Feel and vocabulary both come from reps, not reading — so read this once, then <b>go play.</b></p>`],
+];
+
 let neoBuilt = false, progToken = 0;
 function buildNeo(){
   if (neoBuilt) return;
   neoBuilt = true;
   document.getElementById('neo-tips').innerHTML =
     NEO_TIPS.map(t => `<div class="neo-tip">${t}</div>`).join('');
+
+  const lessons = document.getElementById('neo-lessons');
+  lessons.innerHTML = NEO_LESSONS.map(([title, body], i) =>
+    `<details class="lesson"><summary><span class="ln">${i + 1}</span>${title}</summary>
+      <div class="lesson-body">${body}</div></details>`).join('');
+  lessons.addEventListener('click', e => {
+    const h = e.target.closest('.neo-hear');
+    if (h) playSeq(NEO_HEAR[h.dataset.hear]);
+  });
 
   const degs = document.getElementById('neo-degs');
   degs.innerHTML = NEO_DEGS.map(([n, semi, note, name, feel]) =>
@@ -2191,6 +2300,12 @@ function buildNeo(){
     keySel.value = pc; scaleSel.value = name;
     showTab('explore');
   });
+}
+function playSeq(seq){
+  const my = ++progToken;
+  seq.forEach((c, i) => setTimeout(() => {
+    if (my === progToken) neoStrum(neoVoicing(c[1], c[0]).midis, 0, 0.45);
+  }, i * 1000));
 }
 function playProg(pi){
   const seq = NEO_PROGS[pi][2];
