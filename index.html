@@ -180,6 +180,40 @@
   .ch-x{fill:var(--muted);font-size:10px;font-weight:700;text-anchor:middle}
   .ch-base{fill:var(--muted);font-size:10px;font-weight:700;text-anchor:middle}
 
+  /* neo soul tab */
+  .neo-sec{margin-top:28px}
+  .neo-h{font-size:16px;font-weight:800;letter-spacing:.01em;color:var(--ink);margin:0 0 4px;
+    display:flex;align-items:center}
+  .neo-h .em{margin-right:8px;font-size:18px}
+  .neo-p{color:var(--muted);font-size:14px;margin:0 0 12px;line-height:1.6}
+  .neo-p b{color:var(--ink)}
+  .neo-tips{display:grid;gap:9px}
+  .neo-tip{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--root);
+    border-radius:12px;padding:11px 14px;color:var(--muted);font-size:13.5px;line-height:1.55}
+  .neo-tip b{color:var(--ink)}
+  .neo-card-cap{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.35;padding:0 2px 4px}
+  .neo-chips{display:flex;flex-wrap:wrap;gap:8px}
+  .neo-chip{font:inherit;font-weight:700;font-size:13px;color:var(--ink);background:var(--panel);
+    border:1px solid var(--line);border-radius:12px;padding:9px 14px;cursor:pointer;text-align:left;
+    transition:border-color .15s,transform .1s}
+  .neo-chip small{display:block;font-weight:600;font-size:10.5px;color:var(--muted);margin-top:1px}
+  .neo-chip:hover{border-color:var(--root)}
+  .neo-chip:active{transform:scale(.97)}
+  .prog{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+  .prog-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+  .prog-name{font-weight:800;color:var(--ink);font-size:14px}
+  .prog-name small{display:block;font-weight:600;color:var(--muted);font-size:11.5px;margin-top:1px}
+  .prog-play{font:inherit;font-weight:700;font-size:13px;color:var(--bg);background:var(--root);
+    border:none;border-radius:999px;padding:8px 15px;cursor:pointer;flex:none}
+  .prog-play:hover{filter:brightness(1.07)}
+  .prog-chords{display:flex;flex-wrap:wrap;gap:8px}
+  .prog-ch{font:inherit;font-weight:700;font-size:14px;color:var(--root);background:var(--panel-2);
+    border:1px solid var(--line);border-radius:10px;padding:8px 13px;cursor:pointer;text-align:center;
+    transition:border-color .12s,box-shadow .12s,transform .1s}
+  .prog-ch small{display:block;color:var(--muted);font-weight:600;font-size:10px;margin-top:1px}
+  .prog-ch:hover{border-color:var(--root)}
+  .prog-ch.play{border-color:var(--root);box-shadow:0 0 12px var(--glow-root);transform:translateY(-2px)}
+
   /* neck quiz */
   #qgrid,#qfrets{grid-template-columns:34px repeat(13,minmax(44px,1fr));min-width:640px}
   .dot.blank{
@@ -583,6 +617,7 @@
     <div class="tf-opts" id="tf-opts" hidden>
       <button class="tab" data-tab="explore">&#127928; Explore</button>
       <button class="tab" data-tab="map">&#128506;&#65039; Map</button>
+      <button class="tab" data-tab="neo">&#127924; Neo soul</button>
       <button class="tab" data-tab="quiz">&#127919; Neck quiz</button>
       <button class="tab" data-tab="decoder">&#129517; Decoder</button>
       <button class="tab" data-tab="chords">&#9995; Chords</button>
@@ -662,6 +697,35 @@
     </div>
     <p class="hint">The 12th fret repeats the open string one octave up — learn frets 0–12 and you know the whole neck. Naturals (no sharps/flats) are brighter; those are the ones to lock in first.</p>
   </div><!-- /view-map -->
+
+  <div id="view-neo" hidden>
+    <p class="sub">The neo-soul / R&amp;B toolkit — lush chord voicings, the progressions they live in, the scales you solo with, and how to break out of the pentatonic box. Tap anything to hear it.</p>
+
+    <div class="neo-sec">
+      <div class="neo-h"><span class="em">💡</span>Break out of the box</div>
+      <div class="neo-tips" id="neo-tips"></div>
+    </div>
+
+    <div class="neo-sec">
+      <div class="neo-h"><span class="em">🎹</span>Chord voicings</div>
+      <p class="neo-p">These are the sound of neo soul: 7ths, 9ths, 11ths and 13ths — richer than plain major/minor. All shown in <b>C</b> and all <b>movable</b> (the root sits on the A string, so slide the shape to any key). Tap a card to hear it.</p>
+      <div class="ch-grid" id="neo-lib"></div>
+    </div>
+
+    <div class="neo-sec">
+      <div class="neo-h"><span class="em">🔗</span>Signature progressions</div>
+      <p class="neo-p">The changes these voicings were made for. Tap a chord to hear it, or ▶ to play the whole thing.</p>
+      <div id="neo-prog"></div>
+    </div>
+
+    <div class="neo-sec">
+      <div class="neo-h"><span class="em">🎸</span>Scales to solo with</div>
+      <p class="neo-p">Tap one to load it on the Explore fretboard and start improvising over these vibes.</p>
+      <div class="neo-chips" id="neo-scales"></div>
+    </div>
+
+    <p class="hint">Neo soul rewards feel over speed — play behind the beat, let chords ring, and use space. One vamp for ten minutes beats ten licks in one minute.</p>
+  </div><!-- /view-neo -->
 
   <div id="view-quiz" hidden>
     <p class="sub" id="qsub">A blank neck. Tap a dashed circle, then pick the note that lives there. Fill them all, then hit Check.</p>
@@ -1935,11 +1999,160 @@ document.getElementById('m-clear').addEventListener('click', () => {
   mapHl = -1; mapIso = -1; renderMap();
 });
 
+/* ---------- neo soul & R&B toolkit ---------- */
+const OPEN_MIDI = [40, 45, 50, 55, 59, 64];   // low E -> high e
+// movable voicings, root on the A string; parts are [stringIndex, semitones-from-root]
+const NEO_VOICE = {
+  maj7:   [[1,0],[2,4],[3,7],[4,11],[5,16]],
+  maj9:   [[1,0],[2,4],[3,11],[4,14],[5,16]],
+  maj7s11:[[1,0],[2,4],[3,11],[5,18]],
+  s69:    [[1,0],[2,4],[3,9],[4,14],[5,19]],
+  add9:   [[1,0],[2,4],[3,7],[4,14],[5,16]],
+  m7:     [[1,0],[2,7],[3,10],[4,15],[5,19]],
+  m9:     [[1,0],[2,3],[3,10],[4,14],[5,19]],
+  m11:    [[1,0],[2,5],[3,10],[4,15]],
+  dom9:   [[1,0],[2,4],[3,10],[4,14],[5,16]],
+  dom13:  [[1,0],[2,4],[3,10],[4,14],[5,21]],
+  d7s9:   [[1,0],[2,4],[3,10],[4,15]],
+  d7b9:   [[1,0],[2,4],[3,10],[4,13]],
+  m7b5:   [[1,0],[2,6],[3,10],[4,15]],
+  dim7:   [[1,0],[2,6],[3,9],[4,15]],
+};
+const NEO_SUFFIX = {maj7:'maj7', maj9:'maj9', maj7s11:'maj7♯11', s69:'6/9', add9:'add9',
+  m7:'m7', m9:'m9', m11:'m11', dom9:'9', dom13:'13', d7s9:'7♯9', d7b9:'7♭9', m7b5:'m7♭5', dim7:'°7'};
+function neoVoicing(type, rootPc){
+  let rootFret = ((rootPc - 9) % 12 + 12) % 12;        // root note on the A string
+  const at = rf => NEO_VOICE[type].map(([str, semi]) => OPEN_MIDI[1] + rf + semi - OPEN_MIDI[str]);
+  if (at(rootFret).some(f => f < 0)) rootFret += 12;    // shift up an octave to stay on the neck
+  const fr = [-1,-1,-1,-1,-1,-1], midis = [];
+  NEO_VOICE[type].forEach(([str, semi], k) => {
+    const f = at(rootFret)[k];
+    fr[str] = f; midis.push(OPEN_MIDI[str] + f);
+  });
+  return {fr, midis, rootPc};
+}
+function neoName(rootPc, type){
+  const nm = noteFmt((FLAT_KEYS.has(rootPc) ? FLATS : SHARPS)[rootPc]);
+  return nm + NEO_SUFFIX[type];
+}
+function neoStrum(midis, when = 0, vel = 0.42){
+  [...midis].sort((a, b) => a - b).forEach((m, i) => pluck(m, when + i * 0.055, vel));
+}
+
+const NEO_LIB = [
+  ['maj7', 'Warm and resolved — your major home base.'],
+  ['maj9', "Dreamy and open — the classic neo-soul 'ahh'."],
+  ['maj7s11', 'Lydian shimmer — floaty and modern.'],
+  ['s69', 'Sweet and stable — a lush way to end.'],
+  ['add9', 'Plain major with a little sparkle on top.'],
+  ['m7', 'The mellow minor workhorse.'],
+  ['m9', 'Silky, sophisticated minor — everywhere in R&B.'],
+  ['m11', 'Suspended and moody — D’Angelo territory.'],
+  ['dom9', 'Funky and bluesy — pushes toward home.'],
+  ['dom13', 'Full and brassy — a rich dominant.'],
+  ['d7s9', "The 'Hendrix' chord — gritty tension."],
+  ['d7b9', 'Dark and spicy — loves to resolve to a minor.'],
+  ['m7b5', 'Half-diminished — the ii of a minor key.'],
+  ['dim7', 'Slippery passing chord between two others.'],
+];
+const NEO_PROGS = [
+  ['Major ii–V–I', 'the jazz & neo backbone', [[2,'m9'],[7,'dom13'],[0,'maj9']]],
+  ['Dorian vamp', 'loop it — instant D’Angelo groove', [[9,'m9'],[2,'dom13']]],
+  ['Neo turnaround', 'I–VI–ii–V with gospel flavor', [[0,'maj9'],[9,'d7b9'],[2,'m9'],[7,'dom13']]],
+  ['Minor ii–V–i', 'moody and cinematic', [[2,'m7b5'],[7,'d7b9'],[0,'m9']]],
+  ['Slow-jam R&B', 'I–iii–IV, silky and smooth', [[0,'maj9'],[4,'m9'],[5,'maj9']]],
+];
+const NEO_SCALES = [
+  ['Dorian', 2, 'Dorian', 'minor grooves & vamps'],
+  ['Mixolydian', 7, 'Mixolydian', 'over 9 & 13 dominant chords'],
+  ['Major Pentatonic', 0, 'Major Pentatonic', 'sweet major soul'],
+  ['Minor Pentatonic', 9, 'Minor Pentatonic', 'the bluesy R&B staple'],
+  ['Blues (minor)', 9, 'Blues (minor)', 'add the blue note'],
+  ['Lydian', 5, 'Lydian', 'dreamy major color'],
+];
+const NEO_TIPS = [
+  '<b>Think chords, not just scales.</b> Neo soul is a chord-melody genre — most of the magic is in the voicings and how they move, not in fast single-note runs.',
+  '<b>Add the 9, 11 and 13; drop the 5th.</b> Those upper extensions are the color. The plain 5th is the first note to leave out to make room for them.',
+  '<b>Learn the shapes as movable.</b> Every voicing here has its root on the A string — memorize the grip once and slide it to any key.',
+  '<b>Embellish with hammer-ons.</b> Hammer or pull from a half/whole step below a chord tone — that gospel “curl” — to bring a held chord to life.',
+  '<b>Use 3rds and 6ths.</b> Two-note double stops moving in parallel are the R&B rhythm sound — try the Double Stops toggle over in Explore.',
+  '<b>Approach chords chromatically.</b> Slide into any chord from a half step above or below for that smooth, slippery motion.',
+  '<b>Voice-lead.</b> Keep common tones and move only the nearest note when the chord changes — small moves sound expensive.',
+  '<b>Play behind the beat.</b> Relax the timing, let chords ring and leave space. In neo soul, feel beats flash every time.',
+];
+
+let neoBuilt = false, progToken = 0;
+function buildNeo(){
+  if (neoBuilt) return;
+  neoBuilt = true;
+  document.getElementById('neo-tips').innerHTML =
+    NEO_TIPS.map(t => `<div class="neo-tip">${t}</div>`).join('');
+
+  const lib = document.getElementById('neo-lib');
+  lib.innerHTML = NEO_LIB.map(([id, cap]) => {
+    const v = neoVoicing(id, 0);
+    return `<div class="ch-card" data-type="${id}">
+      <div class="ch-top"><span class="ch-name">${neoName(0, id)}</span></div>
+      ${chordSVG(v.fr, 0)}
+      <div class="neo-card-cap">${cap}</div>
+    </div>`;
+  }).join('');
+  lib.addEventListener('click', e => {
+    const card = e.target.closest('.ch-card');
+    if (card) neoStrum(neoVoicing(card.dataset.type, 0).midis);
+  });
+
+  const prog = document.getElementById('neo-prog');
+  prog.innerHTML = NEO_PROGS.map((p, pi) => {
+    const chips = p[2].map((c, ci) =>
+      `<button class="prog-ch" data-p="${pi}" data-i="${ci}">${neoName(c[0], c[1])}</button>`).join('');
+    return `<div class="prog">
+      <div class="prog-top">
+        <div class="prog-name">${p[0]}<small>${p[1]}</small></div>
+        <button class="prog-play" data-play="${pi}">&#9654; play</button>
+      </div>
+      <div class="prog-chords">${chips}</div>
+    </div>`;
+  }).join('');
+  prog.addEventListener('click', e => {
+    const play = e.target.closest('.prog-play');
+    if (play){ playProg(+play.dataset.play); return; }
+    const ch = e.target.closest('.prog-ch');
+    if (ch){ const c = NEO_PROGS[+ch.dataset.p][2][+ch.dataset.i]; neoStrum(neoVoicing(c[1], c[0]).midis); }
+  });
+
+  const sc = document.getElementById('neo-scales');
+  sc.innerHTML = NEO_SCALES.map(([disp, pc, name, blurb], i) =>
+    `<button class="neo-chip" data-i="${i}">${SHARPS[pc]} ${disp}<small>${blurb}</small></button>`).join('');
+  sc.addEventListener('click', e => {
+    const chip = e.target.closest('.neo-chip');
+    if (!chip) return;
+    const [, pc, name] = NEO_SCALES[+chip.dataset.i];
+    keyPc = pc; scaleName = name; anchor = null;
+    keySel.value = pc; scaleSel.value = name;
+    showTab('explore');
+  });
+}
+function playProg(pi){
+  const seq = NEO_PROGS[pi][2];
+  const chips = [...document.querySelectorAll(`.prog-ch[data-p="${pi}"]`)];
+  const my = ++progToken;
+  seq.forEach((c, i) => setTimeout(() => {
+    if (my !== progToken) return;
+    document.querySelectorAll('.prog-ch.play').forEach(e => e.classList.remove('play'));
+    if (chips[i]) chips[i].classList.add('play');
+    neoStrum(neoVoicing(c[1], c[0]).midis, 0, 0.45);
+    if (i === seq.length - 1)
+      setTimeout(() => { if (my === progToken && chips[i]) chips[i].classList.remove('play'); }, 950);
+  }, i * 1000));
+}
+
 /* ---------- tabs: folded into one button ---------- */
-const TAB_EMOJI = {explore:'🎸', map:'🗺️', quiz:'🎯', decoder:'🧭', chords:'✋'};
+const TAB_EMOJI = {explore:'🎸', map:'🗺️', neo:'🎹', quiz:'🎯', decoder:'🧭', chords:'✋'};
 const TAB_VIEWS = {
   explore: document.getElementById('view-explore'),
   map:     document.getElementById('view-map'),
+  neo:     document.getElementById('view-neo'),
   quiz:    document.getElementById('view-quiz'),
   decoder: document.getElementById('view-decoder'),
   chords:  document.getElementById('view-chords'),
@@ -1959,6 +2172,9 @@ function showTab(t){
   if (t === 'map'){
     document.getElementById('title').textContent = 'Fretboard Map';
     renderMap();
+  } else if (t === 'neo'){
+    document.getElementById('title').textContent = 'Neo Soul & R&B';
+    buildNeo();
   } else if (t === 'quiz'){
     document.getElementById('title').textContent = 'Quiz Arcade';
     if (!quizStarted) newQuiz();
