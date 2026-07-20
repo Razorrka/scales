@@ -191,6 +191,24 @@
   .neo-tip{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--root);
     border-radius:12px;padding:11px 14px;color:var(--muted);font-size:13.5px;line-height:1.55}
   .neo-tip b{color:var(--ink)}
+  .deg-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px}
+  .deg-pill{display:flex;align-items:center;gap:11px;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;padding:9px 12px;cursor:pointer;text-align:left;font:inherit;
+    transition:border-color .12s,transform .1s}
+  .deg-pill:hover{border-color:var(--root)}
+  .deg-pill:active{transform:scale(.97)}
+  .deg-num{width:32px;height:32px;flex:none;border-radius:50%;background:var(--root);color:#10131f;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;
+    box-shadow:0 0 12px var(--glow-root)}
+  .deg-txt{line-height:1.3}
+  .deg-txt b{color:var(--ink);font-size:13.5px}
+  .deg-txt small{display:block;color:var(--muted);font-size:11px}
+  .deg-build{display:grid;gap:6px;margin-top:4px}
+  .deg-row{display:flex;gap:12px;align-items:baseline;background:var(--panel);border:1px solid var(--line);
+    border-radius:10px;padding:9px 13px;font-size:13px}
+  .deg-row .nm{font-weight:800;color:var(--ink);min-width:82px;flex:none}
+  .deg-row .seq{color:var(--muted);letter-spacing:.16em;font-weight:700}
+  .deg-row .seq .hot{color:var(--root)}
   .neo-card-cap{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.35;padding:0 2px 4px}
   .neo-chips{display:flex;flex-wrap:wrap;gap:8px}
   .neo-chip{font:inherit;font-weight:700;font-size:13px;color:var(--ink);background:var(--panel);
@@ -704,6 +722,14 @@
     <div class="neo-sec">
       <div class="neo-h"><span class="em">💡</span>Break out of the box</div>
       <div class="neo-tips" id="neo-tips"></div>
+    </div>
+
+    <div class="neo-sec">
+      <div class="neo-h"><span class="em">🔢</span>What the numbers mean</div>
+      <p class="neo-p">Chord names look like math, but every number is just a <b>step of the major scale</b>. Start on the root and count up — and past 8, the numbers keep climbing instead of resetting. Tap one to hear its color (the root plus that note).</p>
+      <div class="deg-strip" id="neo-degs"></div>
+      <p class="neo-p" style="margin-top:14px">Chords are built by <b>stacking every other note</b>, so we skip by odd numbers: <b>1 → 3 → 5 → 7 → 9 → 11 → 13</b>. The big ones are just the small ones an octave higher — the <b>9</b> is the 2, the <b>11</b> is the 4, the <b>13</b> is the 6. And a <b>♭</b> or <b>♯</b> in front (like ♭7 or ♯11) simply nudges that one note a fret down or up.</p>
+      <div class="deg-build" id="neo-build"></div>
     </div>
 
     <div class="neo-sec">
@@ -2081,12 +2107,45 @@ const NEO_TIPS = [
   '<b>Play behind the beat.</b> Relax the timing, let chords ring and leave space. In neo soul, feel beats flash every time.',
 ];
 
+// [degree, semitones from root, note in C, short name, plain-English feel]
+const NEO_DEGS = [
+  [1, 0, 'C', 'Root', 'home — where it all rests'],
+  [3, 4, 'E', '3rd', 'major = bright, minor = sad'],
+  [5, 7, 'G', '5th', 'rock-solid anchor (safe to drop)'],
+  [7, 11, 'B', '7th', 'the smooth jazz / soul tension'],
+  [9, 14, 'D', '9th', 'shimmer & sophistication'],
+  [11, 17, 'F', '11th', 'floaty and suspended'],
+  [13, 21, 'A', '13th', 'full and lush'],
+];
+const NEO_BUILD = [
+  ['Triad', ['1','3','5']],
+  ['7th chord', ['1','3','5','7']],
+  ['9th chord', ['1','3','5','7','9']],
+  ['11th chord', ['1','3','5','7','9','11']],
+  ['13th chord', ['1','3','5','7','9','11','13']],
+];
+
 let neoBuilt = false, progToken = 0;
 function buildNeo(){
   if (neoBuilt) return;
   neoBuilt = true;
   document.getElementById('neo-tips').innerHTML =
     NEO_TIPS.map(t => `<div class="neo-tip">${t}</div>`).join('');
+
+  const degs = document.getElementById('neo-degs');
+  degs.innerHTML = NEO_DEGS.map(([n, semi, note, name, feel]) =>
+    `<button class="deg-pill" data-semi="${semi}">
+      <span class="deg-num">${n}</span>
+      <span class="deg-txt"><b>${name} · ${note}</b><small>${feel}</small></span>
+    </button>`).join('');
+  degs.addEventListener('click', e => {
+    const p = e.target.closest('.deg-pill');
+    if (p){ pluck(60, 0, 0.45); pluck(60 + +p.dataset.semi, 0.05, 0.45); }
+  });
+  document.getElementById('neo-build').innerHTML = NEO_BUILD.map(([nm, seq]) =>
+    `<div class="deg-row"><span class="nm">${nm}</span><span class="seq">` +
+    seq.map((d, i) => i === seq.length - 1 ? `<span class="hot">${d}</span>` : d).join(' ') +
+    `</span></div>`).join('');
 
   const lib = document.getElementById('neo-lib');
   lib.innerHTML = NEO_LIB.map(([id, cap]) => {
