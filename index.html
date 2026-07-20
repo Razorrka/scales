@@ -471,7 +471,10 @@
   .orb[data-t="peach"].active{box-shadow:0 0 14px rgba(255,125,100,.8)}
   .orb[data-t="tokyo"]{background:linear-gradient(135deg,#ff3ddc,#8a3dff)}
   .orb[data-t="tokyo"].active{box-shadow:0 0 14px rgba(255,61,220,.8)}
+  .orb[data-t="teak"]{background:linear-gradient(135deg,#7a4a24,#d8a24e)}
+  .orb[data-t="teak"].active{box-shadow:0 0 14px rgba(216,162,78,.8)}
   .orb[data-t="custom"].active{box-shadow:0 0 14px rgba(255,255,255,.55)}
+  #sv-mixer .mx-seed[data-seed="teak"]{background:linear-gradient(135deg,#7a4a24,#d8a24e)}
   .orb-add{width:24px;height:24px;border-radius:50%;cursor:pointer;flex:none;
     display:flex;align-items:center;justify-content:center;
     border:2px dashed rgba(255,255,255,.4);color:rgba(255,255,255,.75);
@@ -599,6 +602,7 @@
     <div class="orb" data-t="pom" title="pomegranate"></div>
     <div class="orb" data-t="peach" title="peach glow"></div>
     <div class="orb" data-t="tokyo" title="tokyo"></div>
+    <div class="orb" data-t="teak" title="teak wood"></div>
     <div class="orb" data-t="custom" title="yours" hidden></div>
     <div class="orb-add" id="orb-add" title="mix your own colors">+</div>
   </div>
@@ -616,6 +620,7 @@
     <button class="mx-seed" data-seed="pom" title="pomegranate"></button>
     <button class="mx-seed" data-seed="peach" title="peach"></button>
     <button class="mx-seed" data-seed="tokyo" title="tokyo"></button>
+    <button class="mx-seed" data-seed="teak" title="teak wood"></button>
   </div>
   <div class="mx-sec">base</div>
   <label>background <input type="color" id="mx-bg" value="#0d1220"></label>
@@ -624,6 +629,7 @@
       <option value="aurora" selected>Aurora</option>
       <option value="vignette">Vignette</option>
       <option value="mesh">Mesh</option>
+      <option value="wood">Wood grain</option>
       <option value="flat">Flat</option>
     </select>
   </label>
@@ -2555,6 +2561,8 @@ const PRESET_SEED = {
          scale:'#ff9d5c',root:'#ff5e82',good:'#2ecc8f',bad:'#ff5d6c',glow:60,radius:16,bgStyle:'mesh'},
   tokyo:{bg:'#120521',panel:'#1e0a33',line:'#45207a',ink:'#f0dcff',muted:'#a883cc',logo:'#ff3ddc',
          scale:'#b45cff',root:'#ff3ddc',good:'#2ecc8f',bad:'#ff5d6c',glow:70,radius:18,bgStyle:'mesh'},
+  teak:{bg:'#33200f',panel:'#241610',line:'#5a3d24',ink:'#f4e3cf',muted:'#c19a76',logo:'#e0a95c',
+        scale:'#d8a24e',root:'#e8863c',good:'#8fbf5a',bad:'#e2665c',glow:35,radius:14,bgStyle:'wood'},
 };
 const customOrb = document.querySelector('.orb[data-t="custom"]');
 const orbMain = document.getElementById('orb-main');
@@ -2587,9 +2595,26 @@ function hexA(h, a){
   const p = parseInt(h.slice(1), 16);
   return `rgba(${(p>>16)&255},${(p>>8)&255},${p&255},${a})`;
 }
+/* procedural teak wood grain — inline SVG so it works offline */
+const WOOD_SVG =
+  "<svg xmlns='http://www.w3.org/2000/svg' width='840' height='840'>" +
+  "<rect width='840' height='840' fill='#946039'/>" +
+  "<filter id='d'><feTurbulence type='fractalNoise' baseFrequency='0.006 0.52' numOctaves='5' seed='9' stitchTiles='stitch'/>" +
+  "<feColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.45 -0.36'/></filter>" +
+  "<rect width='840' height='840' filter='url(#d)' fill='#3c2412'/>" +
+  "<filter id='m'><feTurbulence type='fractalNoise' baseFrequency='0.004 0.9' numOctaves='3' seed='3' stitchTiles='stitch'/>" +
+  "<feColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.9 -0.4'/></filter>" +
+  "<rect width='840' height='840' filter='url(#m)' fill='#5a3a1f'/>" +
+  "<filter id='l'><feTurbulence type='fractalNoise' baseFrequency='0.005 0.3' numOctaves='4' seed='42' stitchTiles='stitch'/>" +
+  "<feColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.0 -0.44'/></filter>" +
+  "<rect width='840' height='840' filter='url(#l)' fill='#d19a56'/></svg>";
+const WOOD_URL = 'url("data:image/svg+xml,' + encodeURIComponent(WOOD_SVG) + '")';
+
 function bgCss(c, g){
   const style = c.bgStyle || 'aurora';
   if (style === 'flat') return c.bg;
+  if (style === 'wood')
+    return `linear-gradient(180deg, ${hexA(c.bg,.62)} 0%, ${hexA(c.bg,.14)} 26%, ${hexA(c.bg,0)} 50%, ${hexA(c.bg,.28)} 100%), ${WOOD_URL} center center / cover no-repeat fixed`;
   if (style === 'vignette')
     return `radial-gradient(120% 120% at 50% 0%, ${hexMix(c.bg, c.ink, .06)} 0%, ${c.bg} 45%, ${hexMix(c.bg, '#000000', .35)} 100%)`;
   if (style === 'mesh')
@@ -2721,7 +2746,10 @@ orbMain.addEventListener('click', () => { thOpts.hidden = !thOpts.hidden; });
 thOpts.addEventListener('click', e => {
   if (e.target.closest('.orb-add')){ thOpts.hidden = true; openMixer(); return; }
   const orb = e.target.closest('.orb');
-  if (orb){ setTheme(orb.dataset.t); thOpts.hidden = true; }
+  if (!orb) return;
+  thOpts.hidden = true;
+  if (orb.dataset.t === 'teak'){ customs[curTab] = {...PRESET_SEED.teak}; setTheme('custom'); return; }
+  setTheme(orb.dataset.t);
 });
 [mxBg, mxPanel, mxLine, mxInk, mxMuted, mxLogo, mxScale, mxRoot, mxGood, mxBad, mxRadius, mxGlow]
   .forEach(el => el.addEventListener('input', applyMixer));
