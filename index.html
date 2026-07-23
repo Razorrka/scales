@@ -249,6 +249,12 @@
   .prog-ch small{display:block;color:var(--muted);font-weight:600;font-size:10px;margin-top:1px}
   .prog-ch:hover{border-color:var(--root)}
   .prog-ch.play{border-color:var(--root);box-shadow:0 0 12px var(--glow-root);transform:translateY(-2px)}
+  .kc-legend{font-size:12.5px;color:var(--muted);margin:-4px 0 12px;line-height:1.95}
+  .kc-fn{font-weight:800;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}
+  .ch-card .kc-fn{margin-top:2px;padding-bottom:4px}
+  .kc-home{color:#3fae7a}
+  .kc-away{color:#4f8bd6}
+  .kc-tension{color:#e0913c}
 
   /* neck quiz */
   #qgrid,#qfrets{grid-template-columns:34px repeat(13,minmax(44px,1fr));min-width:640px}
@@ -778,6 +784,18 @@
         </div>
       </div>
       <div class="ch-grid" id="neo-lib"></div>
+    </div>
+
+    <div class="neo-sec">
+      <div class="neo-h"><span class="em">🔑</span>Chords that belong together</div>
+      <p class="neo-p">These seven chords are all built from <b id="neo-key-name">C</b> major, so <b>any of them sound good together</b> — they're one family. Each has a job:</p>
+      <div class="kc-legend">
+        <span class="kc-fn kc-home">● Home</span> — feels resolved &nbsp;·&nbsp;
+        <span class="kc-fn kc-away">● Away</span> — feels like motion &nbsp;·&nbsp;
+        <span class="kc-fn kc-tension">● Tension</span> — pulls back home
+      </div>
+      <div class="ch-grid" id="neo-key-chords"></div>
+      <p class="neo-p" style="margin-top:12px">A progression is just a trip through those jobs — most go <b>Home → Away → Tension → Home</b>. Safe bets that always work in the key: <b>I–IV–V</b>, <b>ii–V–I</b>, <b>I–vi–IV–V</b>, <b>vi–IV–I–V</b>.</p>
     </div>
 
     <div class="neo-sec">
@@ -2271,6 +2289,18 @@ function neoName(rootPc, type){
   const nm = noteFmt((FLAT_KEYS.has(rootPc) ? FLATS : SHARPS)[rootPc]);
   return nm + NEO_SUFFIX[type];
 }
+/* spell a diatonic scale degree with the correct letter for the key */
+const SPELL_LETTERS = ['C','D','E','F','G','A','B'];
+const SPELL_LETTER_PC = [0,2,4,5,7,9,11];
+const KEY_TONIC = {0:'C',1:'Db',2:'D',3:'Eb',4:'E',5:'F',6:'F#',7:'G',8:'Ab',9:'A',10:'Bb',11:'B'};
+function spellInKey(keyPc, degIdx){
+  const tonic = KEY_TONIC[keyPc];
+  const li = (SPELL_LETTERS.indexOf(tonic[0]) + degIdx) % 7;
+  const targetPc = (keyPc + NEO_MAJ[degIdx]) % 12;
+  let diff = ((targetPc - SPELL_LETTER_PC[li] + 6) % 12 + 12) % 12 - 6;
+  const acc = diff === 0 ? '' : diff > 0 ? '♯'.repeat(diff) : '♭'.repeat(-diff);
+  return SPELL_LETTERS[li] + acc;
+}
 function neoStrum(midis, when = 0, vel = 0.42){
   [...midis].sort((a, b) => a - b).forEach((m, i) => pluck(m, when + i * 0.055, vel));
 }
@@ -2410,7 +2440,32 @@ const NEO_LESSONS = [
     <p>Do a little every day. Feel and vocabulary both come from reps, not reading — so read this once, then <b>go play.</b></p>`],
 ];
 
+// the diatonic family of a major key: [roman, neo voicing, function, label]
+const DIATONIC = [
+  ['I', 'maj9', 'home', 'Home'],
+  ['ii', 'm9', 'away', 'Away'],
+  ['iii', 'm7', 'home', 'Home'],
+  ['IV', 'maj9', 'away', 'Away'],
+  ['V', 'dom13', 'tension', 'Tension'],
+  ['vi', 'm9', 'home', 'Home'],
+  ['vii°', 'm7b5', 'tension', 'Tension'],
+];
+const NEO_MAJ = [0,2,4,5,7,9,11];
 let neoBuilt = false, progToken = 0, neoKey = 0;
+function renderNeoKeyChords(){
+  const NN = FLAT_KEYS.has(neoKey) ? FLATS : SHARPS;
+  const kn = document.getElementById('neo-key-name');
+  if (kn) kn.textContent = noteFmt(NN[neoKey]);
+  document.getElementById('neo-key-chords').innerHTML = DIATONIC.map(([rn, type, fn, lbl], i) => {
+    const root = (neoKey + NEO_MAJ[i]) % 12;
+    const v = neoVoicing(type, root);
+    return `<div class="ch-card" data-root="${root}" data-type="${type}">
+      <div class="ch-top"><span class="ch-degpill">${rn}</span><span class="ch-name">${spellInKey(neoKey, i) + NEO_SUFFIX[type]}</span></div>
+      ${chordSVG(v.fr, root)}
+      <div class="kc-fn kc-${fn}">${lbl}</div>
+    </div>`;
+  }).join('');
+}
 function renderNeoLib(){
   document.getElementById('neo-lib').innerHTML = NEO_LIB.map(([id, cap]) => {
     const v = neoVoicing(id, neoKey);
@@ -2472,12 +2527,18 @@ function buildNeo(){
     keySel.appendChild(o);
   });
   keySel.value = neoKey;
-  keySel.addEventListener('change', () => { neoKey = +keySel.value; renderNeoLib(); renderNeoProg(); });
+  keySel.addEventListener('change', () => {
+    neoKey = +keySel.value; renderNeoLib(); renderNeoKeyChords(); renderNeoProg();
+  });
 
   const lib = document.getElementById('neo-lib');
   lib.addEventListener('click', e => {
     const card = e.target.closest('.ch-card');
     if (card) neoStrum(neoVoicing(card.dataset.type, neoKey).midis);
+  });
+  document.getElementById('neo-key-chords').addEventListener('click', e => {
+    const card = e.target.closest('.ch-card');
+    if (card) neoStrum(neoVoicing(card.dataset.type, +card.dataset.root).midis);
   });
   const prog = document.getElementById('neo-prog');
   prog.addEventListener('click', e => {
@@ -2488,6 +2549,7 @@ function buildNeo(){
       neoStrum(neoVoicing(c[1], (c[0] + neoKey) % 12).midis); }
   });
   renderNeoLib();
+  renderNeoKeyChords();
   renderNeoProg();
 
   const sc = document.getElementById('neo-scales');
