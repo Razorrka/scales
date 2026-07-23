@@ -770,7 +770,13 @@
 
     <div class="neo-sec">
       <div class="neo-h"><span class="em">🎹</span>Chord voicings</div>
-      <p class="neo-p">These are the sound of neo soul: 7ths, 9ths, 11ths and 13ths — richer than plain major/minor. All shown in <b>C</b> and all <b>movable</b> (the root sits on the A string, so slide the shape to any key). Tap a card to hear it.</p>
+      <p class="neo-p">The sound of neo soul: 7ths, 9ths, 11ths and 13ths — richer than plain major/minor. They're all <b>movable</b> (root on the A string), so pick a key and every voicing — and the progressions below — moves with it. Tap a card to hear it.</p>
+      <div class="bar" style="margin:0 0 14px">
+        <div>
+          <span class="lab">Key for these chords</span>
+          <select id="neo-key" aria-label="Key for the neo soul chords"></select>
+        </div>
+      </div>
       <div class="ch-grid" id="neo-lib"></div>
     </div>
 
@@ -2404,7 +2410,30 @@ const NEO_LESSONS = [
     <p>Do a little every day. Feel and vocabulary both come from reps, not reading — so read this once, then <b>go play.</b></p>`],
 ];
 
-let neoBuilt = false, progToken = 0;
+let neoBuilt = false, progToken = 0, neoKey = 0;
+function renderNeoLib(){
+  document.getElementById('neo-lib').innerHTML = NEO_LIB.map(([id, cap]) => {
+    const v = neoVoicing(id, neoKey);
+    return `<div class="ch-card" data-type="${id}">
+      <div class="ch-top"><span class="ch-name">${neoName(neoKey, id)}</span></div>
+      ${chordSVG(v.fr, neoKey)}
+      <div class="neo-card-cap">${cap}</div>
+    </div>`;
+  }).join('');
+}
+function renderNeoProg(){
+  document.getElementById('neo-prog').innerHTML = NEO_PROGS.map((p, pi) => {
+    const chips = p[2].map((c, ci) =>
+      `<button class="prog-ch" data-p="${pi}" data-i="${ci}">${neoName((c[0] + neoKey) % 12, c[1])}</button>`).join('');
+    return `<div class="prog">
+      <div class="prog-top">
+        <div class="prog-name">${p[0]}<small>${p[1]}</small></div>
+        <button class="prog-play" data-play="${pi}">&#9654; play</button>
+      </div>
+      <div class="prog-chords">${chips}</div>
+    </div>`;
+  }).join('');
+}
 function buildNeo(){
   if (neoBuilt) return;
   neoBuilt = true;
@@ -2435,38 +2464,31 @@ function buildNeo(){
     seq.map((d, i) => i === seq.length - 1 ? `<span class="hot">${d}</span>` : d).join(' ') +
     `</span></div>`).join('');
 
+  const keySel = document.getElementById('neo-key');
+  SHARPS.forEach((_, pc) => {
+    const o = document.createElement('option');
+    o.value = pc;
+    o.textContent = SHARPS[pc] === FLATS[pc] ? SHARPS[pc] : `${SHARPS[pc]} / ${FLATS[pc]}`;
+    keySel.appendChild(o);
+  });
+  keySel.value = neoKey;
+  keySel.addEventListener('change', () => { neoKey = +keySel.value; renderNeoLib(); renderNeoProg(); });
+
   const lib = document.getElementById('neo-lib');
-  lib.innerHTML = NEO_LIB.map(([id, cap]) => {
-    const v = neoVoicing(id, 0);
-    return `<div class="ch-card" data-type="${id}">
-      <div class="ch-top"><span class="ch-name">${neoName(0, id)}</span></div>
-      ${chordSVG(v.fr, 0)}
-      <div class="neo-card-cap">${cap}</div>
-    </div>`;
-  }).join('');
   lib.addEventListener('click', e => {
     const card = e.target.closest('.ch-card');
-    if (card) neoStrum(neoVoicing(card.dataset.type, 0).midis);
+    if (card) neoStrum(neoVoicing(card.dataset.type, neoKey).midis);
   });
-
   const prog = document.getElementById('neo-prog');
-  prog.innerHTML = NEO_PROGS.map((p, pi) => {
-    const chips = p[2].map((c, ci) =>
-      `<button class="prog-ch" data-p="${pi}" data-i="${ci}">${neoName(c[0], c[1])}</button>`).join('');
-    return `<div class="prog">
-      <div class="prog-top">
-        <div class="prog-name">${p[0]}<small>${p[1]}</small></div>
-        <button class="prog-play" data-play="${pi}">&#9654; play</button>
-      </div>
-      <div class="prog-chords">${chips}</div>
-    </div>`;
-  }).join('');
   prog.addEventListener('click', e => {
     const play = e.target.closest('.prog-play');
     if (play){ playProg(+play.dataset.play); return; }
     const ch = e.target.closest('.prog-ch');
-    if (ch){ const c = NEO_PROGS[+ch.dataset.p][2][+ch.dataset.i]; neoStrum(neoVoicing(c[1], c[0]).midis); }
+    if (ch){ const c = NEO_PROGS[+ch.dataset.p][2][+ch.dataset.i];
+      neoStrum(neoVoicing(c[1], (c[0] + neoKey) % 12).midis); }
   });
+  renderNeoLib();
+  renderNeoProg();
 
   const sc = document.getElementById('neo-scales');
   sc.innerHTML = NEO_SCALES.map(([disp, pc, name, blurb], i) =>
@@ -2494,7 +2516,7 @@ function playProg(pi){
     if (my !== progToken) return;
     document.querySelectorAll('.prog-ch.play').forEach(e => e.classList.remove('play'));
     if (chips[i]) chips[i].classList.add('play');
-    neoStrum(neoVoicing(c[1], c[0]).midis, 0, 0.45);
+    neoStrum(neoVoicing(c[1], (c[0] + neoKey) % 12).midis, 0, 0.45);
     if (i === seq.length - 1)
       setTimeout(() => { if (my === progToken && chips[i]) chips[i].classList.remove('play'); }, 950);
   }, i * 1000));
