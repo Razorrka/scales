@@ -281,6 +281,8 @@
   .pal:hover:not(:disabled){border-color:var(--scale)}
   .pal:disabled{opacity:.35;cursor:default}
   .pal.on{border-color:var(--root);color:var(--root);box-shadow:0 0 10px var(--glow-root)}
+  .pal.good{background:var(--good);border-color:transparent;color:#04130c}
+  .pal.bad{background:var(--bad);border-color:transparent;color:#2a0308}
 
   /* fretboard map — study tool */
   #mgrid,#mfrets{grid-template-columns:34px repeat(13,minmax(44px,1fr));min-width:640px}
@@ -340,6 +342,8 @@
   .qc-ask{display:block;margin-top:8px;font-size:14.5px;font-weight:600;color:var(--muted);text-transform:none;letter-spacing:0}
   .qc-note{font-size:12.5px;font-weight:600;color:var(--muted);min-height:1em;margin:-6px 0 12px}
   .qc-note b{color:var(--scale)}
+  .qc-note b.ok{color:var(--good)}
+  .qc-note b.no{color:var(--bad)}
   .qc-a{font-size:66px;font-weight:800;color:var(--root);margin:14px 0;line-height:1;min-height:66px;
     opacity:.18;transition:opacity .15s;filter:drop-shadow(0 0 16px var(--glow-root))}
   .qc-a.shown{opacity:1}
@@ -914,14 +918,14 @@
       </div>
     </div>
 
-    <div class="palette" id="palette"></div>
-    <div class="qchoices" id="qchoices" hidden></div>
     <div class="qcard" id="qcard" hidden>
       <div class="qc-q" id="qc-q"></div>
       <div class="qc-a" id="qc-a">?</div>
       <div class="qc-note" id="qc-note"></div>
       <div class="qc-actions" id="qc-actions"></div>
     </div>
+    <div class="palette" id="palette"></div>
+    <div class="qchoices" id="qchoices" hidden></div>
     <p class="qresult" id="qresult"></p>
     <p class="hint" id="qhint">Fret 0 is the open string. Tap a filled dot to change your answer before checking.</p>
   </div><!-- /view-quiz -->
@@ -1899,68 +1903,64 @@ function learnGuess(pc, btn){
   }
 }
 
-/* ---------------- game: Flashcards (string + fret -> recall the note) ---------------- */
+/* shared: after an answer, pause on the result then move on */
+function flashAdvance(label){
+  const id = game.id;
+  setTimeout(() => {
+    if (!game || game.id !== id || game.done) return;
+    if (game.round >= game.total) finishRounds(label);
+    else (game.mode === 'cards' ? nextCard : nextNeighbor)();
+  }, game.correct ? 780 : 1500);
+}
+function clearPal(){ paletteEl.querySelectorAll('.pal').forEach(b => { b.classList.remove('good','bad'); b.disabled = false; }); }
+
+/* ---------------- game: Flashcards (string + fret -> tap the note) ---------------- */
 function startCards(){
-  say('Flash-card recall. You get a string and a fret — picture the note, say it out loud, then reveal to check.',
-      'Grade yourself honestly. This is how the neck gets memorized: a few reps, every day.');
-  setQUI({card:true});
+  say('Flash-card recall — you get a string and a fret, tap the note it is. The app checks you.',
+      'One tap per card: green if you nailed it, and a miss shows the note it really was.');
+  setQUI({card:true, palette:true});
   game = {mode:'cards', round:0, total:20, score:0, firstTry:0, id:Date.now()};
+  palHandler = (pc, btn) => cardGuess(pc, btn);
   nextCard();
 }
 function nextCard(){
   game.round++;
   const s = rand(6), f = rand(QFRETS + 1);
   game.card = {s, f, pc:(STRINGS[s].pc + f) % 12, midi: STRINGS[s].midi + f};
-  game.revealed = false;
+  game.answered = false;
+  clearPal();
   renderCard();
 }
 function renderCard(){
   const c = game.card;
   document.getElementById('qc-q').innerHTML =
-    `String &amp; fret<b>${STRINGS[c.s].say} string &middot; fret ${c.f}</b>`;
+    `String &amp; fret<b>${STRINGS[c.s].say} string &middot; fret ${c.f}</b><span class="qc-ask">tap the note below</span>`;
   const a = document.getElementById('qc-a');
-  a.textContent = game.revealed ? noteBoth(c.pc) : '?';
-  a.classList.toggle('shown', game.revealed);
-  document.getElementById('qc-note').textContent = '';
-  flashActions();
+  a.textContent = game.answered ? noteBoth(c.pc) : '?';
+  a.classList.toggle('shown', game.answered);
+  document.getElementById('qc-note').innerHTML = !game.answered ? '' :
+    (game.correct ? '<b class="ok">&#10003; correct</b>' : `<b class="no">&#10007; you tapped ${noteBoth(game.guessPc)}</b>`);
+  document.getElementById('qc-actions').innerHTML = '';
   progress(`card ${game.round} / ${game.total}`);
 }
-/* shared flashcard controls for the reveal/self-grade games */
-function flashActions(){
-  const act = document.getElementById('qc-actions');
-  act.innerHTML = '';
-  const mk = (lbl, cls, fn) => {
-    const b = document.createElement('button');
-    b.className = cls; b.innerHTML = lbl;
-    b.addEventListener('click', ev => { ev.stopPropagation(); fn(); });
-    act.appendChild(b);
-  };
-  if (!game.revealed) mk('Reveal', 'qc-reveal', revealFlash);
-  else { mk('&#10003; Knew it', 'qc-knew', () => gradeFlash(true));
-         mk('&#10007; Missed it', 'qc-missed', () => gradeFlash(false)); }
+function cardGuess(pc, btn){
+  if (game.answered) return;
+  game.answered = true; game.guessPc = pc; game.correct = pc === game.card.pc;
+  if (game.correct){ game.score += 15; game.firstTry++; }
+  if (btn) btn.classList.add(game.correct ? 'good' : 'bad');
+  paletteEl.querySelectorAll('.pal').forEach(b => { b.disabled = true; });
+  pluck(game.card.midi, 0, 0.5);
+  renderCard();
+  flashAdvance('Flashcards');
 }
-function revealFlash(){
-  if (game.revealed) return;
-  game.revealed = true;
-  if (game.mode === 'cards'){ pluck(game.card.midi, 0, 0.5); renderCard(); }
-  else { pluck(game.nb.baseMidi, 0, 0.45); pluck(game.nb.aboveMidi, 0.32, 0.5); renderNeighbor(); }
-}
-function gradeFlash(knew){
-  if (knew){ game.score += 15; game.firstTry++; }
-  const id = game.id, done = game.round >= game.total;
-  if (done) finishRounds(game.mode === 'cards' ? 'Flashcards' : 'Across strings');
-  else if (game && game.id === id) (game.mode === 'cards' ? nextCard : nextNeighbor)();
-}
-qcardEl.addEventListener('click', () => {
-  if (game && !game.revealed && (game.mode === 'cards' || game.mode === 'neighbors')) revealFlash();
-});
 
-/* ---------------- game: Across strings (same fret, the string above) ---------------- */
+/* ---------------- game: Across strings (tap the neighbour's note) ---------------- */
 function startNeighbors(){
-  say('String relationships. You get a note on one string — name the note directly above it, same fret.',
-      'Neighbours are a 4th apart… except G → B, which is a major 3rd. Reveal to check, then grade yourself.');
-  setQUI({card:true});
+  say('String relationships — you get a note on one string, tap the note directly above it at the same fret.',
+      'Neighbours are a 4th apart… except G → B, a major 3rd. Tap your answer; the app checks and shows the real note.');
+  setQUI({card:true, palette:true});
   game = {mode:'neighbors', round:0, total:20, score:0, firstTry:0, id:Date.now()};
+  palHandler = (pc, btn) => neighborGuess(pc, btn);
   nextNeighbor();
 }
 function nextNeighbor(){
@@ -1971,23 +1971,35 @@ function nextNeighbor(){
   game.nb = {base, above, f,
     basePc:(STRINGS[base].pc + f) % 12, abovePc:(STRINGS[above].pc + f) % 12,
     baseMidi:STRINGS[base].midi + f, aboveMidi:STRINGS[above].midi + f};
-  game.revealed = false;
+  game.answered = false;
+  clearPal();
   renderNeighbor();
 }
 function renderNeighbor(){
   const nb = game.nb;
   document.getElementById('qc-q').innerHTML =
-    `The string above<b>${STRINGS[nb.base].say} · fret ${nb.f} = ${noteBoth(nb.basePc)}</b>` +
-    `<span class="qc-ask">the ${STRINGS[nb.above].say} string just above, same fret, is…?</span>`;
+    `The string above<b>${STRINGS[nb.base].say} &middot; fret ${nb.f} = ${noteBoth(nb.basePc)}</b>` +
+    `<span class="qc-ask">tap the ${STRINGS[nb.above].say} string's note (same fret)</span>`;
   const a = document.getElementById('qc-a');
-  a.textContent = game.revealed ? noteBoth(nb.abovePc) : '?';
-  a.classList.toggle('shown', game.revealed);
+  a.textContent = game.answered ? noteBoth(nb.abovePc) : '?';
+  a.classList.toggle('shown', game.answered);
   const semis = STRINGS[nb.above].midi - STRINGS[nb.base].midi;
-  document.getElementById('qc-note').innerHTML = game.revealed
-    ? `${STRINGS[nb.base].lbl} → ${STRINGS[nb.above].lbl} is ${semis === 5 ? 'a <b>perfect 4th</b> up' : 'a <b>major 3rd</b> up — the one odd pair (G→B)'}`
-    : '';
-  flashActions();
+  document.getElementById('qc-note').innerHTML = !game.answered ? '' :
+    (game.correct ? '<b class="ok">&#10003; correct</b> &middot; ' : `<b class="no">&#10007; you tapped ${noteBoth(game.guessPc)}</b> &middot; `) +
+    `${STRINGS[nb.base].lbl} → ${STRINGS[nb.above].lbl} is ${semis === 5 ? 'a perfect 4th up' : 'a major 3rd up (G→B)'}`;
+  document.getElementById('qc-actions').innerHTML = '';
   progress(`card ${game.round} / ${game.total}`);
+}
+function neighborGuess(pc, btn){
+  if (game.answered) return;
+  const nb = game.nb;
+  game.answered = true; game.guessPc = pc; game.correct = pc === nb.abovePc;
+  if (game.correct){ game.score += 15; game.firstTry++; }
+  if (btn) btn.classList.add(game.correct ? 'good' : 'bad');
+  paletteEl.querySelectorAll('.pal').forEach(b => { b.disabled = true; });
+  pluck(nb.baseMidi, 0, 0.4); pluck(nb.aboveMidi, 0.3, 0.5);
+  renderNeighbor();
+  flashAdvance('Across strings');
 }
 
 /* ---------------- game 9: Major or minor (ear) ---------------- */
