@@ -531,6 +531,11 @@
   #sv-mixer .mx-seed[data-seed="tokyo"]{background:linear-gradient(135deg,#ff3ddc,#8a3dff)}
   #sv-mixer .mx-select{font:inherit;font-size:12px;color:var(--ink);background:var(--panel-2);
     border:1px solid var(--line);border-radius:8px;padding:5px 8px;cursor:pointer}
+  #sv-mixer .mx-photo-row{display:flex;gap:6px;margin:8px 0 2px}
+  #sv-mixer .mx-photo-row button{font:inherit;font-size:12px;font-weight:700;color:var(--ink);
+    background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;cursor:pointer}
+  #sv-mixer #mx-photo-btn{flex:1}
+  #sv-mixer .mx-photo-row button:hover{border-color:var(--scale)}
   #sv-mixer .mx-sec{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
     color:var(--muted);margin:10px 0 0;border-top:1px solid var(--line);padding-top:8px}
   #sv-mixer label{display:flex;align-items:center;justify-content:space-between;margin:6px 0;gap:10px;color:var(--muted)}
@@ -658,9 +663,16 @@
       <option value="mesh">Mesh</option>
       <option value="wood">Teak wood</option>
       <option value="bamboo">Bamboo</option>
+      <option value="photo">My photo</option>
       <option value="flat">Flat</option>
     </select>
   </label>
+  <div class="mx-photo-row">
+    <button id="mx-photo-btn">📷 Choose photo…</button>
+    <button id="mx-photo-clear" title="remove photo">✕</button>
+  </div>
+  <label>photo dim <input type="range" id="mx-dim" min="0" max="80" value="45"></label>
+  <input type="file" id="mx-photo" accept="image/*" hidden>
   <label>panels <input type="color" id="mx-panel" value="#161f31"></label>
   <label>lines <input type="color" id="mx-line" value="#2b3652"></label>
   <label class="mx-gl">corners <input type="range" id="mx-radius" min="0" max="26" value="16"></label>
@@ -838,6 +850,7 @@
         <span class="lab">Game</span>
         <select id="qmode" aria-label="Quiz game">
           <optgroup label="Note recognition">
+            <option value="learn">Learn &amp; quiz a string</option>
             <option value="cards">Flashcards</option>
             <option value="fill" selected>Fill the blanks</option>
             <option value="flash">Name the fret</option>
@@ -873,6 +886,10 @@
           <select id="qs1" aria-label="First string"></select>
           <select id="qs2" aria-label="Second string"></select>
         </div>
+      </div>
+      <div id="qstr-wrap" hidden>
+        <span class="lab">Focus string</span>
+        <select id="qstr" aria-label="Focus string"></select>
       </div>
       <div>
         <span class="lab">&nbsp;</span>
@@ -1805,6 +1822,78 @@ function stringsGuess(pc, btn){
   }
 }
 
+/* ---------------- game: Learn & quiz a string (study, then test) ---------------- */
+const qstr = document.getElementById('qstr');
+STRINGS.forEach((s, i) => {
+  const o = document.createElement('option');
+  o.value = i; o.textContent = s.say + ' string';
+  qstr.appendChild(o);
+});
+qstr.value = 5;                                   // low E
+qstr.addEventListener('change', () => { if (qMode === 'learn') newQuiz(); });
+
+function startLearn(){
+  say('Learn & quiz — one string at a time. Study the notes, then I hide them and test you on that string.',
+      'Pick a string above. In the quiz, tap the note name; a miss reveals the answer and comes back around.');
+  game = {mode:'learn', str:+qstr.value, phase:'study', id:Date.now()};
+  renderLearnStudy();
+}
+function renderLearnStudy(){
+  setQUI({board:true, choices:true, prompt:true});
+  buildQBoard((si, f) => si !== game.str ? null : {rowlit:true, dot:{cls:'',
+    text: SHARPS[(STRINGS[game.str].pc + f) % 12],
+    onClick: () => pluck(STRINGS[game.str].midi + f, 0, 0.45)}});
+  qpromptEl.innerHTML = `Study the <b>${STRINGS[game.str].say}</b> string — tap any note to hear it, then quiz yourself.`;
+  qchoicesEl.innerHTML = '';
+  const btn = document.createElement('button');
+  btn.className = 'qchoice'; btn.style.flex = '0 1 auto'; btn.innerHTML = 'Quiz me &#9654;';
+  btn.addEventListener('click', startLearnQuiz);
+  qchoicesEl.appendChild(btn);
+  progress('');
+}
+function startLearnQuiz(){
+  game.phase = 'quiz';
+  game.order = shuffle([...Array(QFRETS + 1).keys()]);
+  game.idx = 0; game.marks = {}; game.miss = false;
+  game.score = 0; game.firstTry = 0; game.total = QFRETS + 1;
+  setQUI({board:true, palette:true, prompt:true});
+  palHandler = (pc, btn) => learnGuess(pc, btn);
+  renderLearnQuiz();
+}
+function renderLearnQuiz(){
+  const target = game.idx < game.total ? game.order[game.idx] : -1;
+  buildQBoard((si, f) => {
+    if (si !== game.str) return null;
+    const mark = game.marks[f];
+    if (mark) return {rowlit:true, dot:{cls: mark, text: SHARPS[(STRINGS[game.str].pc + f) % 12]}};
+    if (f === target) return {rowlit:true, dot:{cls:'blank sel', text:'?'}};
+    return {rowlit:true};
+  });
+  if (target >= 0)
+    qpromptEl.innerHTML = `What note is <b>fret ${target}</b> on the <b>${STRINGS[game.str].say}</b> string? ` +
+      `<small>${game.idx + 1} / ${game.total}</small>`;
+  paletteEl.querySelectorAll('.pal').forEach(b => { b.disabled = !!game.done; });
+  progress('');
+}
+function learnGuess(pc, btn){
+  if (game.done) return;
+  const target = game.order[game.idx];
+  const truePc = (STRINGS[game.str].pc + target) % 12;
+  if (pc === truePc){
+    game.marks[target] = 'correct';
+    game.score += game.miss ? 5 : 15;
+    if (!game.miss) game.firstTry++;
+    pluck(STRINGS[game.str].midi + target, 0, 0.5);
+    game.idx++; game.miss = false;
+    if (game.idx >= game.total){ renderLearnQuiz(); finishRounds('String drill'); }
+    else renderLearnQuiz();
+  } else {
+    game.miss = true;
+    if (btn) palFlash(btn, 'bad');
+    pluck(60 + pc, 0, 0.25);
+  }
+}
+
 /* ---------------- game: Flashcards (string + fret -> recall the note) ---------------- */
 function startCards(){
   say('Flash-card recall. You get a string and a fret — picture the note, say it out loud, then reveal to check.',
@@ -2034,9 +2123,9 @@ function finishRounds(label, cleanCount){
 }
 
 /* ---------------- dispatch ---------------- */
-const QGAMES = {cards:startCards, fill:startFill, flash:startFlash, hunt:startHunt, findall:startFindall,
-                strings:startStrings, root:startRoot, interval:startInterval, triad:startTriad,
-                numbers:startNumbers, ear:startEar, majmin:startMajMin};
+const QGAMES = {learn:startLearn, cards:startCards, fill:startFill, flash:startFlash, hunt:startHunt,
+                findall:startFindall, strings:startStrings, root:startRoot, interval:startInterval,
+                triad:startTriad, numbers:startNumbers, ear:startEar, majmin:startMajMin};
 let qMode = 'fill';
 function newQuiz(){
   quizStarted = true;
@@ -2049,6 +2138,7 @@ document.getElementById('qmode').addEventListener('change', e => {
   qMode = e.target.value;
   document.getElementById('qcount-wrap').hidden = qMode !== 'fill';
   document.getElementById('qpair-wrap').hidden = qMode !== 'strings';
+  document.getElementById('qstr-wrap').hidden = qMode !== 'learn';
   newQuiz();
 });
 
@@ -2718,7 +2808,8 @@ const mxBg = document.getElementById('mx-bg'), mxInk = document.getElementById('
       mxLine = document.getElementById('mx-line'), mxMuted = document.getElementById('mx-muted'),
       mxLogo = document.getElementById('mx-logo'), mxGood = document.getElementById('mx-good'),
       mxBad = document.getElementById('mx-bad'), mxRadius = document.getElementById('mx-radius'),
-      mxBgStyle = document.getElementById('mx-bgstyle');
+      mxBgStyle = document.getElementById('mx-bgstyle'), mxDim = document.getElementById('mx-dim'),
+      mxPhoto = document.getElementById('mx-photo');
 const PRESET_SEED = {
   classic:{bg:'#0d1220',panel:'#161f31',line:'#2b3652',ink:'#eef2fb',muted:'#8a97b4',logo:'#f2a65a',
            scale:'#5b8cff',root:'#f2a65a',good:'#2ecc8f',bad:'#ff5d6c',glow:0,radius:16,bgStyle:'aurora'},
@@ -2797,6 +2888,12 @@ const BAMBOO_URL = bambooURL();
 function bgCss(c, g){
   const style = c.bgStyle || 'aurora';
   if (style === 'flat') return c.bg;
+  if (style === 'photo'){
+    const ph = localStorage.getItem('sv-bg-photo');
+    if (!ph) return bgCss({...c, bgStyle:'aurora'}, g);   // no photo yet → fall back
+    const d = (c.dim == null ? 45 : c.dim) / 100;
+    return `linear-gradient(180deg, ${hexA(c.bg, d + .12)} 0%, ${hexA(c.bg, d)} 50%, ${hexA(c.bg, d + .16)} 100%), url("${ph}") center center / cover no-repeat fixed`;
+  }
   if (style === 'bamboo')          // light wood: a whisper of scrim so it stays pale & clean
     return `linear-gradient(180deg, ${hexA(c.bg,.3)} 0%, ${hexA(c.bg,0)} 30%, ${hexA(c.bg,0)} 70%, ${hexA(c.bg,.14)} 100%), ${BAMBOO_URL} center center / cover no-repeat fixed`;
   if (style === 'wood')
@@ -2884,6 +2981,7 @@ function openMixer(){
   mxBad.value = c.bad || cssVar('--bad') || '#ff5d6c';
   mxRadius.value = c.radius == null ? 16 : c.radius;
   mxBgStyle.value = c.bgStyle || 'aurora';
+  mxDim.value = c.dim == null ? 45 : c.dim;
   mxGlow.value = c.glow == null ? 50 : c.glow;
   mixEl.hidden = false;
 }
@@ -2892,8 +2990,24 @@ function applyMixer(){
                      ink: mxInk.value, muted: mxMuted.value, logo: mxLogo.value,
                      scale: mxScale.value, root: mxRoot.value, good: mxGood.value,
                      bad: mxBad.value, radius: +mxRadius.value, bgStyle: mxBgStyle.value,
-                     glow: +mxGlow.value};
+                     dim: +mxDim.value, glow: +mxGlow.value};
   setTheme('custom');
+}
+/* downscale a camera-roll photo so it fits in localStorage, then use it as the bg */
+function processPhoto(file, cb){
+  const rd = new FileReader();
+  rd.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 1280, sc = Math.min(1, max / Math.max(img.width, img.height));
+      const w = Math.round(img.width * sc), h = Math.round(img.height * sc);
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      cb(cv.toDataURL('image/jpeg', 0.72));
+    };
+    img.src = rd.result;
+  };
+  rd.readAsDataURL(file);
 }
 function loadEditor(c){        // push a palette object into the mixer inputs + apply
   mxBg.value = c.bg; mxPanel.value = c.panel; mxLine.value = c.line;
@@ -2939,9 +3053,26 @@ thOpts.addEventListener('click', e => {
   }
   setTheme(orb.dataset.t);
 });
-[mxBg, mxPanel, mxLine, mxInk, mxMuted, mxLogo, mxScale, mxRoot, mxGood, mxBad, mxRadius, mxGlow]
+[mxBg, mxPanel, mxLine, mxInk, mxMuted, mxLogo, mxScale, mxRoot, mxGood, mxBad, mxRadius, mxDim, mxGlow]
   .forEach(el => el.addEventListener('input', applyMixer));
 mxBgStyle.addEventListener('change', applyMixer);
+document.getElementById('mx-photo-btn').addEventListener('click', () => mxPhoto.click());
+mxPhoto.addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  processPhoto(f, url => {
+    try { localStorage.setItem('sv-bg-photo', url); }
+    catch(_){ alert('That photo is too large to save — try a smaller one.'); return; }
+    mxBgStyle.value = 'photo';
+    applyMixer();
+  });
+  mxPhoto.value = '';
+});
+document.getElementById('mx-photo-clear').addEventListener('click', () => {
+  localStorage.removeItem('sv-bg-photo');
+  if (mxBgStyle.value === 'photo') mxBgStyle.value = 'aurora';
+  applyMixer();
+});
 document.getElementById('mx-random').addEventListener('click', () => loadEditor(randomPalette()));
 document.getElementById('mx-seeds').addEventListener('click', e => {
   const b = e.target.closest('.mx-seed');
