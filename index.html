@@ -306,6 +306,12 @@
   .dot.hunt:hover{border-color:var(--root);transform:scale(1.2)}
   .dot.hunt.correct{width:34px;height:34px;color:#04130c;border-color:transparent;border-style:solid}
   .dot.hunt.wrong{width:34px;height:34px;color:#2a0308;border-color:transparent;border-style:solid}
+  .qcat{display:inline-flex;flex-wrap:wrap;gap:4px;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;padding:3px}
+  .qcat-b{font:inherit;font-size:12.5px;font-weight:700;color:var(--muted);background:transparent;
+    border:none;border-radius:9px;padding:9px 13px;cursor:pointer;transition:color .12s,background .12s}
+  .qcat-b:hover{color:var(--ink)}
+  .qcat-b.active{background:var(--scale);color:var(--bg)}
   .qstats{color:var(--muted);font-size:14px;margin:6px 0 0}
   .qstats b{color:var(--root)}
   .qstats .plus{color:var(--good);font-weight:800;margin-left:6px}
@@ -854,29 +860,17 @@
 
     <div class="bar">
       <div>
+        <span class="lab">Type</span>
+        <div class="qcat" id="qcat">
+          <button type="button" class="qcat-b active" data-cat="recall">Recall</button>
+          <button type="button" class="qcat-b" data-cat="board">Fretboard</button>
+          <button type="button" class="qcat-b" data-cat="theory">Theory</button>
+          <button type="button" class="qcat-b" data-cat="ear">Ear</button>
+        </div>
+      </div>
+      <div>
         <span class="lab">Game</span>
-        <select id="qmode" aria-label="Quiz game">
-          <optgroup label="Note recognition">
-            <option value="learn">Learn &amp; quiz a string</option>
-            <option value="cards">Flashcards</option>
-            <option value="neighbors">Across strings</option>
-            <option value="fill" selected>Fill the blanks</option>
-            <option value="flash">Name the fret</option>
-            <option value="hunt">Note hunt</option>
-            <option value="findall">Find all</option>
-            <option value="strings">String pair</option>
-            <option value="root">Root note</option>
-          </optgroup>
-          <optgroup label="Theory: intervals, chords &amp; numbers">
-            <option value="interval">Interval trainer</option>
-            <option value="triad">Triad builder</option>
-            <option value="numbers">Numbers (degrees)</option>
-          </optgroup>
-          <optgroup label="Ear training">
-            <option value="ear">Interval ear</option>
-            <option value="majmin">Major or minor</option>
-          </optgroup>
-        </select>
+        <select id="qmode" aria-label="Quiz game"></select>
       </div>
       <div id="qcount-wrap">
         <span class="lab">Notes to fill</span>
@@ -1737,6 +1731,7 @@ function nextEar(){
   setTimeout(playEar, 260);
 }
 function playEar(){
+  if (!game || game.mode !== 'ear') return;
   pluck(game.rootMidi, 0, 0.5);
   pluck(game.rootMidi + game.iv.s, 0.5, 0.5);
 }
@@ -2019,6 +2014,7 @@ function nextMajMin(){
   setTimeout(playMajMin, 280);
 }
 function playMajMin(){
+  if (!game || game.mode !== 'majmin') return;
   (game.q === 'maj' ? [0,4,7] : [0,3,7]).forEach((s, i) => pluck(game.rootMidi + s, i * 0.06, 0.5));
 }
 function renderMajMin(){
@@ -2083,7 +2079,8 @@ function nextRoot(){
   });
   game.q = g.q; game.miss = false; game.solved = false; game.marks = {};
   renderRoot();
-  setTimeout(() => [...game.midis].sort((a,b)=>a-b).forEach((m,i)=>pluck(m,i*0.05,0.45)), 300);
+  setTimeout(() => { if (!game || game.mode !== 'root') return;
+    [...game.midis].sort((a,b)=>a-b).forEach((m,i)=>pluck(m,i*0.05,0.45)); }, 300);
 }
 function renderRoot(){
   buildQBoard((siDisp, f) => {
@@ -2133,7 +2130,8 @@ function nextNumbers(){
   game.notePc = (game.key + QMAJ[game.deg - 1]) % 12;
   game.miss = false; game.solved = false;
   renderNumbers();
-  setTimeout(() => { pluck(52 + ((game.key - 4 + 12) % 12), 0, 0.4);
+  setTimeout(() => { if (!game || game.mode !== 'numbers') return;
+    pluck(52 + ((game.key - 4 + 12) % 12), 0, 0.4);
     pluck(52 + ((game.key - 4 + 12) % 12) + QMAJ[game.deg - 1], 0.28, 0.45); }, 240);
 }
 function renderNumbers(){
@@ -2182,21 +2180,58 @@ const QGAMES = {learn:startLearn, cards:startCards, neighbors:startNeighbors, fi
                 flash:startFlash, hunt:startHunt, findall:startFindall, strings:startStrings,
                 root:startRoot, interval:startInterval, triad:startTriad, numbers:startNumbers,
                 ear:startEar, majmin:startMajMin};
-let qMode = 'fill';
+// games grouped into four small categories so no single menu is overwhelming
+const QGAME_LIST = [
+  {v:'cards', t:'Flashcards', c:'recall'},
+  {v:'neighbors', t:'Across strings', c:'recall'},
+  {v:'learn', t:'Learn & quiz a string', c:'recall'},
+  {v:'flash', t:'Name the fret', c:'board'},
+  {v:'fill', t:'Fill the blanks', c:'board'},
+  {v:'hunt', t:'Note hunt', c:'board'},
+  {v:'findall', t:'Find all', c:'board'},
+  {v:'strings', t:'String pair', c:'board'},
+  {v:'root', t:'Root note', c:'board'},
+  {v:'interval', t:'Interval trainer', c:'theory'},
+  {v:'triad', t:'Triad builder', c:'theory'},
+  {v:'numbers', t:'Numbers (degrees)', c:'theory'},
+  {v:'ear', t:'Interval ear', c:'ear'},
+  {v:'majmin', t:'Major or minor', c:'ear'},
+];
+const qmodeSel = document.getElementById('qmode');
+let qMode = 'cards';
+function buildGameMenu(cat){
+  qmodeSel.innerHTML = '';
+  QGAME_LIST.filter(g => g.c === cat).forEach(g => {
+    const o = document.createElement('option');
+    o.value = g.v; o.textContent = g.t;
+    qmodeSel.appendChild(o);
+  });
+}
+function updateModeWraps(){
+  document.getElementById('qcount-wrap').hidden = qMode !== 'fill';
+  document.getElementById('qpair-wrap').hidden = qMode !== 'strings';
+  document.getElementById('qstr-wrap').hidden = qMode !== 'learn';
+}
 function newQuiz(){
   quizStarted = true;
   renderQStats(0);
   qresultEl.className = 'qresult'; qresultEl.textContent = '';
-  (QGAMES[qMode] || startFill)();
+  (QGAMES[qMode] || startCards)();
 }
 document.getElementById('qnew').addEventListener('click', newQuiz);
-document.getElementById('qmode').addEventListener('change', e => {
-  qMode = e.target.value;
-  document.getElementById('qcount-wrap').hidden = qMode !== 'fill';
-  document.getElementById('qpair-wrap').hidden = qMode !== 'strings';
-  document.getElementById('qstr-wrap').hidden = qMode !== 'learn';
+qmodeSel.addEventListener('change', () => { qMode = qmodeSel.value; updateModeWraps(); newQuiz(); });
+document.getElementById('qcat').addEventListener('click', e => {
+  const b = e.target.closest('.qcat-b');
+  if (!b) return;
+  document.querySelectorAll('#qcat .qcat-b').forEach(x => x.classList.toggle('active', x === b));
+  buildGameMenu(b.dataset.cat);
+  qMode = qmodeSel.value;
+  updateModeWraps();
   newQuiz();
 });
+buildGameMenu('recall');
+qmodeSel.value = 'cards';
+updateModeWraps();
 
 /* ---------- decoder: full-screen digital take on the physical card ---------- */
 const FIFTHS_PC = [0,7,2,9,4,11,6,1,8,3,10,5];      // C G D A E B F# Db Ab Eb Bb F
