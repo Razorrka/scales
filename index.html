@@ -330,6 +330,22 @@
   .qbtn-replay:hover{border-color:var(--scale)}
   .dot.want{border-color:var(--scale);color:var(--scale)}
   .qpair-sel{display:flex;gap:8px}
+  /* flashcards */
+  .qcard{max-width:420px;margin:20px auto 6px;text-align:center;cursor:pointer;
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:28px 20px 22px;-webkit-user-select:none;user-select:none}
+  .qc-q{font-size:14px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .qc-q b{color:var(--ink);font-size:20px;letter-spacing:.02em;display:block;margin-top:6px;text-transform:none}
+  .qc-a{font-size:66px;font-weight:800;color:var(--root);margin:14px 0;line-height:1;min-height:66px;
+    opacity:.18;transition:opacity .15s;filter:drop-shadow(0 0 16px var(--glow-root))}
+  .qc-a.shown{opacity:1}
+  .qc-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:4px}
+  .qc-actions button{font:inherit;font-weight:700;font-size:14px;border-radius:12px;padding:12px 22px;
+    cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+  .qc-actions .qc-reveal{background:var(--scale);border-color:transparent;color:var(--bg)}
+  .qc-actions .qc-knew{border-color:var(--good);color:var(--good)}
+  .qc-actions .qc-missed{border-color:var(--bad);color:var(--bad)}
 
   /* double stops */
   button.toggle.on{border-color:var(--root);color:var(--root);box-shadow:0 0 10px var(--glow-root)}
@@ -822,6 +838,7 @@
         <span class="lab">Game</span>
         <select id="qmode" aria-label="Quiz game">
           <optgroup label="Note recognition">
+            <option value="cards">Flashcards</option>
             <option value="fill" selected>Fill the blanks</option>
             <option value="flash">Name the fret</option>
             <option value="hunt">Note hunt</option>
@@ -878,6 +895,11 @@
 
     <div class="palette" id="palette"></div>
     <div class="qchoices" id="qchoices" hidden></div>
+    <div class="qcard" id="qcard" hidden>
+      <div class="qc-q" id="qc-q"></div>
+      <div class="qc-a" id="qc-a">?</div>
+      <div class="qc-actions" id="qc-actions"></div>
+    </div>
     <p class="qresult" id="qresult"></p>
     <p class="hint" id="qhint">Fret 0 is the open string. Tap a filled dot to change your answer before checking.</p>
   </div><!-- /view-quiz -->
@@ -1264,6 +1286,7 @@ const qstatsEl = document.getElementById('qstats');
 const qpromptEl = document.getElementById('qprompt');
 const qboardEl = document.getElementById('qboard');
 const qchoicesEl = document.getElementById('qchoices');
+const qcardEl = document.getElementById('qcard');
 const qsubEl = document.getElementById('qsub');
 const qhintEl = document.getElementById('qhint');
 
@@ -1299,6 +1322,7 @@ function setQUI(o){
   qboardEl.hidden = !o.board;
   paletteEl.hidden = !o.palette;
   qchoicesEl.hidden = !o.choices;
+  qcardEl.hidden = !o.card;
   qcheckBtn.hidden = !o.check;
   qpromptEl.hidden = !o.prompt;
 }
@@ -1781,6 +1805,59 @@ function stringsGuess(pc, btn){
   }
 }
 
+/* ---------------- game: Flashcards (string + fret -> recall the note) ---------------- */
+function startCards(){
+  say('Flash-card recall. You get a string and a fret — picture the note, say it out loud, then reveal to check.',
+      'Grade yourself honestly. This is how the neck gets memorized: a few reps, every day.');
+  setQUI({card:true});
+  game = {mode:'cards', round:0, total:20, score:0, firstTry:0, id:Date.now()};
+  nextCard();
+}
+function nextCard(){
+  game.round++;
+  const s = rand(6), f = rand(QFRETS + 1);
+  game.card = {s, f, pc:(STRINGS[s].pc + f) % 12, midi: STRINGS[s].midi + f};
+  game.revealed = false;
+  renderCard();
+}
+function renderCard(){
+  const c = game.card;
+  document.getElementById('qc-q').innerHTML =
+    `String &amp; fret<b>${STRINGS[c.s].say} string &middot; fret ${c.f}</b>`;
+  const a = document.getElementById('qc-a');
+  a.textContent = game.revealed ? noteBoth(c.pc) : '?';
+  a.classList.toggle('shown', game.revealed);
+  const act = document.getElementById('qc-actions');
+  act.innerHTML = '';
+  if (!game.revealed){
+    const rv = document.createElement('button');
+    rv.className = 'qc-reveal'; rv.textContent = 'Reveal note';
+    rv.addEventListener('click', ev => { ev.stopPropagation(); revealCard(); });
+    act.appendChild(rv);
+  } else {
+    [['✓ Knew it', 'qc-knew', true], ['✗ Missed it', 'qc-missed', false]].forEach(([lbl, cls, knew]) => {
+      const b = document.createElement('button');
+      b.className = cls; b.textContent = lbl;
+      b.addEventListener('click', ev => { ev.stopPropagation(); gradeCard(knew); });
+      act.appendChild(b);
+    });
+  }
+  progress(`card ${game.round} / ${game.total}`);
+}
+function revealCard(){
+  if (game.revealed) return;
+  game.revealed = true;
+  pluck(game.card.midi, 0, 0.5);
+  renderCard();
+}
+function gradeCard(knew){
+  if (knew){ game.score += 15; game.firstTry++; }
+  const id = game.id;
+  if (game.round >= game.total) finishRounds('Flashcards');
+  else if (game && game.id === id) nextCard();
+}
+qcardEl.addEventListener('click', () => { if (game && game.mode === 'cards' && !game.revealed) revealCard(); });
+
 /* ---------------- game 9: Major or minor (ear) ---------------- */
 function startMajMin(){
   say('Listen to the chord — is it major (bright/happy) or minor (dark/sad)?',
@@ -1957,7 +2034,7 @@ function finishRounds(label, cleanCount){
 }
 
 /* ---------------- dispatch ---------------- */
-const QGAMES = {fill:startFill, flash:startFlash, hunt:startHunt, findall:startFindall,
+const QGAMES = {cards:startCards, fill:startFill, flash:startFlash, hunt:startHunt, findall:startFindall,
                 strings:startStrings, root:startRoot, interval:startInterval, triad:startTriad,
                 numbers:startNumbers, ear:startEar, majmin:startMajMin};
 let qMode = 'fill';
