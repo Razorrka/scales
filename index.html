@@ -337,6 +337,9 @@
     padding:28px 20px 22px;-webkit-user-select:none;user-select:none}
   .qc-q{font-size:14px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
   .qc-q b{color:var(--ink);font-size:20px;letter-spacing:.02em;display:block;margin-top:6px;text-transform:none}
+  .qc-ask{display:block;margin-top:8px;font-size:14.5px;font-weight:600;color:var(--muted);text-transform:none;letter-spacing:0}
+  .qc-note{font-size:12.5px;font-weight:600;color:var(--muted);min-height:1em;margin:-6px 0 12px}
+  .qc-note b{color:var(--scale)}
   .qc-a{font-size:66px;font-weight:800;color:var(--root);margin:14px 0;line-height:1;min-height:66px;
     opacity:.18;transition:opacity .15s;filter:drop-shadow(0 0 16px var(--glow-root))}
   .qc-a.shown{opacity:1}
@@ -852,6 +855,7 @@
           <optgroup label="Note recognition">
             <option value="learn">Learn &amp; quiz a string</option>
             <option value="cards">Flashcards</option>
+            <option value="neighbors">Across strings</option>
             <option value="fill" selected>Fill the blanks</option>
             <option value="flash">Name the fret</option>
             <option value="hunt">Note hunt</option>
@@ -915,6 +919,7 @@
     <div class="qcard" id="qcard" hidden>
       <div class="qc-q" id="qc-q"></div>
       <div class="qc-a" id="qc-a">?</div>
+      <div class="qc-note" id="qc-note"></div>
       <div class="qc-actions" id="qc-actions"></div>
     </div>
     <p class="qresult" id="qresult"></p>
@@ -1916,36 +1921,74 @@ function renderCard(){
   const a = document.getElementById('qc-a');
   a.textContent = game.revealed ? noteBoth(c.pc) : '?';
   a.classList.toggle('shown', game.revealed);
-  const act = document.getElementById('qc-actions');
-  act.innerHTML = '';
-  if (!game.revealed){
-    const rv = document.createElement('button');
-    rv.className = 'qc-reveal'; rv.textContent = 'Reveal note';
-    rv.addEventListener('click', ev => { ev.stopPropagation(); revealCard(); });
-    act.appendChild(rv);
-  } else {
-    [['✓ Knew it', 'qc-knew', true], ['✗ Missed it', 'qc-missed', false]].forEach(([lbl, cls, knew]) => {
-      const b = document.createElement('button');
-      b.className = cls; b.textContent = lbl;
-      b.addEventListener('click', ev => { ev.stopPropagation(); gradeCard(knew); });
-      act.appendChild(b);
-    });
-  }
+  document.getElementById('qc-note').textContent = '';
+  flashActions();
   progress(`card ${game.round} / ${game.total}`);
 }
-function revealCard(){
+/* shared flashcard controls for the reveal/self-grade games */
+function flashActions(){
+  const act = document.getElementById('qc-actions');
+  act.innerHTML = '';
+  const mk = (lbl, cls, fn) => {
+    const b = document.createElement('button');
+    b.className = cls; b.innerHTML = lbl;
+    b.addEventListener('click', ev => { ev.stopPropagation(); fn(); });
+    act.appendChild(b);
+  };
+  if (!game.revealed) mk('Reveal', 'qc-reveal', revealFlash);
+  else { mk('&#10003; Knew it', 'qc-knew', () => gradeFlash(true));
+         mk('&#10007; Missed it', 'qc-missed', () => gradeFlash(false)); }
+}
+function revealFlash(){
   if (game.revealed) return;
   game.revealed = true;
-  pluck(game.card.midi, 0, 0.5);
-  renderCard();
+  if (game.mode === 'cards'){ pluck(game.card.midi, 0, 0.5); renderCard(); }
+  else { pluck(game.nb.baseMidi, 0, 0.45); pluck(game.nb.aboveMidi, 0.32, 0.5); renderNeighbor(); }
 }
-function gradeCard(knew){
+function gradeFlash(knew){
   if (knew){ game.score += 15; game.firstTry++; }
-  const id = game.id;
-  if (game.round >= game.total) finishRounds('Flashcards');
-  else if (game && game.id === id) nextCard();
+  const id = game.id, done = game.round >= game.total;
+  if (done) finishRounds(game.mode === 'cards' ? 'Flashcards' : 'Across strings');
+  else if (game && game.id === id) (game.mode === 'cards' ? nextCard : nextNeighbor)();
 }
-qcardEl.addEventListener('click', () => { if (game && game.mode === 'cards' && !game.revealed) revealCard(); });
+qcardEl.addEventListener('click', () => {
+  if (game && !game.revealed && (game.mode === 'cards' || game.mode === 'neighbors')) revealFlash();
+});
+
+/* ---------------- game: Across strings (same fret, the string above) ---------------- */
+function startNeighbors(){
+  say('String relationships. You get a note on one string — name the note directly above it, same fret.',
+      'Neighbours are a 4th apart… except G → B, which is a major 3rd. Reveal to check, then grade yourself.');
+  setQUI({card:true});
+  game = {mode:'neighbors', round:0, total:20, score:0, firstTry:0, id:Date.now()};
+  nextNeighbor();
+}
+function nextNeighbor(){
+  game.round++;
+  const base = 1 + rand(5);                 // STRINGS index 1..5 (has a string above it)
+  const above = base - 1;
+  const f = rand(QFRETS + 1);
+  game.nb = {base, above, f,
+    basePc:(STRINGS[base].pc + f) % 12, abovePc:(STRINGS[above].pc + f) % 12,
+    baseMidi:STRINGS[base].midi + f, aboveMidi:STRINGS[above].midi + f};
+  game.revealed = false;
+  renderNeighbor();
+}
+function renderNeighbor(){
+  const nb = game.nb;
+  document.getElementById('qc-q').innerHTML =
+    `The string above<b>${STRINGS[nb.base].say} · fret ${nb.f} = ${noteBoth(nb.basePc)}</b>` +
+    `<span class="qc-ask">the ${STRINGS[nb.above].say} string just above, same fret, is…?</span>`;
+  const a = document.getElementById('qc-a');
+  a.textContent = game.revealed ? noteBoth(nb.abovePc) : '?';
+  a.classList.toggle('shown', game.revealed);
+  const semis = STRINGS[nb.above].midi - STRINGS[nb.base].midi;
+  document.getElementById('qc-note').innerHTML = game.revealed
+    ? `${STRINGS[nb.base].lbl} → ${STRINGS[nb.above].lbl} is ${semis === 5 ? 'a <b>perfect 4th</b> up' : 'a <b>major 3rd</b> up — the one odd pair (G→B)'}`
+    : '';
+  flashActions();
+  progress(`card ${game.round} / ${game.total}`);
+}
 
 /* ---------------- game 9: Major or minor (ear) ---------------- */
 function startMajMin(){
@@ -2123,9 +2166,10 @@ function finishRounds(label, cleanCount){
 }
 
 /* ---------------- dispatch ---------------- */
-const QGAMES = {learn:startLearn, cards:startCards, fill:startFill, flash:startFlash, hunt:startHunt,
-                findall:startFindall, strings:startStrings, root:startRoot, interval:startInterval,
-                triad:startTriad, numbers:startNumbers, ear:startEar, majmin:startMajMin};
+const QGAMES = {learn:startLearn, cards:startCards, neighbors:startNeighbors, fill:startFill,
+                flash:startFlash, hunt:startHunt, findall:startFindall, strings:startStrings,
+                root:startRoot, interval:startInterval, triad:startTriad, numbers:startNumbers,
+                ear:startEar, majmin:startMajMin};
 let qMode = 'fill';
 function newQuiz(){
   quizStarted = true;
