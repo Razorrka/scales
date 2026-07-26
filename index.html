@@ -312,6 +312,7 @@
     border:none;border-radius:9px;padding:9px 13px;cursor:pointer;transition:color .12s,background .12s}
   .qcat-b:hover{color:var(--ink)}
   .qcat-b.active{background:var(--scale);color:var(--bg)}
+  .qhintline{color:var(--scale);font-size:13.5px;font-weight:600;min-height:1em;margin:6px 0 0}
   .qstats{color:var(--muted);font-size:14px;margin:6px 0 0}
   .qstats b{color:var(--root)}
   .qstats .plus{color:var(--good);font-weight:800;margin-left:6px}
@@ -899,6 +900,10 @@
       </div>
       <div>
         <span class="lab">&nbsp;</span>
+        <button id="qhint-btn">&#128161;&nbsp; Hint</button>
+      </div>
+      <div>
+        <span class="lab">&nbsp;</span>
         <button class="primary" id="qcheck" disabled>&#10003;&nbsp; Check answers</button>
       </div>
     </div>
@@ -921,6 +926,7 @@
     <div class="palette" id="palette"></div>
     <div class="qchoices" id="qchoices" hidden></div>
     <p class="qresult" id="qresult"></p>
+    <p class="qhintline" id="qhintline"></p>
     <p class="hint" id="qhint">Fret 0 is the open string. Tap a filled dot to change your answer before checking.</p>
   </div><!-- /view-quiz -->
 
@@ -1307,6 +1313,7 @@ const qpromptEl = document.getElementById('qprompt');
 const qboardEl = document.getElementById('qboard');
 const qchoicesEl = document.getElementById('qchoices');
 const qcardEl = document.getElementById('qcard');
+const qhintlineEl = document.getElementById('qhintline');
 const qsubEl = document.getElementById('qsub');
 const qhintEl = document.getElementById('qhint');
 
@@ -1346,7 +1353,7 @@ function setQUI(o){
   qcheckBtn.hidden = !o.check;
   qpromptEl.hidden = !o.prompt;
 }
-function progress(txt){ qresultEl.className = 'qresult progress'; qresultEl.textContent = txt; }
+function progress(txt){ qresultEl.className = 'qresult progress'; qresultEl.textContent = txt; qhintlineEl.textContent = ''; }
 function arpeggio(){ [0, 4, 7, 12].forEach((iv, i) => pluck(60 + iv, i * 0.12, 0.4)); }
 
 /* shared board renderer: cellFn(si,f) returns null, {rowlit},
@@ -1922,7 +1929,7 @@ function nextCard(){
   game.round++;
   const s = rand(6), f = rand(QFRETS + 1);
   game.card = {s, f, pc:(STRINGS[s].pc + f) % 12, midi: STRINGS[s].midi + f};
-  game.answered = false;
+  game.answered = false; game.miss = false;
   clearPal();
   renderCard();
 }
@@ -1941,7 +1948,7 @@ function renderCard(){
 function cardGuess(pc, btn){
   if (game.answered) return;
   game.answered = true; game.guessPc = pc; game.correct = pc === game.card.pc;
-  if (game.correct){ game.score += 15; game.firstTry++; }
+  if (game.correct){ game.score += game.miss ? 5 : 15; if (!game.miss) game.firstTry++; }
   if (btn) btn.classList.add(game.correct ? 'good' : 'bad');
   paletteEl.querySelectorAll('.pal').forEach(b => { b.disabled = true; });
   pluck(game.card.midi, 0, 0.5);
@@ -1966,7 +1973,7 @@ function nextNeighbor(){
   game.nb = {base, above, f,
     basePc:(STRINGS[base].pc + f) % 12, abovePc:(STRINGS[above].pc + f) % 12,
     baseMidi:STRINGS[base].midi + f, aboveMidi:STRINGS[above].midi + f};
-  game.answered = false;
+  game.answered = false; game.miss = false;
   clearPal();
   renderNeighbor();
 }
@@ -1989,7 +1996,7 @@ function neighborGuess(pc, btn){
   if (game.answered) return;
   const nb = game.nb;
   game.answered = true; game.guessPc = pc; game.correct = pc === nb.abovePc;
-  if (game.correct){ game.score += 15; game.firstTry++; }
+  if (game.correct){ game.score += game.miss ? 5 : 15; if (!game.miss) game.firstTry++; }
   if (btn) btn.classList.add(game.correct ? 'good' : 'bad');
   paletteEl.querySelectorAll('.pal').forEach(b => { b.disabled = true; });
   pluck(nb.baseMidi, 0, 0.4); pluck(nb.aboveMidi, 0.3, 0.5);
@@ -2166,6 +2173,7 @@ function numbersGuess(d, btn){
 /* ---------------- shared finish for round-based games ---------------- */
 function finishRounds(label, cleanCount){
   game.done = true;
+  qhintlineEl.textContent = '';
   const hit = cleanCount != null ? cleanCount : game.firstTry;
   const perfect = hit === game.total;
   award(game.score, perfect);
@@ -2174,6 +2182,42 @@ function finishRounds(label, cleanCount){
     `${hit} / ${game.total} clean — +${game.score} pts. Hit New game to go again.`;
   if (perfect) arpeggio();
 }
+
+/* ---------------- hints: a smart nudge per game ---------------- */
+const openNote = s => noteBoth(STRINGS[s].pc);
+const plural = n => n === 1 ? '' : 's';
+const QHINTS = {
+  cards: g => `Open ${STRINGS[g.card.s].say} string is ${openNote(g.card.s)} — count up ${g.card.f} fret${plural(g.card.f)}.`,
+  neighbors: g => { const semis = STRINGS[g.nb.above].midi - STRINGS[g.nb.base].midi;
+    return `${STRINGS[g.nb.base].lbl}→${STRINGS[g.nb.above].lbl} is ${semis === 5 ? 'a perfect 4th' : 'a major 3rd'} up — add ${semis} semitones to ${noteBoth(g.nb.basePc)}.`; },
+  learn: g => g.phase === 'quiz'
+    ? `Open ${STRINGS[g.str].say} is ${openNote(g.str)} — count up ${g.order[g.idx]} fret${plural(g.order[g.idx])}.`
+    : 'Study the notes, then tap “Quiz me”.',
+  flash: g => `It's fret ${g.pos.f} on the ${STRINGS[g.pos.s].say} string (open = ${openNote(g.pos.s)}).`,
+  fill: g => g.sel < 0 ? 'Tap a blank dot first.' :
+    `Fret ${g.items[g.sel].f} on the ${STRINGS[g.items[g.sel].s].say} string — open is ${openNote(g.items[g.sel].s)}.`,
+  hunt: g => `Open ${STRINGS[g.target.s].say} is ${openNote(g.target.s)} — count up to ${noteBoth(g.target.pc)}.`,
+  findall: () => 'Fret 0 and fret 12 are the same note on every string — don’t miss the pairs.',
+  strings: g => `Open ${STRINGS[g.pos.s].say} string is ${openNote(g.pos.s)} — count up ${g.pos.f} fret${plural(g.pos.f)}.`,
+  root: () => 'The root is the lowest-pitched note in the shape — the one nearest the bottom string.',
+  interval: g => `The ${g.iv.n} above ${noteBoth(g.root.pc)} is ${noteBoth(g.targetPc)} — tap any ${noteBoth(g.targetPc)}.`,
+  triad: g => { const need = [...g.tones].filter(t => !g.foundTones.has(t)).map(noteBoth);
+    return `${noteBoth(g.rootPc)} ${g.qual === 'maj' ? 'major' : 'minor'} = ${[...g.tones].map(noteBoth).join(', ')}. Still need: ${need.join(', ') || 'done!'}.`; },
+  numbers: g => { const NN = FLAT_KEYS.has(g.key) ? FLATS : SHARPS;
+    return `${noteFmt(NN[g.key])} major: ${QMAJ.map(i => noteFmt(NN[(g.key + i) % 12])).join(' ')} — count to ${noteFmt(NN[g.notePc])}.`; },
+  ear: g => { const opts = [...qchoicesEl.querySelectorAll('.qchoice')].filter(b => b.textContent !== g.iv.n && !b.disabled);
+    shuffle(opts).slice(0, 2).forEach(b => b.disabled = true); return 'Removed two wrong answers — and try the ▶ replay.'; },
+  majmin: () => 'Major sounds bright; minor sounds darker/sadder. The 3rd note is the giveaway — hit ▶ replay and listen.',
+};
+function showHint(){
+  if (!game || game.done) return;
+  const fn = QHINTS[game.mode];
+  if (!fn) return;
+  if (game.mode === 'findall') game.dirty = true; else game.miss = true;
+  const msg = fn(game);
+  if (msg) qhintlineEl.textContent = '💡 ' + msg;
+}
+document.getElementById('qhint-btn').addEventListener('click', showHint);
 
 /* ---------------- dispatch ---------------- */
 const QGAMES = {learn:startLearn, cards:startCards, neighbors:startNeighbors, fill:startFill,
