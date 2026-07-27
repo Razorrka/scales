@@ -199,6 +199,48 @@
   .iv-tr .nm{color:var(--ink);font-weight:700}
   .iv-tr .fl{color:var(--muted);font-size:12.5px}
 
+  /* notepad */
+  .np-bar{display:flex;align-items:center;gap:12px;margin:14px 0 10px;flex-wrap:wrap}
+  .np-status{font-size:12px;font-weight:800;color:var(--good);letter-spacing:.04em}
+  .np-count{font-size:12px;color:var(--muted);margin-right:auto}
+  .np-bar button{font-size:12.5px;padding:8px 13px}
+  .np-text{width:100%;min-height:min(60vh,520px);resize:vertical;
+    font:15px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;box-shadow:var(--shadow);outline:none}
+  .np-text:focus{border-color:var(--scale)}
+
+  /* phrasing sub-app */
+  .ph-tabs{display:inline-flex;flex-wrap:wrap;gap:4px;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;padding:3px;margin:14px 0 18px}
+  .ph-tab{font:inherit;font-size:13px;font-weight:700;color:var(--muted);background:transparent;border:none;
+    border-radius:9px;padding:9px 16px;cursor:pointer;transition:color .12s,background .12s}
+  .ph-tab:hover{color:var(--ink)}
+  .ph-tab.active{background:var(--scale);color:var(--bg)}
+  .ph-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .ph-chip{font:inherit;font-weight:700;font-size:13.5px;color:var(--ink);background:var(--panel);
+    border:1px solid var(--line);border-radius:11px;padding:10px 15px;cursor:pointer;transition:border-color .12s,transform .1s}
+  .ph-chip:hover{border-color:var(--scale)}
+  .ph-chip:active{transform:scale(.97)}
+  .ph-chip.active{background:var(--scale);border-color:transparent;color:var(--bg)}
+  #ph-strip,#ph-strip-frets{grid-template-columns:34px repeat(13,minmax(40px,1fr));min-width:600px}
+  .dot.ph-a{background:var(--root);color:#2a1400}
+  .dot.ph-b{background:var(--scale)}
+  .ph-tech-cap{color:var(--muted);font-size:14px;line-height:1.6;margin:14px 0 0;min-height:2.6em}
+  .ph-tech-cap b{color:var(--ink)}
+  .ph-tool{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow)}
+  .ph-tool-h{font-weight:800;color:var(--ink);font-size:14.5px;margin-bottom:4px}
+  .ph-tool-p{color:var(--muted);font-size:13px;line-height:1.55;margin:0 0 10px}
+  .ph-tool-p b{color:var(--ink)}
+  .ph-tool-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .ph-bpm{font-size:13px;color:var(--muted)}
+  .ph-bpm b{color:var(--root);font-size:15px}
+  .ph-tool-row input[type=range]{flex:1;min-width:120px;accent-color:var(--root)}
+  .ph-drills{display:grid;gap:9px}
+  .ph-drill{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--root);
+    border-radius:12px;padding:11px 14px;color:var(--muted);font-size:13.5px;line-height:1.55}
+  .ph-drill b{color:var(--ink)}
+
   /* neo soul tab */
   .neo-sec{margin-top:28px}
   .neo-h{font-size:16px;font-weight:800;letter-spacing:.01em;color:var(--ink);margin:0 0 4px;
@@ -734,9 +776,11 @@
       <button class="tab" data-tab="map">&#128506;&#65039; Map</button>
       <button class="tab" data-tab="intervals">&#128207; Intervals</button>
       <button class="tab" data-tab="neo">&#127924; Neo soul</button>
+      <button class="tab" data-tab="phrasing">&#127908; Phrasing</button>
       <button class="tab" data-tab="quiz">&#127919; Neck quiz</button>
       <button class="tab" data-tab="decoder">&#129517; Decoder</button>
       <button class="tab" data-tab="chords">&#9995; Chords</button>
+      <button class="tab" data-tab="notes">&#128221; Notes</button>
     </div>
   </div>
   <h1 id="title"></h1>
@@ -1032,6 +1076,76 @@
     <div class="ch-grid" id="ch-grid"></div>
     <p class="hint">These follow the Decoder's key — change it here or there. &times; = don't play that string, &#9675; = open string, orange dot = the root, side number = starting fret.</p>
   </div><!-- /view-chords -->
+
+  <div id="view-notes" hidden>
+    <p class="sub">Your scratchpad — jot down licks, chord ideas, reminders, anything. It saves on this device automatically, so it's here when you come back. Copy it into your real notebook whenever.</p>
+    <div class="np-bar">
+      <span class="np-status" id="np-status">Saved</span>
+      <span class="np-count" id="np-count"></span>
+      <button id="np-copy">Copy all</button>
+      <button id="np-clear">Clear</button>
+    </div>
+    <textarea id="np-text" class="np-text" placeholder="Start writing…" spellcheck="true"></textarea>
+  </div><!-- /view-notes -->
+
+  <div id="view-phrasing" hidden>
+    <p class="sub">Phrasing is <b>how</b> you play the notes — the difference between running a scale and telling a story. This is a whole practice space for it. Tap through the sections.</p>
+    <div class="ph-tabs" id="ph-tabs">
+      <button type="button" class="ph-tab active" data-ph="lessons">Lessons</button>
+      <button type="button" class="ph-tab" data-ph="tech">Techniques</button>
+      <button type="button" class="ph-tab" data-ph="practice">Practice</button>
+      <button type="button" class="ph-tab" data-ph="quiz">Quiz</button>
+    </div>
+
+    <div class="ph-view" id="ph-lessons">
+      <p class="neo-p">The ideas that turn notes into music. Read one, then go play it — a couple have a ▶ to hear the concept.</p>
+      <div id="ph-lessons-list"></div>
+    </div>
+
+    <div class="ph-view" id="ph-tech" hidden>
+      <p class="neo-p">The moves that give notes a voice. Tap one to see it on the string and hear it.</p>
+      <div class="board"><div class="grid" id="ph-strip"></div><div class="frets" id="ph-strip-frets"></div></div>
+      <p class="ph-tech-cap" id="ph-tech-cap"></p>
+      <div class="ph-chips" id="ph-tech-chips"></div>
+    </div>
+
+    <div class="ph-view" id="ph-practice" hidden>
+      <p class="neo-p">Concrete ways to build phrasing. Use the tools, then take the drills to your guitar.</p>
+      <div class="ph-tool">
+        <div class="ph-tool-h">🎧 Call &amp; response — echo the phrase</div>
+        <p class="ph-tool-p">Tap Play and a short lick plays. Answer it back on your guitar — same rhythm, your notes. (These sit in <b>A minor pentatonic</b>.)</p>
+        <div class="ph-tool-row">
+          <button class="primary" id="ph-phrase">&#9654; Play a phrase</button>
+          <button id="ph-phrase-again" disabled>&#8635; Again</button>
+        </div>
+      </div>
+      <div class="ph-tool">
+        <div class="ph-tool-h">🥁 Metronome</div>
+        <p class="ph-tool-p">Phrasing lives in time. Practice leaving space for a full beat, or a full bar.</p>
+        <div class="ph-tool-row">
+          <button class="primary" id="ph-metro">&#9654; Start</button>
+          <span class="ph-bpm">tempo <b id="ph-bpm-val">90</b> bpm</span>
+          <input type="range" id="ph-bpm" min="40" max="200" value="90">
+        </div>
+      </div>
+      <div class="neo-h" style="margin-top:22px"><span class="em">📋</span>Practice drills</div>
+      <div class="ph-drills" id="ph-drills"></div>
+    </div>
+
+    <div class="ph-view" id="ph-quiz" hidden>
+      <p class="neo-p" id="ph-quiz-intro">Two ear games for phrasing. Pick one.</p>
+      <div class="ph-chips" id="ph-quiz-pick"></div>
+      <div id="ph-quiz-play" hidden>
+        <p class="qprompt" id="ph-q-prompt"></p>
+        <div class="qchoices" id="ph-q-choices"></div>
+        <p class="qresult" id="ph-q-result"></p>
+        <div class="ph-tool-row" style="margin-top:8px">
+          <button id="ph-q-replay">&#9654; Replay</button>
+          <button id="ph-q-back">&#8592; Back</button>
+        </div>
+      </div>
+    </div>
+  </div><!-- /view-phrasing -->
 </div>
 
 <script>
@@ -1117,6 +1231,55 @@ function pluck(midi, when=0, vel=0.5){
   src.connect(lp); lp.connect(g); g.connect(ctx.destination);
   src.start(ctx.currentTime + when);
 }
+
+// oscillator voice for bends / vibrato / slides (things a plucked buffer can't do)
+function tone(midi, dur = 0.8, opts = {}){
+  const ctx = ensureCtx();
+  const t0 = ctx.currentTime + (opts.when || 0);
+  const f = m => 440 * Math.pow(2, (m - 69) / 12);
+  const osc = ctx.createOscillator();
+  osc.type = opts.type || 'sawtooth';
+  osc.frequency.setValueAtTime(f(midi), t0);
+  if (opts.bendTo != null){
+    const bt = t0 + dur * (opts.bendTime || 0.4);
+    osc.frequency.linearRampToValueAtTime(f(opts.bendTo), bt);
+    if (opts.bendBack) osc.frequency.linearRampToValueAtTime(f(midi), t0 + dur);
+  }
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400;
+  const g = ctx.createGain();
+  const vel = opts.vel || 0.32;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.linearRampToValueAtTime(vel, t0 + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(lp); lp.connect(g); g.connect(ctx.destination);
+  let lfo, lg;
+  if (opts.vibrato){
+    lfo = ctx.createOscillator(); lfo.frequency.value = opts.vibrato;
+    lg = ctx.createGain(); lg.gain.value = opts.vibDepth || 7;
+    lfo.connect(lg); lg.connect(osc.frequency); lfo.start(t0); lfo.stop(t0 + dur);
+  }
+  osc.start(t0); osc.stop(t0 + dur + 0.05);
+}
+
+// simple metronome
+let metroTimer = null, metroBpm = 90, metroBeat = 0;
+function metroClick(accent){
+  const ctx = ensureCtx();
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.value = accent ? 1650 : 1100;
+  g.gain.setValueAtTime(0.0001, ctx.currentTime);
+  g.gain.linearRampToValueAtTime(accent ? 0.5 : 0.3, ctx.currentTime + 0.004);
+  g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.06);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(); o.stop(ctx.currentTime + 0.08);
+}
+function metroStart(){
+  metroBeat = 0;
+  const tick = () => { metroClick(metroBeat % 4 === 0); metroBeat++; };
+  tick();
+  metroTimer = setInterval(tick, 60000 / metroBpm);
+}
+function metroStop(){ clearInterval(metroTimer); metroTimer = null; }
 
 /* ---------- state ---------- */
 let keyPc = 9;                          // A
@@ -2973,21 +3136,234 @@ function playProg(pi){
   }, i * 1000));
 }
 
+/* ---------- notepad: one big auto-saving page ---------- */
+(function(){
+  const npText = document.getElementById('np-text'), npStatus = document.getElementById('np-status'),
+        npCount = document.getElementById('np-count');
+  let npTimer = null;
+  npText.value = localStorage.getItem('sv-notepad') || '';
+  const upd = () => { const t = npText.value, w = t.trim() ? t.trim().split(/\s+/).length : 0;
+    npCount.textContent = `${w} word${w !== 1 ? 's' : ''} · ${t.length} chars`; };
+  upd();
+  npText.addEventListener('input', () => {
+    npStatus.textContent = 'Saving…'; upd();
+    clearTimeout(npTimer);
+    npTimer = setTimeout(() => { try { localStorage.setItem('sv-notepad', npText.value); } catch(_){}
+      npStatus.textContent = 'Saved'; }, 400);
+  });
+  document.getElementById('np-copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(npText.value); npStatus.textContent = 'Copied!';
+      setTimeout(() => npStatus.textContent = 'Saved', 1200); }
+    catch(_){ npText.select(); }
+  });
+  document.getElementById('np-clear').addEventListener('click', () => {
+    if (!npText.value || confirm('Clear all notes?')){ npText.value = '';
+      try { localStorage.setItem('sv-notepad', ''); } catch(_){} upd(); npStatus.textContent = 'Saved'; }
+  });
+})();
+
+/* ---------- phrasing: a mini-app about how you play ---------- */
+const PH_LESSONS = [
+  ['Phrasing is how, not what', `<p>Two players can hit the exact same notes and one sounds like a robot while the other sounds like a singer. That difference is <b>phrasing</b> — the rhythm, the spaces, the emphasis, the little bends and slides. Think of a solo as <b>talking</b>: short sentences, breaths between them, some words louder than others.</p><p>Goal of this whole tab: stop <i>running scales</i> and start <i>saying something</i>.</p>`],
+  ['Leave space', `<p>The most common mistake is playing too many notes. <b>Rests are music.</b> A gap after a phrase lets the listener catch up and makes the next idea land harder.</p><p>Try it: play a 3–4 note idea, then <b>stop</b> for a whole beat. Uncomfortable at first, powerful fast.</p><button class="neo-hear" data-ph-hear="space">&#9654; hear cramming vs. space</button>`],
+  ['Motif: a little idea, developed', `<p>A <b>motif</b> is a short, memorable idea — 2–4 notes with a rhythm. Great solos take one and <b>repeat and vary</b> it: same rhythm on new notes, or same notes with a new rhythm. Repetition is what makes a line feel intentional instead of random.</p><button class="neo-hear" data-ph-hear="motif">&#9654; hear a motif develop</button>`],
+  ['Call &amp; response', `<p>Play a <b>question</b> phrase that feels unfinished, then an <b>answer</b> that resolves it — like a conversation. Blues and soul live on this. The answer often echoes the question's rhythm but ends on a calmer, home note.</p><button class="neo-hear" data-ph-hear="call">&#9654; hear call &amp; response</button>`],
+  ['Tension &amp; release', `<p>Notes inside the underlying chord feel like <b>home</b> (release); notes outside it feel like <b>tension</b>. Good phrasing builds a little tension on an outside note, then <b>resolves</b> to a chord tone. Landing phrases on chord tones is the #1 way to sound “right”.</p>`],
+  ['Rhythm beats notes', `<p>If you fix one thing, fix rhythm. The <b>same three notes</b> with a great rhythm smoke a fast scale run with a boring one. Syncopate, leave gaps, hold notes longer than feels natural. Drill phrases to the metronome in Practice.</p>`],
+  ['Dynamics &amp; articulation', `<p>How you <b>attack</b> a note is expression: pick harder for accents, softer for ghost notes. Slide into a note, bend into it, add vibrato at the end of a long one. These are the consonants and vowels of guitar — see the Techniques tab.</p>`],
+  ['Start and land strong', `<p>Begin phrases on a strong beat and a strong (chord) note, and <b>land</b> them there too. A phrase that starts and ends on a chord tone sounds resolved even if it wanders in the middle. Aim your lines — don't just start on the root and ramble.</p>`],
+];
+const PH_TECH = [
+  {id:'bend', name:'Bend', frets:[7], desc:`Push the string sideways to raise the pitch. A <b>full bend</b> is up a whole step (2 frets). It's the crying, vocal sound of the guitar — bend <b>into</b> a target note.`},
+  {id:'release', name:'Bend &amp; release', frets:[7], desc:`Bend up, then let it fall back to pitch while it still rings. Two emotions in a single note.`},
+  {id:'vibrato', name:'Vibrato', frets:[7], desc:`A small, even wobble in pitch on a held note. It adds life and sustain — the fingerprint of every great player. Keep it steady, not nervous.`},
+  {id:'slide', name:'Slide', frets:[5,7], desc:`Pick one note and slide your finger to another <b>without re-picking</b>. Smooth and connective — great for moving between positions.`},
+  {id:'hammer', name:'Hammer-on', frets:[5,7], desc:`Pick a note, then slam another finger onto a higher fret to sound it <b>without picking again</b>. Legato and fluid.`},
+  {id:'pull', name:'Pull-off', frets:[7,5], desc:`The reverse: pick a note, then pull the finger off to sound a lower fretted note. Pair with hammer-ons for flowing lines.`},
+  {id:'trill', name:'Trill', frets:[5,7], desc:`Rapid-fire hammer-ons and pull-offs between two notes. An ornament for tension and excitement.`},
+];
+const PH_DRILLS = [
+  ['One-string solo', `Improvise for two minutes using <b>only one string</b>. With shapes gone, all that's left is melody, rhythm and phrasing — exactly what we're building.`],
+  ['Target the landing', `Pick one chord tone (say the root or the 3rd). Solo freely but <b>end every phrase</b> on that note. Trains resolution and aiming.`],
+  ['Question &amp; answer', `Play a phrase that feels unfinished, then one that answers and resolves it. Use the Call &amp; response player above as your model.`],
+  ['Rhythm first', `Tap or clap a rhythm for four bars. THEN play any notes to that exact rhythm. Rhythm leads, notes follow.`],
+  ['Steal a vocal', `Play a sung melody you know by ear — a hook, a nursery rhyme, anything. Singers phrase for a living; borrow from them.`],
+  ['Love the silence', `Metronome on. Play one short phrase, then rest a <b>full bar</b> of silence — every time. Space is the hardest, most powerful tool.`],
+];
+const PENT = [57,60,62,64,67,69,72,76];      // A minor pentatonic, ~2 octaves
+const PH_TECHNAME = {bend:'Bend', vibrato:'Vibrato', slide:'Slide', hammer:'Hammer-on', trill:'Trill'};
+const PH_TECHQ = ['bend','vibrato','slide','hammer','trill'];
+let phTechSel = 'bend', phBuilt = false, phraseSeq = null, phq = null;
+
+function playTech(id){
+  const B = 59;
+  if (id === 'bend') tone(B+7, 1.0, {bendTo:B+9, bendTime:0.33, vel:0.4});
+  else if (id === 'release') tone(B+7, 1.3, {bendTo:B+9, bendTime:0.3, bendBack:true, vel:0.4});
+  else if (id === 'vibrato') tone(B+7, 1.3, {vibrato:5.5, vibDepth:7, vel:0.4});
+  else if (id === 'slide') tone(B+5, 0.85, {bendTo:B+7, bendTime:0.7, vel:0.4});
+  else if (id === 'hammer'){ pluck(B+5, 0, 0.5); pluck(B+7, 0.14, 0.32); }
+  else if (id === 'pull'){ pluck(B+7, 0, 0.5); pluck(B+5, 0.14, 0.32); }
+  else if (id === 'trill'){ for (let i = 0; i < 8; i++) pluck(i % 2 ? B+7 : B+5, i * 0.1, 0.34); }
+}
+function renderPhStrip(){
+  const t = PH_TECH.find(x => x.id === phTechSel);
+  const el = document.getElementById('ph-strip');
+  el.innerHTML = '<div class="slabel">B</div>';
+  for (let f = 0; f <= 12; f++){
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (f === 0 ? ' fret0' : '') + (f === 1 ? ' nut' : '');
+    const idx = t.frets.indexOf(f);
+    if (idx >= 0){ const d = document.createElement('div'); d.className = 'dot ' + (idx === 0 ? 'ph-a' : 'ph-b'); d.textContent = f; cell.appendChild(d); }
+    el.appendChild(cell);
+  }
+  const fr = document.getElementById('ph-strip-frets');
+  fr.innerHTML = '<div></div>';
+  for (let f = 0; f <= 12; f++){ const n = document.createElement('div'); n.className = 'fnum' + (INLAYS.has(f) ? ' inlay' : ''); n.textContent = f; fr.appendChild(n); }
+  document.getElementById('ph-tech-cap').innerHTML = `<b>${t.name.replace('&amp;','&')}</b> — ${t.desc}`;
+}
+function phHear(id){
+  if (id === 'space'){
+    [0,1,2,3,4,5].forEach((n,i) => pluck(PENT[n % PENT.length], i * 0.12, 0.4));   // crammed
+    pluck(PENT[4], 1.5, 0.5); pluck(PENT[3], 1.85, 0.5); pluck(PENT[0], 2.5, 0.55); // spacious
+  } else if (id === 'motif'){
+    [[57,0],[60,0.7],[64,1.4]].forEach(([base,t]) => [0,3,5].forEach((s,i) => pluck(base+s, t+i*0.16, 0.45)));
+  } else if (id === 'call'){
+    [64,67,69].forEach((m,i) => pluck(m, i*0.2, 0.45)); pluck(67, 0.7, 0.5);        // question, hangs
+    [69,67,64].forEach((m,i) => pluck(m, 1.5+i*0.2, 0.45)); pluck(57, 2.25, 0.55);  // answer, resolves to A
+  }
+}
+function genPhrase(){
+  const len = 3 + rand(4), rhythms = [0.2,0.28,0.4,0.5];
+  let t = 0, idx = 2 + rand(3); phraseSeq = [];
+  for (let i = 0; i < len; i++){
+    idx = Math.max(0, Math.min(PENT.length - 1, idx + rand(3) - 1));
+    phraseSeq.push({m:PENT[idx], t}); t += rhythms[rand(rhythms.length)];
+  }
+}
+function playPhrase(seq){ (seq || phraseSeq || []).forEach(n => pluck(n.m, n.t, 0.45)); }
+
+/* phrasing quiz */
+function phQuizStart(mode){
+  phq = {mode, score:0, round:0, total:8};
+  document.getElementById('ph-quiz-pick').hidden = true;
+  document.getElementById('ph-quiz-play').hidden = false;
+  document.getElementById('ph-quiz-intro').textContent =
+    mode === 'tech' ? 'Name that technique — listen and pick.' : 'Resolved or hanging — does the phrase come home?';
+  phQuizNext();
+}
+function genQuizPhrase(resolved){
+  const CHORD = [57,60,64,69,72,76], TENS = [62,67];
+  const len = 3 + rand(3), rhythms = [0.22,0.3,0.4];
+  let t = 0, idx = 2 + rand(3); const seq = [];
+  for (let i = 0; i < len - 1; i++){ idx = Math.max(0, Math.min(PENT.length-1, idx + rand(3) - 1)); seq.push({m:PENT[idx], t}); t += rhythms[rand(rhythms.length)]; }
+  seq.push({m: resolved ? CHORD[rand(CHORD.length)] : TENS[rand(TENS.length)], t});
+  return seq;
+}
+function phQuizPlay(){
+  if (!phq) return;
+  if (phq.mode === 'tech') playTech(phq.answer);
+  else { pluck(45, 0, 0.4); pluck(57, 0.04, 0.32); setTimeout(() => playPhrase(phq.seq), 260); }
+}
+function phQuizNext(){
+  phq.round++; phq.answered = false;
+  const ce = document.getElementById('ph-q-choices'); ce.innerHTML = '';
+  if (phq.mode === 'tech'){
+    phq.answer = PH_TECHQ[rand(PH_TECHQ.length)];
+    const set = new Set([phq.answer]); while (set.size < 4) set.add(PH_TECHQ[rand(PH_TECHQ.length)]);
+    phq.opts = shuffle([...set]);
+    document.getElementById('ph-q-prompt').innerHTML = `Which technique is this? <small>${phq.round} / ${phq.total} · score ${phq.score}</small>`;
+    phq.opts.forEach(id => { const b = document.createElement('button'); b.className = 'qchoice'; b.textContent = PH_TECHNAME[id]; b.addEventListener('click', () => phQuizGuess(id, b)); ce.appendChild(b); });
+  } else {
+    phq.resolved = Math.random() < 0.5;
+    phq.seq = genQuizPhrase(phq.resolved);
+    document.getElementById('ph-q-prompt').innerHTML = `Does this phrase resolve, or hang? <small>${phq.round} / ${phq.total} · score ${phq.score}</small>`;
+    [['Resolved', true],['Hanging', false]].forEach(([lbl,val]) => { const b = document.createElement('button'); b.className = 'qchoice'; b.textContent = lbl; b.addEventListener('click', () => phQuizGuess(val, b)); ce.appendChild(b); });
+  }
+  document.getElementById('ph-q-result').textContent = '';
+  setTimeout(phQuizPlay, 250);
+}
+function phQuizGuess(ans, btn){
+  if (!phq || phq.answered) return;
+  phq.answered = true;
+  const correct = phq.mode === 'tech' ? ans === phq.answer : ans === phq.resolved;
+  if (correct){ phq.score += 10; btn.classList.add('good'); } else btn.classList.add('bad');
+  document.getElementById('ph-q-choices').querySelectorAll('.qchoice').forEach(b => b.disabled = true);
+  const res = document.getElementById('ph-q-result');
+  res.className = 'qresult ' + (correct ? 'good' : 'bad');
+  res.textContent = correct ? '✓ Yes!' : (phq.mode === 'tech' ? `✗ It was a ${PH_TECHNAME[phq.answer]}.` : `✗ It ${phq.resolved ? 'resolved' : 'hung'}.`);
+  const done = phq.round >= phq.total;
+  setTimeout(() => {
+    if (!phq) return;
+    if (done){ res.className = 'qresult good'; res.textContent = `Done — ${phq.score} / ${phq.total * 10} pts. Nice ears! Tap Back for another.`; }
+    else phQuizNext();
+  }, correct ? 950 : 1700);
+}
+
+function buildPhrasing(){
+  if (phBuilt) return;
+  phBuilt = true;
+  const ll = document.getElementById('ph-lessons-list');
+  ll.innerHTML = PH_LESSONS.map(([t,b],i) => `<details class="lesson"><summary><span class="ln">${i+1}</span>${t}</summary><div class="lesson-body">${b}</div></details>`).join('');
+  ll.addEventListener('click', e => { const h = e.target.closest('[data-ph-hear]'); if (h) phHear(h.dataset.phHear); });
+
+  const tc = document.getElementById('ph-tech-chips');
+  tc.innerHTML = PH_TECH.map(t => `<button class="ph-chip${t.id === phTechSel ? ' active' : ''}" data-id="${t.id}">${t.name}</button>`).join('');
+  tc.addEventListener('click', e => { const b = e.target.closest('.ph-chip'); if (!b) return;
+    phTechSel = b.dataset.id;
+    tc.querySelectorAll('.ph-chip').forEach(x => x.classList.toggle('active', x === b));
+    renderPhStrip(); playTech(phTechSel); });
+  renderPhStrip();
+
+  document.getElementById('ph-drills').innerHTML = PH_DRILLS.map(([t,b]) => `<div class="ph-drill"><b>${t}.</b> ${b}</div>`).join('');
+
+  document.getElementById('ph-phrase').addEventListener('click', () => { genPhrase(); playPhrase(); document.getElementById('ph-phrase-again').disabled = false; });
+  document.getElementById('ph-phrase-again').addEventListener('click', () => { if (phraseSeq) playPhrase(); });
+
+  const mb = document.getElementById('ph-metro');
+  mb.addEventListener('click', () => { if (metroTimer){ metroStop(); mb.innerHTML = '&#9654; Start'; } else { metroStart(); mb.innerHTML = '&#9208; Stop'; } });
+  const bpm = document.getElementById('ph-bpm');
+  bpm.addEventListener('input', () => { metroBpm = +bpm.value; document.getElementById('ph-bpm-val').textContent = metroBpm; if (metroTimer){ metroStop(); metroStart(); } });
+
+  const pick = document.getElementById('ph-quiz-pick');
+  pick.innerHTML = `<button class="ph-chip" data-mode="tech">Name that technique</button><button class="ph-chip" data-mode="resolve">Resolved or hanging?</button>`;
+  pick.addEventListener('click', e => { const b = e.target.closest('.ph-chip'); if (b) phQuizStart(b.dataset.mode); });
+  document.getElementById('ph-q-replay').addEventListener('click', phQuizPlay);
+  document.getElementById('ph-q-back').addEventListener('click', () => {
+    phq = null;
+    document.getElementById('ph-quiz-play').hidden = true;
+    document.getElementById('ph-quiz-pick').hidden = false;
+    document.getElementById('ph-quiz-intro').textContent = 'Two ear games for phrasing. Pick one.';
+  });
+}
+const PH_SUBS = {lessons:'ph-lessons', tech:'ph-tech', practice:'ph-practice', quiz:'ph-quiz'};
+function showPhSub(sub){
+  Object.entries(PH_SUBS).forEach(([k,id]) => { document.getElementById(id).hidden = k !== sub; });
+  document.querySelectorAll('#ph-tabs .ph-tab').forEach(b => b.classList.toggle('active', b.dataset.ph === sub));
+  if (sub === 'tech') renderPhStrip();
+}
+document.getElementById('ph-tabs').addEventListener('click', e => { const b = e.target.closest('.ph-tab'); if (b) showPhSub(b.dataset.ph); });
+
 /* ---------- tabs: folded into one button ---------- */
-const TAB_EMOJI = {explore:'🎸', map:'🗺️', intervals:'📏', neo:'🎹', quiz:'🎯', decoder:'🧭', chords:'✋'};
+const TAB_EMOJI = {explore:'🎸', map:'🗺️', intervals:'📏', neo:'🎹', phrasing:'🎤', quiz:'🎯', decoder:'🧭', chords:'✋', notes:'📝'};
 const TAB_VIEWS = {
   explore:   document.getElementById('view-explore'),
   map:       document.getElementById('view-map'),
   intervals: document.getElementById('view-intervals'),
   neo:       document.getElementById('view-neo'),
+  phrasing:  document.getElementById('view-phrasing'),
   quiz:      document.getElementById('view-quiz'),
   decoder:   document.getElementById('view-decoder'),
   chords:    document.getElementById('view-chords'),
+  notes:     document.getElementById('view-notes'),
 };
 const tfCur = document.getElementById('tf-cur');
 const tfOpts = document.getElementById('tf-opts');
 let curTab = 'explore';
 function showTab(t){
+  if (t !== 'phrasing' && metroTimer){    // stop the metronome when you leave Phrasing
+    metroStop();
+    const mb = document.getElementById('ph-metro'); if (mb) mb.innerHTML = '&#9654; Start';
+  }
   curTab = t;
   Object.entries(TAB_VIEWS).forEach(([name, view]) => { view.hidden = name !== t; });
   applyTheme();               // every tab wears its own colors
@@ -3005,6 +3381,11 @@ function showTab(t){
   } else if (t === 'neo'){
     document.getElementById('title').textContent = 'Neo Soul & R&B';
     buildNeo();
+  } else if (t === 'phrasing'){
+    document.getElementById('title').textContent = 'Phrasing';
+    buildPhrasing();
+  } else if (t === 'notes'){
+    document.getElementById('title').textContent = 'Notepad';
   } else if (t === 'quiz'){
     document.getElementById('title').textContent = 'Quiz Arcade';
     if (!quizStarted) newQuiz();
