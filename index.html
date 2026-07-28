@@ -240,6 +240,15 @@
   .ph-drill{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--root);
     border-radius:12px;padding:11px 14px;color:var(--muted);font-size:13.5px;line-height:1.55}
   .ph-drill b{color:var(--ink)}
+  /* rhythm beat grid */
+  .rh-grid{display:grid;grid-template-columns:repeat(16,1fr);gap:4px;margin:14px 0 4px;max-width:600px}
+  .rh-cell{aspect-ratio:1;border-radius:6px;background:var(--panel-2);border:1px solid var(--line);
+    cursor:pointer;transition:background .07s,box-shadow .07s}
+  .rh-cell.beat{border-color:var(--muted)}
+  .rh-cell.on{background:var(--root)}
+  .rh-cell.play{box-shadow:0 0 0 2px var(--scale),0 0 10px var(--glow-scale)}
+  .rh-cell.on.play{background:var(--scale)}
+  .rh-count{color:var(--muted);font-size:12px;letter-spacing:.06em;margin:2px 0 14px;font-weight:600;max-width:600px}
 
   /* neo soul tab */
   .neo-sec{margin-top:28px}
@@ -777,6 +786,7 @@
       <button class="tab" data-tab="intervals">&#128207; Intervals</button>
       <button class="tab" data-tab="neo">&#127924; Neo soul</button>
       <button class="tab" data-tab="phrasing">&#127908; Phrasing</button>
+      <button class="tab" data-tab="rhythm">&#129345; Rhythm</button>
       <button class="tab" data-tab="quiz">&#127919; Neck quiz</button>
       <button class="tab" data-tab="decoder">&#129517; Decoder</button>
       <button class="tab" data-tab="chords">&#9995; Chords</button>
@@ -1146,6 +1156,68 @@
       </div>
     </div>
   </div><!-- /view-phrasing -->
+
+  <div id="view-rhythm" hidden>
+    <p class="sub">Rhythm is the engine — the <b>when</b> behind every note. Wrong notes with great time can still groove; right notes with bad time never will. Here's a whole space to build it.</p>
+    <div class="ph-tabs" id="rh-subtabs">
+      <button type="button" class="ph-tab active" data-rh="lessons">Lessons</button>
+      <button type="button" class="ph-tab" data-rh="patterns">Patterns</button>
+      <button type="button" class="ph-tab" data-rh="practice">Practice</button>
+      <button type="button" class="ph-tab" data-rh="quiz">Quiz</button>
+    </div>
+
+    <div class="ph-view" id="rh-lessons">
+      <p class="neo-p">How time actually works, in plain language. A couple have a ▶ to hear it.</p>
+      <div id="rh-lessons-list"></div>
+    </div>
+
+    <div class="ph-view" id="rh-patterns" hidden>
+      <p class="neo-p">Tap the squares to build a rhythm — or load a preset — then press Play. The four brighter columns are the <b>downbeats</b> (1, 2, 3, 4); the squares between them are the “e &amp; a” subdivisions.</p>
+      <div class="rh-grid" id="rh-grid"></div>
+      <p class="rh-count">1 e &amp; a &nbsp; 2 e &amp; a &nbsp; 3 e &amp; a &nbsp; 4 e &amp; a</p>
+      <div class="ph-tool-row">
+        <button class="primary" id="rh-play">&#9654; Play</button>
+        <span class="ph-bpm">tempo <b id="rh-bpm-val">90</b> bpm</span>
+        <input type="range" id="rh-bpm" min="40" max="200" value="90">
+        <button id="rh-clear-grid">Clear</button>
+      </div>
+      <div class="ph-chips" id="rh-preset-chips"></div>
+    </div>
+
+    <div class="ph-view" id="rh-practice" hidden>
+      <div class="ph-tool">
+        <div class="ph-tool-h">🔢 Subdivision trainer</div>
+        <p class="ph-tool-p">Hear one beat split evenly into 2, 3, or 4. Feeling the beat divided — not counting frantically — is the whole game.</p>
+        <div class="ph-chips" id="rh-subdiv-chips"></div>
+      </div>
+      <div class="ph-tool">
+        <div class="ph-tool-h">👆 Tap tempo</div>
+        <p class="ph-tool-p">Tap along with any song to find its BPM, then send it to the metronome.</p>
+        <div class="ph-tool-row">
+          <button class="primary" id="rh-tap">Tap</button>
+          <span class="ph-bpm"><b id="rh-tap-val">—</b> bpm</span>
+          <button id="rh-tap-use">Use it</button>
+        </div>
+      </div>
+      <p class="ph-tool-p" style="margin-top:2px">For a metronome, load <b>Quarter notes</b> in the Patterns tab and hit Play.</p>
+      <div class="neo-h" style="margin-top:22px"><span class="em">📋</span>Practice drills</div>
+      <div class="ph-drills" id="rh-drills"></div>
+    </div>
+
+    <div class="ph-view" id="rh-quiz" hidden>
+      <p class="neo-p" id="rh-quiz-intro">Two ear games for time. Pick one.</p>
+      <div class="ph-chips" id="rh-quiz-pick"></div>
+      <div id="rh-quiz-play" hidden>
+        <p class="qprompt" id="rh-q-prompt"></p>
+        <div class="qchoices" id="rh-q-choices"></div>
+        <p class="qresult" id="rh-q-result"></p>
+        <div class="ph-tool-row" style="margin-top:8px">
+          <button id="rh-q-replay">&#9654; Replay</button>
+          <button id="rh-q-back">&#8592; Back</button>
+        </div>
+      </div>
+    </div>
+  </div><!-- /view-rhythm -->
 </div>
 
 <script>
@@ -3343,14 +3415,201 @@ function showPhSub(sub){
 }
 document.getElementById('ph-tabs').addEventListener('click', e => { const b = e.target.closest('.ph-tab'); if (b) showPhSub(b.dataset.ph); });
 
+/* ---------- rhythm: a mini-app about time ---------- */
+const RH_LESSONS = [
+  ['Beat &amp; tempo', `<p>The <b>beat</b> is the steady pulse you tap your foot to. <b>Tempo</b> is how fast it goes — measured in <b>BPM</b> (beats per minute); 120 BPM = two beats every second. Everything in rhythm is measured against this pulse, so the first skill is simply <b>keeping a steady one</b>.</p>`],
+  ['Counting the bar', `<p>Music is grouped into <b>bars</b> (measures). Most songs are in <b>4/4</b>: four beats per bar, counted <b>“1 2 3 4, 1 2 3 4…”</b>. Beat 1 is the strongest — the “downbeat” — where bars begin. Count out loud while you play; it fixes more timing problems than anything else.</p>`],
+  ['Note values', `<p>Notes are named by how much of a beat they take:</p><ul><li><b>Quarter note</b> = 1 beat (one per pulse)</li><li><b>Eighth note</b> = ½ beat (two per pulse)</li><li><b>Sixteenth note</b> = ¼ beat (four per pulse)</li></ul><p>So a beat can hold one note, or be split into 2 or 4 even pieces. That splitting is called subdivision.</p>`],
+  ['Downbeats &amp; upbeats', `<p>Split each beat in two and count <b>“1 &amp; 2 &amp; 3 &amp; 4 &amp;”</b>. The numbers are <b>downbeats</b> (on the pulse); the <b>&amp;</b>s are <b>upbeats</b> (between pulses). Tons of groove — funk, reggae, ska — lives by accenting those <b>&amp;</b>s instead of the numbers.</p><button class="neo-hear" data-rh-hear="updown">&#9654; hear downbeats vs. the &amp;'s</button>`],
+  ['Subdivision', `<p>The secret to good time isn't counting faster — it's <b>feeling the beat divided evenly</b>. Hear each beat as 2 (eighths), 3 (triplets) or 4 (sixteenths) equal pieces, even when you only play one note. Lock to that inner grid and everything sits right.</p><button class="neo-hear" data-rh-hear="subs">&#9654; hear 1, then 2, 3, 4 per beat</button>`],
+  ['Syncopation', `<p><b>Syncopation</b> is accenting the <b>off-beats</b> — the &amp;s and the “e/a” sixteenths — instead of the strong beats. It's what makes a groove feel funky and surprising instead of stiff. Feel the steady pulse underneath, then place notes <b>between</b> the beats.</p><button class="neo-hear" data-rh-hear="sync">&#9654; hear straight vs. syncopated</button>`],
+  ['Straight vs. swing', `<p><b>Straight</b> eighths split the beat into two <b>equal</b> halves. <b>Swing</b> (or shuffle) makes the first half <b>longer</b> than the second — a “long-short, long-short” lope you hear in blues, jazz and shuffles. Same notes, totally different feel.</p><button class="neo-hear" data-rh-hear="swing">&#9654; hear straight vs. swung</button>`],
+  ['Rests &amp; the pocket', `<p><b>Rests</b> (silences) are rhythm too — a well-placed gap grooves harder than another note. And the <b>pocket</b> is the goal: lock so tightly and consistently with the beat that it feels effortless. Great rhythm players are <b>steady</b> above all — the metronome is your best friend, not your enemy.</p>`],
+];
+const RH_PATTERNS = {
+  quarters:   [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+  eighths:    [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+  offbeats:   [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+  sixteenths: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
+  clave:      [1,0,0,1, 0,0,1,0, 0,0,1,0, 1,0,0,0],
+  funk:       [1,0,1,1, 0,0,1,0, 1,0,1,1, 0,0,1,0],
+};
+const RH_PRESETS = [
+  ['quarters','Quarter notes'], ['eighths','Eighth notes'], ['offbeats','Off-beats (&amp;s)'],
+  ['sixteenths','Sixteenths'], ['clave','Son clave'], ['funk','Funk groove'],
+];
+const RH_DRILLS = [
+  ['Count out loud', `Play anything, but <b>count “1 2 3 4”</b> out loud the whole time. It feels silly and fixes timing instantly.`],
+  ['Tap the foot', `Keep a steady foot tap on every beat while you play. Your foot is your built-in metronome — never let it stop.`],
+  ['Clap the &amp;s', `Metronome on the beat. Now clap only the <b>upbeats</b> (the “&amp;”s), right between the clicks. Trains syncopation.`],
+  ['One chord, many rhythms', `Pick ONE chord and play it with five different rhythms from the Patterns grid. Proves rhythm — not notes — makes the groove.`],
+  ['Metronome on 2 &amp; 4', `Set the click to land on beats 2 and 4 only (count 1-CLICK-3-CLICK). It's how drummers feel time — and it's humbling.`],
+  ['Leave a bar', `Play a one-bar idea, then rest a <b>full bar</b> of silence, in time. Comfort with space is elite-level rhythm.`],
+];
+
+let rhTimer = null, rhStep = 0, rhBpm = 90, rhPattern = new Array(16).fill(0);
+let rhTapTimes = [], rhq = null, rhBuilt = false;
+
+function rhStepDur(){ return (60000 / rhBpm) / 4; }
+function rhPlayStep(s){
+  if (rhPattern[s]) metroClick(s % 4 === 0);
+  document.querySelectorAll('#rh-grid .rh-cell').forEach((c, i) => c.classList.toggle('play', i === s));
+}
+function rhStart(){
+  rhStep = 0; rhPlayStep(0);
+  rhTimer = setInterval(() => { rhStep = (rhStep + 1) % 16; rhPlayStep(rhStep); }, rhStepDur());
+}
+function rhStop(){
+  clearInterval(rhTimer); rhTimer = null;
+  document.querySelectorAll('#rh-grid .rh-cell.play').forEach(c => c.classList.remove('play'));
+  const pb = document.getElementById('rh-play'); if (pb) pb.innerHTML = '&#9654; Play';
+}
+function renderRhGrid(){
+  const g = document.getElementById('rh-grid');
+  g.innerHTML = '';
+  for (let i = 0; i < 16; i++){
+    const c = document.createElement('div');
+    c.className = 'rh-cell' + (i % 4 === 0 ? ' beat' : '') + (rhPattern[i] ? ' on' : '');
+    c.addEventListener('click', () => { rhPattern[i] = rhPattern[i] ? 0 : 1; c.classList.toggle('on', !!rhPattern[i]); });
+    g.appendChild(c);
+  }
+}
+function rhHear(id){
+  const beat = 60000 / rhBpm;
+  const clicks = (arr) => arr.forEach(([t, acc]) => setTimeout(() => metroClick(acc), t));
+  if (id === 'updown'){
+    clicks([0,1,2,3].map(b => [b*beat, true]));                                   // downbeats
+    setTimeout(() => clicks([0,1,2,3].map(b => [b*beat + beat/2, false])), 4.3*beat); // then the &s
+  } else if (id === 'subs'){
+    let t = 0; [1,2,3,4].forEach(n => { for (let k = 0; k < n; k++) clicks([[t + k*beat/n, k===0]]); t += beat*1.3; });
+  } else if (id === 'sync'){
+    clicks([0,1,2,3].map(b => [b*beat, b%2===0]));                                // straight on-beat
+    const off = 4.5*beat;
+    clicks([[off,true],[off+beat*0.75,false],[off+beat*1.5,false],[off+beat*2.25,false],[off+beat*2.5,true]]);
+  } else if (id === 'swing'){
+    for (let b = 0; b < 4; b++){ clicks([[b*beat, b%2===0],[b*beat+beat/2, false]]); }   // straight
+    const off = 4.6*beat;
+    for (let b = 0; b < 4; b++){ clicks([[off+b*beat, b%2===0],[off+b*beat+beat*0.667, false]]); } // swung
+  }
+}
+function rhSubdiv(n){                       // play two beats split into n
+  const beat = 60000 / rhBpm, per = beat / n;
+  for (let b = 0; b < 2; b++) for (let k = 0; k < n; k++)
+    setTimeout(() => metroClick(k === 0), (b*n + k) * per);
+}
+function rhTap(){
+  const now = performance.now();
+  rhTapTimes.push(now);
+  rhTapTimes = rhTapTimes.filter(t => now - t < 2500);
+  if (rhTapTimes.length >= 2){
+    let sum = 0; for (let i = 1; i < rhTapTimes.length; i++) sum += rhTapTimes[i] - rhTapTimes[i-1];
+    const bpm = Math.round(60000 / (sum / (rhTapTimes.length - 1)));
+    if (bpm >= 40 && bpm <= 300) document.getElementById('rh-tap-val').textContent = bpm;
+  }
+}
+
+/* rhythm quiz */
+function rhQuizStart(mode){
+  rhq = {mode, score:0, round:0, total:8};
+  document.getElementById('rh-quiz-pick').hidden = true;
+  document.getElementById('rh-quiz-play').hidden = false;
+  document.getElementById('rh-quiz-intro').textContent =
+    mode === 'subdiv' ? 'Count the subdivision — how many even notes per beat?' : 'Straight or swung — even, or that long-short lope?';
+  rhQuizNext();
+}
+function rhQuizPlay(){
+  if (!rhq) return;
+  if (rhq.mode === 'subdiv') rhSubdiv(rhq.n);
+  else { const beat = 60000 / rhBpm; for (let b = 0; b < 4; b++){ metroClick(b===0); setTimeout(() => metroClick(false), (b + (rhq.swung ? 0.667 : 0.5)) * beat); } }
+}
+function rhQuizNext(){
+  rhq.round++; rhq.answered = false;
+  const ce = document.getElementById('rh-q-choices'); ce.innerHTML = '';
+  if (rhq.mode === 'subdiv'){
+    rhq.n = [2,3,4][rand(3)];
+    document.getElementById('rh-q-prompt').innerHTML = `How many notes per beat? <small>${rhq.round} / ${rhq.total} · score ${rhq.score}</small>`;
+    [['2 — eighths',2],['3 — triplets',3],['4 — sixteenths',4]].forEach(([lbl,v]) => { const b = document.createElement('button'); b.className = 'qchoice'; b.textContent = lbl; b.addEventListener('click', () => rhQuizGuess(v, b)); ce.appendChild(b); });
+  } else {
+    rhq.swung = Math.random() < 0.5;
+    document.getElementById('rh-q-prompt').innerHTML = `Straight or swung? <small>${rhq.round} / ${rhq.total} · score ${rhq.score}</small>`;
+    [['Straight', false],['Swung', true]].forEach(([lbl,v]) => { const b = document.createElement('button'); b.className = 'qchoice'; b.textContent = lbl; b.addEventListener('click', () => rhQuizGuess(v, b)); ce.appendChild(b); });
+  }
+  document.getElementById('rh-q-result').textContent = '';
+  setTimeout(rhQuizPlay, 300);
+}
+function rhQuizGuess(ans, btn){
+  if (!rhq || rhq.answered) return;
+  rhq.answered = true;
+  const correct = rhq.mode === 'subdiv' ? ans === rhq.n : ans === rhq.swung;
+  if (correct){ rhq.score += 10; btn.classList.add('good'); } else btn.classList.add('bad');
+  document.getElementById('rh-q-choices').querySelectorAll('.qchoice').forEach(b => b.disabled = true);
+  const res = document.getElementById('rh-q-result');
+  res.className = 'qresult ' + (correct ? 'good' : 'bad');
+  res.textContent = correct ? '✓ Yes!' : (rhq.mode === 'subdiv' ? `✗ It was ${rhq.n} per beat.` : `✗ It was ${rhq.swung ? 'swung' : 'straight'}.`);
+  const done = rhq.round >= rhq.total;
+  setTimeout(() => {
+    if (!rhq) return;
+    if (done){ res.className = 'qresult good'; res.textContent = `Done — ${rhq.score} / ${rhq.total*10} pts. Solid time! Tap Back for another.`; }
+    else rhQuizNext();
+  }, correct ? 950 : 1700);
+}
+
+function buildRhythm(){
+  if (rhBuilt) return;
+  rhBuilt = true;
+  const ll = document.getElementById('rh-lessons-list');
+  ll.innerHTML = RH_LESSONS.map(([t,b],i) => `<details class="lesson"><summary><span class="ln">${i+1}</span>${t}</summary><div class="lesson-body">${b}</div></details>`).join('');
+  ll.addEventListener('click', e => { const h = e.target.closest('[data-rh-hear]'); if (h) rhHear(h.dataset.rhHear); });
+
+  rhPattern = RH_PATTERNS.quarters.slice();
+  renderRhGrid();
+  const pc = document.getElementById('rh-preset-chips');
+  pc.innerHTML = RH_PRESETS.map(([id,name]) => `<button class="ph-chip" data-p="${id}">${name}</button>`).join('');
+  pc.addEventListener('click', e => { const b = e.target.closest('.ph-chip'); if (b){ rhPattern = RH_PATTERNS[b.dataset.p].slice(); renderRhGrid(); } });
+  const pb = document.getElementById('rh-play');
+  pb.addEventListener('click', () => { if (rhTimer){ rhStop(); } else { rhStart(); pb.innerHTML = '&#9208; Stop'; } });
+  const bpm = document.getElementById('rh-bpm');
+  bpm.addEventListener('input', () => { rhBpm = +bpm.value; document.getElementById('rh-bpm-val').textContent = rhBpm; if (rhTimer){ clearInterval(rhTimer); rhTimer = setInterval(() => { rhStep = (rhStep + 1) % 16; rhPlayStep(rhStep); }, rhStepDur()); } });
+  document.getElementById('rh-clear-grid').addEventListener('click', () => { rhPattern = new Array(16).fill(0); renderRhGrid(); });
+
+  const sc = document.getElementById('rh-subdiv-chips');
+  sc.innerHTML = [['1 — quarter',1],['2 — eighths',2],['3 — triplet',3],['4 — sixteenths',4]].map(([l,n]) => `<button class="ph-chip" data-n="${n}">${l}</button>`).join('');
+  sc.addEventListener('click', e => { const b = e.target.closest('.ph-chip'); if (b) rhSubdiv(+b.dataset.n); });
+  document.getElementById('rh-tap').addEventListener('click', rhTap);
+  document.getElementById('rh-tap-use').addEventListener('click', () => {
+    const v = parseInt(document.getElementById('rh-tap-val').textContent, 10);
+    if (v){ rhBpm = v; document.getElementById('rh-bpm').value = v; document.getElementById('rh-bpm-val').textContent = v; }
+  });
+  document.getElementById('rh-drills').innerHTML = RH_DRILLS.map(([t,b]) => `<div class="ph-drill"><b>${t}.</b> ${b}</div>`).join('');
+
+  const pick = document.getElementById('rh-quiz-pick');
+  pick.innerHTML = `<button class="ph-chip" data-mode="subdiv">Count the subdivision</button><button class="ph-chip" data-mode="swing">Straight or swung?</button>`;
+  pick.addEventListener('click', e => { const b = e.target.closest('.ph-chip'); if (b) rhQuizStart(b.dataset.mode); });
+  document.getElementById('rh-q-replay').addEventListener('click', rhQuizPlay);
+  document.getElementById('rh-q-back').addEventListener('click', () => {
+    rhq = null;
+    document.getElementById('rh-quiz-play').hidden = true;
+    document.getElementById('rh-quiz-pick').hidden = false;
+    document.getElementById('rh-quiz-intro').textContent = 'Two ear games for time. Pick one.';
+  });
+}
+const RH_SUBS = {lessons:'rh-lessons', patterns:'rh-patterns', practice:'rh-practice', quiz:'rh-quiz'};
+function showRhSub(sub){
+  Object.entries(RH_SUBS).forEach(([k,id]) => { document.getElementById(id).hidden = k !== sub; });
+  document.querySelectorAll('#rh-subtabs .ph-tab').forEach(b => b.classList.toggle('active', b.dataset.rh === sub));
+  if (sub !== 'patterns') rhStop();
+}
+document.getElementById('rh-subtabs').addEventListener('click', e => { const b = e.target.closest('.ph-tab'); if (b) showRhSub(b.dataset.rh); });
+
 /* ---------- tabs: folded into one button ---------- */
-const TAB_EMOJI = {explore:'🎸', map:'🗺️', intervals:'📏', neo:'🎹', phrasing:'🎤', quiz:'🎯', decoder:'🧭', chords:'✋', notes:'📝'};
+const TAB_EMOJI = {explore:'🎸', map:'🗺️', intervals:'📏', neo:'🎹', phrasing:'🎤', rhythm:'🥁', quiz:'🎯', decoder:'🧭', chords:'✋', notes:'📝'};
 const TAB_VIEWS = {
   explore:   document.getElementById('view-explore'),
   map:       document.getElementById('view-map'),
   intervals: document.getElementById('view-intervals'),
   neo:       document.getElementById('view-neo'),
   phrasing:  document.getElementById('view-phrasing'),
+  rhythm:    document.getElementById('view-rhythm'),
   quiz:      document.getElementById('view-quiz'),
   decoder:   document.getElementById('view-decoder'),
   chords:    document.getElementById('view-chords'),
@@ -3364,6 +3623,7 @@ function showTab(t){
     metroStop();
     const mb = document.getElementById('ph-metro'); if (mb) mb.innerHTML = '&#9654; Start';
   }
+  if (t !== 'rhythm' && rhTimer) rhStop();   // stop the beat sequencer when you leave Rhythm
   curTab = t;
   Object.entries(TAB_VIEWS).forEach(([name, view]) => { view.hidden = name !== t; });
   applyTheme();               // every tab wears its own colors
@@ -3384,6 +3644,9 @@ function showTab(t){
   } else if (t === 'phrasing'){
     document.getElementById('title').textContent = 'Phrasing';
     buildPhrasing();
+  } else if (t === 'rhythm'){
+    document.getElementById('title').textContent = 'Rhythm';
+    buildRhythm();
   } else if (t === 'notes'){
     document.getElementById('title').textContent = 'Notepad';
   } else if (t === 'quiz'){
