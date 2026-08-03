@@ -250,6 +250,25 @@
   .rh-cell.on.play{background:var(--scale)}
   .rh-count{color:var(--muted);font-size:12px;letter-spacing:.06em;margin:2px 0 14px;font-weight:600;max-width:600px}
 
+  /* fingerstyle exercises */
+  .fg-ex{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:11px;box-shadow:var(--shadow)}
+  .fg-top{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+  .fg-name{font-weight:800;color:var(--ink);font-size:15px}
+  .fg-diff{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:3px 9px}
+  .fg-diff.beg{background:var(--root-faint);color:var(--root)}
+  .fg-diff.int{background:rgba(91,140,255,.16);color:var(--scale)}
+  .fg-play{margin-left:auto;font:inherit;font-weight:700;font-size:13px;color:var(--bg);background:var(--root);
+    border:none;border-radius:999px;padding:8px 15px;cursor:pointer}
+  .fg-play:hover{filter:brightness(1.07)}
+  .fg-pima{display:flex;gap:9px;flex-wrap:wrap;margin:8px 0 8px;background:var(--panel-2);
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .fg-step{display:flex;flex-direction:column;align-items:center;min-width:30px}
+  .fg-step .f{font-weight:800;font-size:21px;color:var(--root);line-height:1;transition:color .1s,transform .1s}
+  .fg-step .s{font-size:10.5px;color:var(--muted);margin-top:3px;font-weight:600}
+  .fg-step.cur .f{color:var(--scale);transform:scale(1.25)}
+  .fg-tip{color:var(--muted);font-size:13px;line-height:1.55}
+  .fg-tip b{color:var(--ink)}
+
   /* neo soul tab */
   .neo-sec{margin-top:28px}
   .neo-h{font-size:16px;font-weight:800;letter-spacing:.01em;color:var(--ink);margin:0 0 4px;
@@ -787,6 +806,7 @@
       <button class="tab" data-tab="neo">&#127924; Neo soul</button>
       <button class="tab" data-tab="phrasing">&#127908; Phrasing</button>
       <button class="tab" data-tab="rhythm">&#129345; Rhythm</button>
+      <button class="tab" data-tab="finger">&#128400;&#65039; Fingerstyle</button>
       <button class="tab" data-tab="quiz">&#127919; Neck quiz</button>
       <button class="tab" data-tab="decoder">&#129517; Decoder</button>
       <button class="tab" data-tab="chords">&#9995; Chords</button>
@@ -1218,6 +1238,22 @@
       </div>
     </div>
   </div><!-- /view-rhythm -->
+
+  <div id="view-finger" hidden>
+    <p class="sub">Fingerpicking patterns to drill. <b>p</b> = thumb, <b>i</b> = index, <b>m</b> = middle, <b>a</b> = ring (Spanish <i>pulgar, índice, medio, anular</i>). The thumb takes the bass strings; i-m-a take G-B-e. Pick a chord, set a tempo, and tap ▶ to hear each one — the fingers light up as it plays.</p>
+    <div class="bar">
+      <div>
+        <span class="lab">Chord</span>
+        <select id="fg-chord" aria-label="Chord to pick over"></select>
+      </div>
+      <div>
+        <span class="lab">Tempo <b id="fg-bpm-val" style="color:var(--root)">80</b></span>
+        <input type="range" id="fg-bpm" min="40" max="160" value="80" style="accent-color:var(--root);vertical-align:middle">
+      </div>
+    </div>
+    <div id="fg-list"></div>
+    <p class="hint">Write the p-i-m-a sequence in your notebook and loop it slowly with a metronome (Rhythm tab) until it's automatic — <b>accuracy first, speed later</b>. Keep your picking hand relaxed and anchor lightly with your pinky if it helps.</p>
+  </div><!-- /view-finger -->
 </div>
 
 <script>
@@ -3601,8 +3637,97 @@ function showRhSub(sub){
 }
 document.getElementById('rh-subtabs').addEventListener('click', e => { const b = e.target.closest('.ph-tab'); if (b) showRhSub(b.dataset.rh); });
 
+/* ---------- fingerstyle: p-i-m-a picking exercises ---------- */
+// chord voicings as 6 string midis (low E..high e; null = muted); bass = the two thumb strings
+const FG_CHORDS = {
+  'Am': {midis:[null,45,52,57,60,64], bass:[1,2]},
+  'C':  {midis:[null,48,52,55,60,64], bass:[1,2]},
+  'Em': {midis:[40,47,52,55,59,64], bass:[0,1]},
+  'G':  {midis:[43,47,50,55,59,67], bass:[0,1]},
+  'D':  {midis:[null,null,50,57,62,66], bass:[2,3]},
+};
+const FG_SNAME = ['E','A','D','G','B','e'];
+// steps: f = finger label, s = string token ('b1','b2', a treble index 3/4/5, or an array = pinch)
+const FG_EX = [
+  {name:'Basic arpeggio', diff:'beg', tip:`The foundation. Thumb, then index-middle-ring climbing G-B-e. Let every note ring.`,
+   steps:[{f:'p',s:'b1'},{f:'i',s:3},{f:'m',s:4},{f:'a',s:5}]},
+  {name:'Descending', diff:'beg', tip:`The same idea in reverse — ring down to index. Trains the fingers the other direction.`,
+   steps:[{f:'p',s:'b1'},{f:'a',s:5},{f:'m',s:4},{f:'i',s:3}]},
+  {name:'Up &amp; back (roll)', diff:'beg', tip:`Climb then come back without stopping — one smooth six-note wave. Great warm-up.`,
+   steps:[{f:'p',s:'b1'},{f:'i',s:3},{f:'m',s:4},{f:'a',s:5},{f:'m',s:4},{f:'i',s:3}]},
+  {name:'Inside-out', diff:'int', tip:`Skips around the middle strings (p m i a). Trains finger independence — go slow.`,
+   steps:[{f:'p',s:'b1'},{f:'m',s:4},{f:'i',s:3},{f:'a',s:5}]},
+  {name:'Pinch', diff:'beg', tip:`Thumb and ring pluck <b>together</b>, then index and middle. The heart of chord-melody playing.`,
+   steps:[{f:'p+a',s:['b1',5]},{f:'i',s:3},{f:'m',s:4}]},
+  {name:'Alternating thumb (Travis)', diff:'int', tip:`The folk/country engine: the thumb bounces between two bass strings while fingers fill in. Keep the thumb steady like a metronome.`,
+   steps:[{f:'p',s:'b1'},{f:'i',s:3},{f:'p',s:'b2'},{f:'m',s:4}]},
+  {name:'Forward roll', diff:'int', tip:`A banjo-style p-i-m roll. Repeat it fast and perfectly even — evenness beats speed.`,
+   steps:[{f:'p',s:'b1'},{f:'i',s:3},{f:'m',s:4}]},
+  {name:'Waltz (3/4)', diff:'beg', tip:`A three-feel: bass on beat 1, fingers on 2 and 3. Count “1-2-3, 1-2-3”. Beautiful for ballads.`,
+   steps:[{f:'p',s:'b1'},{f:'i',s:3},{f:'m',s:4}]},
+];
+let fgBpm = 80, fgChord = 'Am', fgBuilt = false, fgToken = 0;
+function fgStepStrings(s){
+  if (s === 'b1' || s === 'b2') return 'bass';
+  if (Array.isArray(s)) return s.map(fgStepStrings).join('+');
+  return FG_SNAME[s];
+}
+function fgResolve(s){
+  const ch = FG_CHORDS[fgChord];
+  const idx = s === 'b1' ? ch.bass[0] : s === 'b2' ? ch.bass[1] : s;
+  return ch.midis[idx];
+}
+function fgPlay(ex, cardEl){
+  const my = ++fgToken;
+  const step = (60 / fgBpm) * 0.5;             // eighth-note spacing
+  const loops = 2, steps = ex.steps;
+  const letterEls = cardEl.querySelectorAll('.fg-step');
+  for (let L = 0; L < loops; L++){
+    steps.forEach((st, i) => {
+      const t = (L * steps.length + i) * step;
+      (Array.isArray(st.s) ? st.s : [st.s]).forEach((s, k) => {
+        const m = fgResolve(s); if (m != null) pluck(m, t + k * 0.015, 0.5);
+      });
+      setTimeout(() => {
+        if (my !== fgToken) return;
+        letterEls.forEach(x => x.classList.remove('cur'));
+        if (letterEls[i]) letterEls[i].classList.add('cur');
+      }, t * 1000);
+    });
+  }
+  setTimeout(() => { if (my === fgToken) letterEls.forEach(x => x.classList.remove('cur')); },
+    loops * steps.length * step * 1000 + 200);
+}
+function renderFgList(){
+  document.getElementById('fg-list').innerHTML = FG_EX.map((ex, ei) => `
+    <div class="fg-ex" data-ei="${ei}">
+      <div class="fg-top">
+        <span class="fg-name">${ex.name}</span>
+        <span class="fg-diff ${ex.diff}">${ex.diff === 'beg' ? 'Beginner' : 'Intermediate'}</span>
+        <button class="fg-play" data-ei="${ei}">&#9654; Play</button>
+      </div>
+      <div class="fg-pima">${ex.steps.map(st => `<div class="fg-step"><span class="f">${st.f}</span><span class="s">${fgStepStrings(st.s)}</span></div>`).join('')}</div>
+      <div class="fg-tip">${ex.tip}</div>
+    </div>`).join('');
+}
+function buildFinger(){
+  if (fgBuilt) return;
+  fgBuilt = true;
+  const cs = document.getElementById('fg-chord');
+  cs.innerHTML = Object.keys(FG_CHORDS).map(k => `<option value="${k}">${k}</option>`).join('');
+  cs.value = fgChord;
+  cs.addEventListener('change', () => { fgChord = cs.value; });
+  const bpm = document.getElementById('fg-bpm');
+  bpm.addEventListener('input', () => { fgBpm = +bpm.value; document.getElementById('fg-bpm-val').textContent = fgBpm; });
+  renderFgList();
+  document.getElementById('fg-list').addEventListener('click', e => {
+    const b = e.target.closest('.fg-play');
+    if (b) fgPlay(FG_EX[+b.dataset.ei], b.closest('.fg-ex'));
+  });
+}
+
 /* ---------- tabs: folded into one button ---------- */
-const TAB_EMOJI = {explore:'🎸', map:'🗺️', intervals:'📏', neo:'🎹', phrasing:'🎤', rhythm:'🥁', quiz:'🎯', decoder:'🧭', chords:'✋', notes:'📝'};
+const TAB_EMOJI = {explore:'🎸', map:'🗺️', intervals:'📏', neo:'🎹', phrasing:'🎤', rhythm:'🥁', finger:'🖐️', quiz:'🎯', decoder:'🧭', chords:'✋', notes:'📝'};
 const TAB_VIEWS = {
   explore:   document.getElementById('view-explore'),
   map:       document.getElementById('view-map'),
@@ -3610,6 +3735,7 @@ const TAB_VIEWS = {
   neo:       document.getElementById('view-neo'),
   phrasing:  document.getElementById('view-phrasing'),
   rhythm:    document.getElementById('view-rhythm'),
+  finger:    document.getElementById('view-finger'),
   quiz:      document.getElementById('view-quiz'),
   decoder:   document.getElementById('view-decoder'),
   chords:    document.getElementById('view-chords'),
@@ -3647,6 +3773,9 @@ function showTab(t){
   } else if (t === 'rhythm'){
     document.getElementById('title').textContent = 'Rhythm';
     buildRhythm();
+  } else if (t === 'finger'){
+    document.getElementById('title').textContent = 'Fingerstyle';
+    buildFinger();
   } else if (t === 'notes'){
     document.getElementById('title').textContent = 'Notepad';
   } else if (t === 'quiz'){
