@@ -171,14 +171,17 @@
   .ch-degpill{background:var(--root);color:#10131f;font-size:11px;font-weight:800;
     border-radius:999px;min-width:18px;padding:1px 6px}
   .ch-name{font-weight:800;font-size:16px;color:var(--ink)}
-  .ch-svg{width:96px;height:112px}
+  .ch-svg{width:98px;height:118px}
   .ch-str,.ch-fret{stroke:var(--line);stroke-width:1.4}
   .ch-nut{stroke:var(--muted);stroke-width:4}
   .ch-dot{fill:var(--scale)}
   .ch-dot.rt{fill:var(--root)}
-  .ch-o{fill:none;stroke:var(--muted);stroke-width:1.4}
+  .ch-lbl{fill:#fff;font-size:7.6px;font-weight:800;text-anchor:middle;font-family:inherit}
+  .ch-lbl.rt{fill:#2a1400}
+  .ch-open{fill:var(--scale);font-size:8.5px;font-weight:800;text-anchor:middle;font-family:inherit}
+  .ch-open.rt{fill:var(--root)}
   .ch-x{fill:var(--muted);font-size:10px;font-weight:700;text-anchor:middle}
-  .ch-base{fill:var(--muted);font-size:10px;font-weight:700;text-anchor:middle}
+  .ch-base{fill:var(--muted);font-size:9.5px;font-weight:700;text-anchor:middle}
 
   /* intervals tab */
   .iv-chips{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 16px}
@@ -2752,22 +2755,27 @@ function getShape(pc, q){
 }
 const TUNING = [4,9,2,7,11,4];                  // low E -> high e pitch classes
 function chordSVG(fr, rootPc){
+  const NN = FLAT_KEYS.has(rootPc) ? FLATS : SHARPS;
   const pos = fr.filter(f => f > 0);
-  const base = Math.max(...pos, 1) <= 4 ? 1 : Math.min(...pos);
-  const left = 16, top = 24, sw = 15, fh = 20;
-  let s = `<svg viewBox="0 0 96 112" class="ch-svg" aria-hidden="true">`;
-  for (let i = 0; i <= 4; i++)
+  const maxF = pos.length ? Math.max(...pos) : 0;
+  const base = maxF > 4 ? Math.min(...pos) : 1;               // where the grid starts
+  const numFrets = Math.max(4, maxF - base + 1);              // grow to fit the whole voicing
+  const left = 18, top = 26, sw = 15, gridH = 78, fh = gridH / numFrets;
+  const name = (i, f) => noteFmt(NN[(TUNING[i] + f) % 12]);
+  let s = `<svg viewBox="0 0 100 118" class="ch-svg" aria-hidden="true">`;
+  for (let i = 0; i <= numFrets; i++)
     s += `<line x1="${left}" y1="${top + i*fh}" x2="${left + 5*sw}" y2="${top + i*fh}"
       class="ch-fret${i === 0 && base === 1 ? ' ch-nut' : ''}"/>`;
   for (let i = 0; i < 6; i++)
-    s += `<line x1="${left + i*sw}" y1="${top}" x2="${left + i*sw}" y2="${top + 4*fh}" class="ch-str"/>`;
-  if (base > 1) s += `<text x="${left - 9}" y="${top + fh*0.66}" class="ch-base">${base}</text>`;
+    s += `<line x1="${left + i*sw}" y1="${top}" x2="${left + i*sw}" y2="${top + numFrets*fh}" class="ch-str"/>`;
+  if (base > 1) s += `<text x="${left - 8}" y="${top + fh*0.66}" class="ch-base">${base}</text>`;
   fr.forEach((f, i) => {
-    const x = left + i*sw;
-    const isRoot = f >= 0 && (TUNING[i] + f) % 12 === rootPc;
-    if (f === -1) s += `<text x="${x}" y="${top - 7}" class="ch-x">&times;</text>`;
-    else if (f === 0) s += `<circle cx="${x}" cy="${top - 10}" r="3.6" class="ch-o"${isRoot ? ' stroke-width="2.6"' : ''}/>`;
-    else s += `<circle cx="${x}" cy="${top + (f - base + 0.5)*fh}" r="6.4" class="ch-dot${isRoot ? ' rt' : ''}"/>`;
+    const x = left + i*sw, rt = f >= 0 && (TUNING[i] + f) % 12 === rootPc ? ' rt' : '';
+    if (f === -1){ s += `<text x="${x}" y="${top - 8}" class="ch-x">&times;</text>`; return; }
+    if (f === 0){ s += `<text x="${x}" y="${top - 7}" class="ch-open${rt}">${name(i, 0)}</text>`; return; }
+    const cy = top + (f - base + 0.5) * fh;
+    s += `<circle cx="${x}" cy="${cy}" r="6.8" class="ch-dot${rt}"/>`;
+    s += `<text x="${x}" y="${cy + 2.7}" class="ch-lbl${rt}">${name(i, f)}</text>`;
   });
   return s + '</svg>';
 }
