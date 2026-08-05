@@ -272,6 +272,26 @@
   .fg-tip{color:var(--muted);font-size:13px;line-height:1.55}
   .fg-tip b{color:var(--ink)}
 
+  /* inspiration deck */
+  .insp-card{max-width:460px;margin:24px auto 10px;min-height:min(50svh,400px);position:relative;overflow:hidden;
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--line);
+    border-radius:calc(var(--radius) + 8px);box-shadow:var(--shadow);cursor:grab;touch-action:pan-y;
+    display:flex;align-items:center;justify-content:center;text-align:center;padding:44px 30px;
+    -webkit-user-select:none;user-select:none}
+  .insp-card:active{cursor:grabbing}
+  .insp-num{position:absolute;top:16px;left:0;right:0;font-size:11px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--muted);font-weight:800}
+  .insp-hint{position:absolute;bottom:14px;left:0;right:0;font-size:11px;color:var(--muted);opacity:.7}
+  .insp-text{font-size:clamp(21px,5.4vw,29px);font-weight:800;line-height:1.32;color:var(--ink);
+    filter:drop-shadow(0 0 14px var(--glow-scale))}
+  @keyframes inspL{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
+  @keyframes inspR{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:none}}
+  .insp-card.sl .insp-text{animation:inspL .22s ease}
+  .insp-card.sr .insp-text{animation:inspR .22s ease}
+  .insp-bar{display:flex;gap:9px;justify-content:center;align-items:center;flex-wrap:wrap;max-width:460px;margin:0 auto}
+  .insp-bar button{font-size:13px}
+  .insp-saved{text-align:center;color:var(--good);font-weight:700;font-size:13px;min-height:1.2em;margin:8px 0 0}
+
   /* neo soul tab */
   .neo-sec{margin-top:28px}
   .neo-h{font-size:16px;font-weight:800;letter-spacing:.01em;color:var(--ink);margin:0 0 4px;
@@ -810,6 +830,7 @@
       <button class="tab" data-tab="phrasing">&#127908; Phrasing</button>
       <button class="tab" data-tab="rhythm">&#129345; Rhythm</button>
       <button class="tab" data-tab="finger">&#128400;&#65039; Fingerstyle</button>
+      <button class="tab" data-tab="insp">&#128214; Inspiration</button>
       <button class="tab" data-tab="quiz">&#127919; Neck quiz</button>
       <button class="tab" data-tab="decoder">&#129517; Decoder</button>
       <button class="tab" data-tab="chords">&#9995; Chords</button>
@@ -1257,6 +1278,23 @@
     <div id="fg-list"></div>
     <p class="hint">Write the p-i-m-a sequence in your notebook and loop it slowly with a metronome (Rhythm tab) until it's automatic — <b>accuracy first, speed later</b>. Keep your picking hand relaxed and anchor lightly with your pinky if it helps.</p>
   </div><!-- /view-finger -->
+
+  <div id="view-insp" hidden>
+    <p class="sub">Creative prompts to get you playing from <b>feeling</b>, not fingers. Swipe or tap the card for a new one. There are no wrong answers — just react to the words.</p>
+    <div class="insp-card" id="insp-card">
+      <div class="insp-num" id="insp-num"></div>
+      <div class="insp-text" id="insp-text"></div>
+      <div class="insp-hint">swipe or tap →</div>
+    </div>
+    <div class="insp-bar">
+      <button id="insp-prev" aria-label="Previous">&#8592;</button>
+      <button class="primary" id="insp-next">Next card &#8594;</button>
+      <button id="insp-shuffle">&#128256; Shuffle</button>
+      <button id="insp-save">&#43; Notes</button>
+    </div>
+    <p class="insp-saved" id="insp-saved"></p>
+    <p class="hint">Pick a card, set a timer for two minutes, and just play to the feeling — don't stop to judge it. The best ideas come from not aiming.</p>
+  </div><!-- /view-insp -->
 </div>
 
 <script>
@@ -2754,8 +2792,8 @@ function getShape(pc, q){
   return q === 'maj' ? [-1,a,a+2,a+2,a+2,a] : [-1,a,a+2,a+2,a+1,a];
 }
 const TUNING = [4,9,2,7,11,4];                  // low E -> high e pitch classes
-function chordSVG(fr, rootPc){
-  const NN = FLAT_KEYS.has(rootPc) ? FLATS : SHARPS;
+function chordSVG(fr, rootPc, flats){
+  const NN = (flats == null ? FLAT_KEYS.has(rootPc) : flats) ? FLATS : SHARPS;
   const pos = fr.filter(f => f > 0);
   const maxF = pos.length ? Math.max(...pos) : 0;
   const base = maxF > 4 ? Math.min(...pos) : 1;               // where the grid starts
@@ -2790,7 +2828,7 @@ function renderChords(){
                : noteFmt(NN[p]).toLowerCase() + (q === 'min' ? 'm' : '°');
     return `<div class="ch-card" data-deg="${d}">
       <div class="ch-top"><span class="ch-degpill">${d}</span><span class="ch-name">${name}</span></div>
-      ${chordSVG(getShape(p, q), p)}
+      ${chordSVG(getShape(p, q), p, FLAT_KEYS.has(pc))}
     </div>`;
   }).join('');
 }
@@ -3129,7 +3167,7 @@ function renderNeoKeyChords(){
     const v = neoVoicing(type, root);
     return `<div class="ch-card" data-root="${root}" data-type="${type}">
       <div class="ch-top"><span class="ch-degpill">${rn}</span><span class="ch-name">${spellInKey(neoKey, i) + NEO_SUFFIX[type]}</span></div>
-      ${chordSVG(v.fr, root)}
+      ${chordSVG(v.fr, root, FLAT_KEYS.has(neoKey))}
       <div class="kc-fn kc-${fn}">${lbl}</div>
     </div>`;
   }).join('');
@@ -3139,7 +3177,7 @@ function renderNeoLib(){
     const v = neoVoicing(id, neoKey);
     return `<div class="ch-card" data-type="${id}">
       <div class="ch-top"><span class="ch-name">${neoName(neoKey, id)}</span></div>
-      ${chordSVG(v.fr, neoKey)}
+      ${chordSVG(v.fr, neoKey, FLAT_KEYS.has(neoKey))}
       <div class="neo-card-cap">${cap}</div>
     </div>`;
   }).join('');
@@ -3734,8 +3772,101 @@ function buildFinger(){
   });
 }
 
+/* ---------- inspiration deck: swipeable creative prompts ---------- */
+const INSP = [
+  "Pretend you're answering another guitarist.",
+  "Play like you're tired.",
+  "Make the guitar sound like someone talking.",
+  "Write something that would fit at 3 AM.",
+  "Play one phrase that sounds expensive.",
+  "Make it feel like you're leaving instead of arriving.",
+  "Play the saddest thing you can with only three notes.",
+  "Hold one note as long as you can stand, then answer it.",
+  "Play like you're trying not to wake someone.",
+  "Sound like the last song at a party.",
+  "Ask a question with a phrase, then refuse to answer it.",
+  "Make it sound like rain.",
+  "Play a memory you can't quite reach.",
+  "Solo like you're bragging.",
+  "Play like you're apologizing.",
+  "Make the guitar laugh.",
+  "Play a phrase, then play its shadow — quieter and lower.",
+  "Sound like sunrise.",
+  "Play like you have all the time in the world.",
+  "Make one idea and repeat it until it means something.",
+  "Play the space between two chords like it matters.",
+  "Sound like you're falling for someone.",
+  "Play like you're saying goodbye at an airport.",
+  "Groove so hard you don't need to solo.",
+  "Play only on the off-beats for a whole minute.",
+  "Play like the amp is about to die.",
+  "Sound like a phone call you didn't want to end.",
+  "Play something a horn player would play.",
+  "Play a question you're afraid to ask.",
+  "Play like you're telling a secret.",
+  "Use only two strings and make it beautiful.",
+  "Play a melody you'd hum, not one you'd shred.",
+  "Sound like a late-night drive with no destination.",
+  "Play like you're smiling.",
+  "Make one bend say everything.",
+  "Play as if the song already ended and this is the echo.",
+  "Pretend the room is empty and no one is judging.",
+  "Play like water — never stop moving.",
+  "Make it sound like nostalgia.",
+  "Play a phrase that arrives late and doesn't apologize.",
+  "Play like you just woke up.",
+  "Make the guitar whisper, then let it break.",
+  "Play the same three notes ten ways.",
+  "Sound like you're in on a joke nobody else heard.",
+  "Play like it's the first warm day of the year.",
+];
+let inspDeck = [], inspPos = 0, inspBuilt = false;
+function inspShuffle(){
+  inspDeck = INSP.map((_, i) => i);
+  for (let i = inspDeck.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [inspDeck[i], inspDeck[j]] = [inspDeck[j], inspDeck[i]]; }
+  inspPos = 0;
+}
+function inspRender(dir){
+  document.getElementById('insp-text').textContent = INSP[inspDeck[inspPos]];
+  document.getElementById('insp-num').textContent = `${inspPos + 1} / ${INSP.length}`;
+  const card = document.getElementById('insp-card');
+  card.classList.remove('sl','sr');
+  if (dir){ void card.offsetWidth; card.classList.add(dir > 0 ? 'sl' : 'sr'); }
+}
+function inspNext(){ inspPos++; if (inspPos >= inspDeck.length) inspShuffle(); inspRender(1); }
+function inspPrev(){ inspPos--; if (inspPos < 0) inspPos = inspDeck.length - 1; inspRender(-1); }
+function inspSave(){
+  const p = INSP[inspDeck[inspPos]];
+  try {
+    const cur = localStorage.getItem('sv-notepad') || '';
+    localStorage.setItem('sv-notepad', cur + (cur && !cur.endsWith('\n') ? '\n' : '') + '• ' + p + '\n');
+    const t = document.getElementById('np-text'); if (t) t.value = localStorage.getItem('sv-notepad');
+  } catch(_){}
+  const s = document.getElementById('insp-saved'); s.textContent = 'Saved to Notes ✓';
+  setTimeout(() => { s.textContent = ''; }, 1600);
+}
+function buildInsp(){
+  if (inspBuilt) return;
+  inspBuilt = true;
+  inspShuffle(); inspRender(0);
+  document.getElementById('insp-next').addEventListener('click', inspNext);
+  document.getElementById('insp-prev').addEventListener('click', inspPrev);
+  document.getElementById('insp-shuffle').addEventListener('click', () => { inspShuffle(); inspRender(1); });
+  document.getElementById('insp-save').addEventListener('click', inspSave);
+  const card = document.getElementById('insp-card');
+  let sx = null;
+  card.addEventListener('pointerdown', e => { sx = e.clientX; });
+  card.addEventListener('pointerup', e => {
+    if (sx === null) return;
+    const dx = e.clientX - sx; sx = null;
+    if (dx < -35) inspNext();
+    else if (dx > 35) inspPrev();
+    else inspNext();                 // a tap also advances
+  });
+}
+
 /* ---------- tabs: folded into one button ---------- */
-const TAB_EMOJI = {explore:'🎸', map:'🗺️', intervals:'📏', neo:'🎹', phrasing:'🎤', rhythm:'🥁', finger:'🖐️', quiz:'🎯', decoder:'🧭', chords:'✋', notes:'📝'};
+const TAB_EMOJI = {explore:'🎸', map:'🗺️', intervals:'📏', neo:'🎹', phrasing:'🎤', rhythm:'🥁', finger:'🖐️', insp:'📖', quiz:'🎯', decoder:'🧭', chords:'✋', notes:'📝'};
 const TAB_VIEWS = {
   explore:   document.getElementById('view-explore'),
   map:       document.getElementById('view-map'),
@@ -3744,6 +3875,7 @@ const TAB_VIEWS = {
   phrasing:  document.getElementById('view-phrasing'),
   rhythm:    document.getElementById('view-rhythm'),
   finger:    document.getElementById('view-finger'),
+  insp:      document.getElementById('view-insp'),
   quiz:      document.getElementById('view-quiz'),
   decoder:   document.getElementById('view-decoder'),
   chords:    document.getElementById('view-chords'),
@@ -3784,6 +3916,9 @@ function showTab(t){
   } else if (t === 'finger'){
     document.getElementById('title').textContent = 'Fingerstyle';
     buildFinger();
+  } else if (t === 'insp'){
+    document.getElementById('title').textContent = 'Inspiration Deck';
+    buildInsp();
   } else if (t === 'notes'){
     document.getElementById('title').textContent = 'Notepad';
   } else if (t === 'quiz'){
