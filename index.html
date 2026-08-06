@@ -292,6 +292,43 @@
   .insp-bar button{font-size:13px}
   .insp-saved{text-align:center;color:var(--good);font-weight:700;font-size:13px;min-height:1.2em;margin:8px 0 0}
 
+  /* printable sheets — always black on white */
+  .sheet{background:#fff;color:#000;border-radius:12px;padding:18px 16px;margin-top:14px;box-shadow:var(--shadow)}
+  .sheet .sh-head{font-weight:800;font-size:16px;color:#000;margin:0 0 12px;border-bottom:2px solid #000;padding-bottom:6px}
+  .sheet .sh-block{page-break-inside:avoid;break-inside:avoid;margin-bottom:15px}
+  .sheet .sh-title{font-weight:800;font-size:14px;color:#000;margin:0}
+  .sheet .sh-sub{font-size:10.5px;color:#333;margin:1px 0 3px;letter-spacing:.02em}
+  .sheet .sheet-svg{width:100%;height:auto;max-width:540px;display:block}
+  .sheet .sh-line{stroke:#000;stroke-width:1.1}
+  .sheet .sh-nut{stroke:#000;stroke-width:3.2}
+  .sheet .sh-dot{fill:#fff;stroke:#000;stroke-width:1.3}
+  .sheet .sh-dot.rt{fill:#000}
+  .sheet .sh-t{fill:#000;font-size:9px;font-weight:700;text-anchor:middle;font-family:inherit}
+  .sheet .sh-t.rt{fill:#fff}
+  .sheet .sh-num{fill:#000;font-size:8.5px;text-anchor:middle;font-family:inherit}
+  .sheet .sh-slab{fill:#000;font-size:9px;font-weight:800;text-anchor:middle;font-family:inherit}
+  .sheet .sh-chgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 8px}
+  .sheet .sh-ch{page-break-inside:avoid;break-inside:avoid;text-align:center}
+  .sheet .sh-chname{font-weight:800;font-size:12.5px;color:#000;margin-bottom:1px}
+  /* B&W overrides for the chord diagrams inside a sheet */
+  .sheet .ch-str,.sheet .ch-fret{stroke:#000}
+  .sheet .ch-nut{stroke:#000}
+  .sheet .ch-dot{fill:#fff;stroke:#000;stroke-width:1.3}
+  .sheet .ch-dot.rt{fill:#000}
+  .sheet .ch-lbl{fill:#000}
+  .sheet .ch-lbl.rt{fill:#fff}
+  .sheet .ch-open{fill:#000}
+  .sheet .ch-x{fill:#000}
+  .sheet .ch-base{fill:#000}
+  .sheet .ch-svg{width:100%;max-width:118px;height:auto}
+  @media print {
+    .themes, #sv-mixer { display:none !important; }
+    body { background:#fff !important; padding:0 !important; }
+    .wrap > *:not(#view-sheets){ display:none !important; }
+    #view-sheets > *:not(#sheet){ display:none !important; }
+    .sheet{ box-shadow:none; border-radius:0; margin:0; padding:0; }
+  }
+
   /* neo soul tab */
   .neo-sec{margin-top:28px}
   .neo-h{font-size:16px;font-weight:800;letter-spacing:.01em;color:var(--ink);margin:0 0 4px;
@@ -834,6 +871,7 @@
       <button class="tab" data-tab="quiz">&#127919; Neck quiz</button>
       <button class="tab" data-tab="decoder">&#129517; Decoder</button>
       <button class="tab" data-tab="chords">&#9995; Chords</button>
+      <button class="tab" data-tab="sheets">&#128424;&#65039; Sheets</button>
       <button class="tab" data-tab="notes">&#128221; Notes</button>
     </div>
   </div>
@@ -1130,6 +1168,29 @@
     <div class="ch-grid" id="ch-grid"></div>
     <p class="hint">These follow the Decoder's key — change it here or there. &times; = don't play that string, &#9675; = open string, orange dot = the root, side number = starting fret.</p>
   </div><!-- /view-chords -->
+
+  <div id="view-sheets" hidden>
+    <p class="sub">Printable black-&amp;-white reference sheets. Pick what you want and a key, then <b>Print / Save</b> — on a phone the print dialog lets you “Save as PDF” or save an image. Or just screenshot the white sheet below.</p>
+    <div class="bar">
+      <div>
+        <span class="lab">Sheet</span>
+        <select id="sh-what" aria-label="What to print">
+          <option value="scales">All scales</option>
+          <option value="neo">Neo soul chords</option>
+          <option value="diatonic">Chords in a key</option>
+        </select>
+      </div>
+      <div>
+        <span class="lab">Key</span>
+        <select id="sh-key" aria-label="Key"></select>
+      </div>
+      <div>
+        <span class="lab">&nbsp;</span>
+        <button class="primary" id="sh-print">&#128424;&#65039;&nbsp; Print / Save</button>
+      </div>
+    </div>
+    <div class="sheet" id="sheet"></div>
+  </div><!-- /view-sheets -->
 
   <div id="view-notes" hidden>
     <p class="sub">Your scratchpad — jot down licks, chord ideas, reminders, anything. It saves on this device automatically, so it's here when you come back. Copy it into your real notebook whenever.</p>
@@ -3865,8 +3926,79 @@ function buildInsp(){
   });
 }
 
+/* ---------- printable sheets: black-and-white references ---------- */
+function bwScaleSVG(keyPc, name){
+  const iv = ALL_SCALES[name];
+  const inScale = new Set(iv.map(i => (keyPc + i) % 12));
+  const NN = FLAT_KEYS.has(keyPc) ? FLATS : SHARPS;
+  const nF = 12, L = 20, T = 12, fw = 30, sg = 18, W = L + nF*fw + 14, H = T + 5*sg + 18;
+  let s = `<svg viewBox="0 0 ${W} ${H}" class="sheet-svg" preserveAspectRatio="xMinYMid meet">`;
+  for (let si = 0; si < 6; si++){
+    const y = T + si*sg;
+    s += `<line x1="${L}" y1="${y}" x2="${L + nF*fw}" y2="${y}" class="sh-line"/>`;
+    s += `<text x="${L - 11}" y="${y + 3}" class="sh-slab">${STRINGS[si].lbl}</text>`;
+  }
+  for (let f = 0; f <= nF; f++){
+    const x = L + f*fw;
+    s += `<line x1="${x}" y1="${T}" x2="${x}" y2="${T + 5*sg}" class="sh-line${f === 0 ? ' sh-nut' : ''}"/>`;
+    s += `<text x="${x}" y="${H - 5}" class="sh-num">${f}</text>`;
+  }
+  for (let si = 0; si < 6; si++)
+    for (let f = 0; f <= nF; f++){
+      const pc = (STRINGS[si].pc + f) % 12;
+      if (!inScale.has(pc)) continue;
+      const rt = pc === keyPc ? ' rt' : '', x = L + f*fw, y = T + si*sg;
+      s += `<circle cx="${x}" cy="${y}" r="8.4" class="sh-dot${rt}"/>`;
+      s += `<text x="${x}" y="${y + 3}" class="sh-t${rt}">${noteFmt(NN[pc])}</text>`;
+    }
+  return s + '</svg>';
+}
+function renderSheet(){
+  const what = document.getElementById('sh-what').value;
+  const key = +document.getElementById('sh-key').value;
+  const NN = FLAT_KEYS.has(key) ? FLATS : SHARPS, kn = noteFmt(NN[key]);
+  const sheet = document.getElementById('sheet');
+  if (what === 'scales'){
+    let html = `<div class="sh-head">${kn} — scale reference (frets 0–12 · filled dot = root)</div>`;
+    SCALE_GROUPS.forEach(([, map]) => Object.keys(map).forEach(nm => {
+      const iv = ALL_SCALES[nm];
+      const notes = iv.map(i => noteFmt(NN[(key + i) % 12])).join('  ');
+      const degs = iv.map(i => DEG[i]).join(' ');
+      html += `<div class="sh-block"><div class="sh-title">${kn} ${nm}</div><div class="sh-sub">${notes}&nbsp;&nbsp;·&nbsp;&nbsp;${degs}</div>${bwScaleSVG(key, nm)}</div>`;
+    }));
+    sheet.innerHTML = html;
+  } else if (what === 'neo'){
+    let html = `<div class="sh-head">${kn} — neo soul / R&amp;B voicings (movable, root on the A string)</div><div class="sh-chgrid">`;
+    NEO_LIB.forEach(([id]) => {
+      const v = neoVoicing(id, key);
+      html += `<div class="sh-ch"><div class="sh-chname">${neoName(key, id)}</div>${chordSVG(v.fr, key, FLAT_KEYS.has(key))}</div>`;
+    });
+    sheet.innerHTML = html + '</div>';
+  } else {
+    let html = `<div class="sh-head">Chords in ${kn} major (the diatonic family)</div><div class="sh-chgrid">`;
+    DIATONIC.forEach(([rn, type], i) => {
+      const root = (key + NEO_MAJ[i]) % 12, v = neoVoicing(type, root);
+      html += `<div class="sh-ch"><div class="sh-chname">${rn} · ${spellInKey(key, i) + NEO_SUFFIX[type]}</div>${chordSVG(v.fr, root, FLAT_KEYS.has(key))}</div>`;
+    });
+    sheet.innerHTML = html + '</div>';
+  }
+}
+let sheetsBuilt = false;
+function buildSheets(){
+  if (!sheetsBuilt){
+    sheetsBuilt = true;
+    const ks = document.getElementById('sh-key');
+    ks.innerHTML = SHARPS.map((_, pc) => `<option value="${pc}">${SHARPS[pc] === FLATS[pc] ? SHARPS[pc] : SHARPS[pc] + ' / ' + FLATS[pc]}</option>`).join('');
+    ks.value = 0;
+    document.getElementById('sh-what').addEventListener('change', renderSheet);
+    ks.addEventListener('change', renderSheet);
+    document.getElementById('sh-print').addEventListener('click', () => window.print());
+  }
+  renderSheet();
+}
+
 /* ---------- tabs: folded into one button ---------- */
-const TAB_EMOJI = {explore:'🎸', map:'🗺️', intervals:'📏', neo:'🎹', phrasing:'🎤', rhythm:'🥁', finger:'🖐️', insp:'📖', quiz:'🎯', decoder:'🧭', chords:'✋', notes:'📝'};
+const TAB_EMOJI = {explore:'🎸', map:'🗺️', intervals:'📏', neo:'🎹', phrasing:'🎤', rhythm:'🥁', finger:'🖐️', insp:'📖', quiz:'🎯', decoder:'🧭', chords:'✋', sheets:'🖨️', notes:'📝'};
 const TAB_VIEWS = {
   explore:   document.getElementById('view-explore'),
   map:       document.getElementById('view-map'),
@@ -3879,6 +4011,7 @@ const TAB_VIEWS = {
   quiz:      document.getElementById('view-quiz'),
   decoder:   document.getElementById('view-decoder'),
   chords:    document.getElementById('view-chords'),
+  sheets:    document.getElementById('view-sheets'),
   notes:     document.getElementById('view-notes'),
 };
 const tfCur = document.getElementById('tf-cur');
@@ -3919,6 +4052,9 @@ function showTab(t){
   } else if (t === 'insp'){
     document.getElementById('title').textContent = 'Inspiration Deck';
     buildInsp();
+  } else if (t === 'sheets'){
+    document.getElementById('title').textContent = 'Print Sheets';
+    buildSheets();
   } else if (t === 'notes'){
     document.getElementById('title').textContent = 'Notepad';
   } else if (t === 'quiz'){

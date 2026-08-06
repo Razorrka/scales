@@ -1,4 +1,4 @@
-const CACHE = 'scales-v35';
+const CACHE = 'scales-v36';
 const ASSETS = ['./', './index.html', './manifest.webmanifest',
                 './apple-touch-icon.png', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
