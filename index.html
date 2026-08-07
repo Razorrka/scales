@@ -1194,6 +1194,7 @@
           <option value="picking">Picking exercises</option>
           <option value="phrasing">Phrasing lesson</option>
           <option value="rhythm">Rhythm lesson</option>
+          <option value="sweep">Sweep picking & arpeggios</option>
           <option value="fingerstyle">Fingerstyle & diagram</option>
         </select>
       </div>
@@ -4066,6 +4067,57 @@ function renderSheet(){
       html += `<div><b>${title}.</b> ${desc}</div>`;
     });
     html += '</div></div>';
+    sheet.innerHTML = html;
+  } else if (what === 'sweep'){
+    let html = `<div class="sh-head">Sweep picking &amp; arpeggios</div>
+    <div class="sh-lesson"><div class="sh-lbl"><b>What is an arpeggio?</b></div>
+    <div class="sh-lrow">An arpeggio is a chord broken into individual notes, played one at a time instead of all together. Instead of strumming a C major chord (all strings at once), you play C, then E, then G, then the next C — same notes, different delivery. Arpeggios are <b>melodic</b> — they turn harmony into a line you can sing or play fast.</div></div>
+
+    <div class="sh-lesson"><div class="sh-lbl"><b>What is sweep picking?</b></div>
+    <div class="sh-lrow">Sweep picking is one continuous pick stroke that touches each string of an arpeggio exactly once, in one smooth motion. Instead of picking each note separately (↓↑↓↑), you sweep across all the strings with one direction change between strings. It sounds like a waterfall or harp glissando — fluid and fast.</div></div>
+
+    <div class="sh-lesson"><div class="sh-lbl"><b>Why combine them?</b></div>
+    <div class="sh-lrow">Sweep picking lets you play arpeggios fast and cleanly without picking every note individually. It's the foundation of metal, jazz fusion, and neo-classical shredding. The catch: it's all about accuracy and muting — you must let each note ring individually, not blur together.</div></div>`;
+
+    html += `<div class="sh-head2">How to sweep pick an arpeggio (first time)</div>
+    <div class="sh-lesson"><div class="sh-lbl"><b>Step 1: Start with a simple shape</b></div>
+    <div class="sh-lrow">Pick a basic triad (3-string arpeggio). Example: Am (A-C-E) on strings 4-3-2, frets 0-3-2. Place your fretting fingers first. Don't rush this.</div></div>
+
+    <div class="sh-lesson"><div class="sh-lbl"><b>Step 2: One pick stroke down</b></div>
+    <div class="sh-lrow">Hold the pick lightly. Starting at the lowest string (fret 0), drag it downward across all three strings in one smooth motion. Each string rings once. Don't pick each string separately — let the pick glide.</div></div>
+
+    <div class="sh-lesson"><div class="sh-lbl"><b>Step 3: Reverse (one pick stroke up)</b></div>
+    <div class="sh-lrow">At the highest string, reverse direction and sweep back up. Same motion in reverse. The key: the pick moves continuously. No stopping between strings.</div></div>
+
+    <div class="sh-lesson"><div class="sh-lbl"><b>Step 4: Mute the ringing</b></div>
+    <div class="sh-lrow">This is the hard part. As you move to the next string, slightly relax the fretting finger pressure on the string you just played (so it mutes). This keeps notes from blurring together. Precision over speed — every time.</div></div>
+
+    <div class="sh-lesson"><div class="sh-lbl"><b>Step 5: Repeat slowly</b></div>
+    <div class="sh-lrow">Do the sweep down-up-down-up at 60 BPM with a metronome. Evenness and clarity matter infinitely more than speed. Drill this for weeks at slow tempos. Speed comes automatically once accuracy is locked in.</div></div>`;
+
+    html += `<div class="sh-head2">Exercises (start at 60 BPM, increase by 5 BPM weekly)</div>
+
+    <div class="sh-lesson"><div class="sh-lbl"><b>Exercise 1: Three-string minor (Am pattern)</b></div>
+    <div class="sh-lrow"><b>Setup:</b> Strings 4-3-2 (D-G-B), frets 0-3-2 (or any open position minor). Sweep down-up-down-up, repeat 20 times slowly. Focus on: even pressure, clean note separation, smooth pick motion.</div></div>
+
+    <div class="sh-lesson"><div class="sh-lbl"><b>Exercise 2: Three-string major (E pattern)</b></div>
+    <div class="sh-lrow"><b>Setup:</b> Strings 4-3-2, frets 2-1-0 (or any E voicing). Same sweep pattern. Listen for buzz — if strings blur, you're moving too fast or pressing too hard. Dial it back.</div></div>
+
+    <div class="sh-lesson"><div class="sh-lbl"><b>Exercise 3: Five-string arpeggio</b></div>
+    <div class="sh-lrow"><b>Setup:</b> Am voicing: strings 6-4-3-2, frets X-0-3-2 (skip the A string). Sweep all five strings down, then reverse and come back up. Same rules: accuracy first, speed later.</div></div>
+
+    <div class="sh-lesson"><div class="sh-lbl"><b>Exercise 4: Three sweeps per direction</b></div>
+    <div class="sh-lrow"><b>Pattern:</b> Sweep down 3 times on the same arpeggio (repeating the top note), then sweep up 3 times. This trains hand control and forces you to rebuild the shape. Metronome set to quarter-note clicks.</div></div>
+
+    <div class="sh-lesson"><div class="sh-lbl"><b>Exercise 5: Key progression sweeps</b></div>
+    <div class="sh-lrow"><b>Setup:</b> Change chords every 4 sweeps: Am → C → Em → F, back to Am. Only sweep arpeggios that fit the chord voicing. This trains your brain to see shapes as musical ideas, not just mechanics.</div></div>
+
+    <div class="sh-lesson"><div class="sh-lbl"><b>Exercise 6: Speed drill (once basics are solid)</b></div>
+    <div class="sh-lrow"><b>Method:</b> Pick one arpeggio shape. Do 20 sweeps at 80 BPM, then 20 at 100, then 120. Stop if you hear buzzing or feel tension. Rest and come back. Tension = you're doing it wrong.</div></div>
+
+    <div class="sh-lesson"><div class="sh-lbl"><b>Pro tip: Muting is everything</b></div>
+    <div class="sh-lrow">The difference between a sloppy sweep and a clean one is muting. As your pick leaves a string, that finger should ease off pressure just enough to kill the note but not enough to fully release the shape. Practice this isolation: play one string, let it ring, then mute it by softening pressure. Repeat 50 times. This single skill transforms your sweeps.</div></div>`;
+
     sheet.innerHTML = html;
   } else if (what === 'fingerstyle'){
     let html = `<div class="sh-head">Fingerstyle: intermediate &amp; advanced patterns</div>
