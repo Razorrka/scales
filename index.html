@@ -3790,6 +3790,24 @@ const FG_EX = [
   {name:'Waltz (3/4)', diff:'beg', tip:`A three-feel: bass on beat 1, fingers on 2 and 3. Count “1-2-3, 1-2-3”. Beautiful for ballads.`,
    steps:[{f:'p',s:'b1'},{f:'i',s:3},{f:'m',s:4}]},
 ];
+const FG_INTERMEDIATE = [
+  {name:'Alternating thumb (Travis)', tip:`The folk/country engine: thumb bounces between two bass strings while fingers fill in. Keep the thumb steady like a metronome.`,
+   steps:[{f:'p',s:'b1'},{f:'i',s:3},{f:'p',s:'b2'},{f:'m',s:4}]},
+  {name:'Forward roll', tip:`Banjo-style p-i-m roll. Repeat it fast and perfectly even — evenness beats speed.`,
+   steps:[{f:'p',s:'b1'},{f:'i',s:3},{f:'m',s:4}]},
+  {name:'Inside-out skip', tip:`Irregular finger order (p-m-i-a) that skips around. Builds independence and forces you to think, not just play shapes.`,
+   steps:[{f:'p',s:'b1'},{f:'m',s:4},{f:'i',s:3},{f:'a',s:5}]},
+  {name:'Double-thumb bounce', tip:`Thumb hits two bass notes in quick succession, then fingers answer. The core of flamenco and fingerstyle groove.`,
+   steps:[{f:'p',s:'b1'},{f:'p',s:'b2'},{f:'i',s:3},{f:'m',s:4},{f:'a',s:5}]},
+  {name:'Pinch &amp; roll', tip:`Simultaneous pinch (p+a), then a quick finger roll. Combines percussive hitting with smooth flow.`,
+   steps:[{f:'p+a',s:['b1',5]},{f:'i',s:3},{f:'m',s:4},{f:'a',s:5}]},
+  {name:'Cascading pattern', tip:`Each finger enters in sequence (p-i-m-a) and holds, creating a cascade effect. Demands clean articulation.`,
+   steps:[{f:'p',s:'b1'},{f:'i',s:3},{f:'m',s:4},{f:'a',s:5},{f:'i',s:3},{f:'m',s:4}]},
+  {name:'Syncopated bass', tip:`Bass notes play off the beat while fingers keep the pulse. The pocket is everything — play with a metronome.`,
+   steps:[{f:'p',s:'b2'},{f:'i',s:3},{f:'p',s:'b1'},{f:'m',s:4},{f:'a',s:5}]},
+  {name:'Thumb octaves', tip:`Thumb plays two strings simultaneously (usually the two bass strings), then fingers. Powerful and rhythmic.`,
+   steps:[{f:'p',s:['b1','b2']},{f:'i',s:3},{f:'m',s:4},{f:'a',s:5}]},
+];
 let fgBpm = 80, fgChord = 'Am', fgBuilt = false, fgToken = 0;
 function fgStepStrings(s){
   if (s === 'b1' || s === 'b2') return 'bass';
@@ -4050,18 +4068,17 @@ function renderSheet(){
     html += '</div></div>';
     sheet.innerHTML = html;
   } else if (what === 'fingerstyle'){
-    let html = `<div class="sh-head">Fingerstyle: classical right-hand technique</div>
+    let html = `<div class="sh-head">Fingerstyle: intermediate &amp; advanced patterns</div>
     <p class="sh-desc"><b>p</b> = thumb (bass notes · strings 6,5,4) · <b>i</b> = index (G string) · <b>m</b> = middle (B string) · <b>a</b> = ring (high E string)</p>
     <div class="sh-fdiag"><div class="fhand"><span class="fp">p</span><span class="fi">i</span><span class="fm">m</span><span class="fa">a</span></div>
     <div style="font-size:11px;line-height:1.4;margin-top:8px">
-      The classical assignment: each finger stays on the same string (usually). The thumb covers bass duty and plays bass notes freely. The three fingers (i-m-a) each have a home string but can move when needed. This frees you to play flowing arpeggios, chord-melody, and intricate fingerpicking patterns.
+      The classical assignment: each finger stays on the same string (usually). The thumb covers bass duty and plays bass notes freely. The three fingers (i-m-a) each have a home string but can move when needed. <b>These exercises build finger independence, rhythmic precision, and expressive control.</b> Drill slowly with a metronome — accuracy first, speed comes naturally.
     </div></div>`;
-    html += `<div class="sh-head2">Exercises (practice each slowly, repeat 10 times)</div>`;
-    FG_EX.forEach((ex, i) => {
+    html += `<div class="sh-head2">Intermediate &amp; advanced patterns</div>`;
+    FG_INTERMEDIATE.forEach((ex, i) => {
       const steps = ex.steps.map(s => s.f).join(' - ');
       html += `<div class="sh-lesson"><div class="sh-lbl"><b>${i+1}. ${ex.name}</b></div>
         <div class="sh-lrow"><b>Fingers:</b> ${steps}</div>
-        <div class="sh-lrow"><b>Difficulty:</b> ${ex.diff==='beg'?'Beginner':'Intermediate'}</div>
         <div class="sh-lrow"><b>How:</b> ${ex.tip.replace(/<[^>]+>/g,'')}</div></div>`;
     });
     sheet.innerHTML = html;
