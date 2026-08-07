@@ -321,6 +321,18 @@
   .sheet .ch-x{fill:#000}
   .sheet .ch-base{fill:#000}
   .sheet .ch-svg{width:100%;max-width:118px;height:auto}
+  .sheet .sh-desc{font-size:12px;color:#000;margin:0 0 14px;line-height:1.5}
+  .sheet .sh-head2{font-weight:800;font-size:14px;color:#000;margin:16px 0 10px;border-top:1px solid #999;padding-top:8px}
+  .sheet .sh-lesson{page-break-inside:avoid;break-inside:avoid;margin-bottom:12px;border-left:3px solid #000;padding-left:10px}
+  .sheet .sh-lbl{font-weight:700;font-size:12px;color:#000;margin-bottom:3px}
+  .sheet .sh-lrow{font-size:11px;color:#000;line-height:1.4;margin-bottom:2px}
+  .sheet .sh-techniques{font-size:11px;color:#000;line-height:1.5}
+  .sheet .sh-techniques > div{margin-bottom:6px}
+  .sheet .sh-drills{font-size:11px;color:#000;line-height:1.5}
+  .sheet .sh-drills > div{margin-bottom:6px}
+  .sheet .sh-fdiag{text-align:center;margin:14px 0;padding:14px;border:1px solid #000;border-radius:4px}
+  .sheet .fhand{display:inline-flex;gap:6px;font-weight:700;font-size:28px;margin-bottom:8px}
+  .sheet .fhand span{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:2px solid #000;border-radius:3px}
   @media print {
     .themes, #sv-mixer { display:none !important; }
     body { background:#fff !important; padding:0 !important; }
@@ -1178,6 +1190,11 @@
           <option value="scales">All scales</option>
           <option value="neo">Neo soul chords</option>
           <option value="diatonic">Chords in a key</option>
+          <option value="intervals">Intervals lesson</option>
+          <option value="picking">Picking exercises</option>
+          <option value="phrasing">Phrasing lesson</option>
+          <option value="rhythm">Rhythm lesson</option>
+          <option value="fingerstyle">Fingerstyle & diagram</option>
         </select>
       </div>
       <div>
@@ -3958,6 +3975,7 @@ function renderSheet(){
   const key = +document.getElementById('sh-key').value;
   const NN = FLAT_KEYS.has(key) ? FLATS : SHARPS, kn = noteFmt(NN[key]);
   const sheet = document.getElementById('sheet');
+
   if (what === 'scales'){
     let html = `<div class="sh-head">${kn} — scale reference (frets 0–12 · filled dot = root)</div>`;
     SCALE_GROUPS.forEach(([, map]) => Object.keys(map).forEach(nm => {
@@ -3974,13 +3992,79 @@ function renderSheet(){
       html += `<div class="sh-ch"><div class="sh-chname">${neoName(key, id)}</div>${chordSVG(v.fr, key, FLAT_KEYS.has(key))}</div>`;
     });
     sheet.innerHTML = html + '</div>';
-  } else {
+  } else if (what === 'diatonic'){
     let html = `<div class="sh-head">Chords in ${kn} major (the diatonic family)</div><div class="sh-chgrid">`;
     DIATONIC.forEach(([rn, type], i) => {
       const root = (key + NEO_MAJ[i]) % 12, v = neoVoicing(type, root);
       html += `<div class="sh-ch"><div class="sh-chname">${rn} · ${spellInKey(key, i) + NEO_SUFFIX[type]}</div>${chordSVG(v.fr, root, FLAT_KEYS.has(key))}</div>`;
     });
     sheet.innerHTML = html + '</div>';
+  } else if (what === 'intervals'){
+    let html = `<div class="sh-head">Intervals: the distance between any two notes</div>
+      <p class="sh-desc">An interval is measured in <b>semitones</b> (half-steps). Every interval has a unique sound — learn them so you recognize them by ear. The fretboard shows how many frets up from E (open low string). Play each one both isolated and against the root to hear the feel.</p>`;
+    INTERVALS_FULL.forEach(iv => {
+      html += `<div class="sh-lesson"><div class="sh-lbl"><b>${iv.ab} · ${iv.name}</b></div>
+        <div class="sh-lrow"><span class="sh-lfr">${iv.s} fret${iv.s!==1?'s':''}</span><span class="sh-lfeel">${iv.feel}</span></div></div>`;
+    });
+    sheet.innerHTML = html;
+  } else if (what === 'picking'){
+    let html = `<div class="sh-head">Picking exercises &amp; drills</div>
+      <p class="sh-desc">Picking technique is the engine of your right hand. These five approaches each have a different purpose — learn all of them and use them as needed.</p>`;
+    const pickEx = [
+      {name:'Alternate picking', pattern:'↓ ↑ ↓ ↑ ↓ ↑', desc:'Down-up-down-up, one pick stroke per note. The most common and efficient technique for single-note lines.'},
+      {name:'Economy picking', pattern:'↓ ↑ ↓ ↓ ↑ ↑', desc:'Change direction only when you have to. After an upstroke on a string, move to the next lower string with a downstroke (no direction change). Faster than pure alternate.'},
+      {name:'String skipping', pattern:'↓ skip ↑ skip ↓', desc:'Jump over strings deliberately. Builds awareness of the fretboard and trains hand independence.'},
+      {name:'Sweep picking', pattern:'one smooth motion across strings', desc:'One fluid pick motion that touches each string once. Often played on arpeggios, gives a continuous waterfall effect.'},
+      {name:'Tremolo picking', pattern:'very fast ↓↓↓↓↓ repeat', desc:'Rapid repeated down-strokes (or alternate) on the same note. Creates a shimmering, intense effect on a single string.'},
+    ];
+    pickEx.forEach(ex => {
+      html += `<div class="sh-lesson"><div class="sh-lbl"><b>${ex.name}</b></div>
+        <div class="sh-lrow"><code style="font-family:monospace;letter-spacing:2px">${ex.pattern}</code></div>
+        <div class="sh-lrow">${ex.desc}</div></div>`;
+    });
+    sheet.innerHTML = html;
+  } else if (what === 'phrasing'){
+    let html = `<div class="sh-head">Phrasing: how you play, not what you play</div>
+      <p class="sh-desc">Two guitarists can play the exact same notes and one sounds like a robot while the other sounds like a singer. That difference is <b>phrasing</b> — the rhythm, the spaces, the emphasis, the bends and slides. This is how you turn notes into music.</p>`;
+    PH_LESSONS.forEach(([title, body]) => {
+      const clean = body.replace(/<button.*?<\/button>/g,'').replace(/<[^>]+>/g,'');
+      html += `<div class="sh-lesson"><div class="sh-lbl"><b>${title}</b></div><div class="sh-lrow">${clean}</div></div>`;
+    });
+    html += `<div class="sh-lesson"><div class="sh-lbl"><b>Techniques you'll use:</b></div><div class="sh-techniques">`;
+    PH_TECH.forEach(t => {
+      html += `<div><b>${t.name}</b> — ${t.desc}</div>`;
+    });
+    html += '</div></div>';
+    sheet.innerHTML = html;
+  } else if (what === 'rhythm'){
+    let html = `<div class="sh-head">Rhythm: the most important thing</div>
+      <p class="sh-desc">If you fix one thing about your playing, fix your rhythm. Rhythm is more important than notes. A simple phrase with great rhythm beats a fast scale run with boring time. Rhythm is also the easiest thing to improve because it only takes a metronome and discipline.</p>`;
+    RH_LESSONS.forEach(([title, body]) => {
+      const clean = body.replace(/<button.*?<\/button>/g,'').replace(/<[^>]+>/g,'');
+      html += `<div class="sh-lesson"><div class="sh-lbl"><b>${title}</b></div><div class="sh-lrow">${clean}</div></div>`;
+    });
+    html += `<div class="sh-lesson"><div class="sh-lbl"><b>Practice drills:</b></div><div class="sh-drills">`;
+    RH_DRILLS.forEach(([title, desc]) => {
+      html += `<div><b>${title}.</b> ${desc}</div>`;
+    });
+    html += '</div></div>';
+    sheet.innerHTML = html;
+  } else if (what === 'fingerstyle'){
+    let html = `<div class="sh-head">Fingerstyle: classical right-hand technique</div>
+    <p class="sh-desc"><b>p</b> = thumb (bass notes · strings 6,5,4) · <b>i</b> = index (G string) · <b>m</b> = middle (B string) · <b>a</b> = ring (high E string)</p>
+    <div class="sh-fdiag"><div class="fhand"><span class="fp">p</span><span class="fi">i</span><span class="fm">m</span><span class="fa">a</span></div>
+    <div style="font-size:11px;line-height:1.4;margin-top:8px">
+      The classical assignment: each finger stays on the same string (usually). The thumb covers bass duty and plays bass notes freely. The three fingers (i-m-a) each have a home string but can move when needed. This frees you to play flowing arpeggios, chord-melody, and intricate fingerpicking patterns.
+    </div></div>`;
+    html += `<div class="sh-head2">Exercises (practice each slowly, repeat 10 times)</div>`;
+    FG_EX.forEach((ex, i) => {
+      const steps = ex.steps.map(s => s.f).join(' - ');
+      html += `<div class="sh-lesson"><div class="sh-lbl"><b>${i+1}. ${ex.name}</b></div>
+        <div class="sh-lrow"><b>Fingers:</b> ${steps}</div>
+        <div class="sh-lrow"><b>Difficulty:</b> ${ex.diff==='beg'?'Beginner':'Intermediate'}</div>
+        <div class="sh-lrow"><b>How:</b> ${ex.tip.replace(/<[^>]+>/g,'')}</div></div>`;
+    });
+    sheet.innerHTML = html;
   }
 }
 let sheetsBuilt = false;
