@@ -1195,6 +1195,7 @@
           <option value="phrasing">Phrasing lesson</option>
           <option value="rhythm">Rhythm lesson</option>
           <option value="sweep">Sweep picking & arpeggios</option>
+          <option value="neckdiagram">Neck diagram (filled & blank)</option>
           <option value="fingerstyle">Fingerstyle & diagram</option>
         </select>
       </div>
@@ -4067,6 +4068,55 @@ function renderSheet(){
       html += `<div><b>${title}.</b> ${desc}</div>`;
     });
     html += '</div></div>';
+    sheet.innerHTML = html;
+  } else if (what === 'neckdiagram'){
+    const neckSVG = (filled) => {
+      const nF = 12, L = 20, T = 12, fw = 30, sg = 18, W = L + nF*fw + 14, H = T + 5*sg + 18;
+      let s = `<svg viewBox="0 0 ${W} ${H}" class="sheet-svg" preserveAspectRatio="xMinYMid meet">`;
+      for (let si = 0; si < 6; si++){
+        const y = T + si*sg;
+        s += `<line x1="${L}" y1="${y}" x2="${L + nF*fw}" y2="${y}" class="sh-line"/>`;
+        s += `<text x="${L - 11}" y="${y + 3}" class="sh-slab">${STRINGS[si].lbl}</text>`;
+      }
+      for (let f = 0; f <= nF; f++){
+        const x = L + f*fw;
+        s += `<line x1="${x}" y1="${T}" x2="${x}" y2="${T + 5*sg}" class="sh-line${f === 0 ? ' sh-nut' : ''}"/>`;
+        s += `<text x="${x}" y="${H - 5}" class="sh-num">${f}</text>`;
+      }
+      if (filled){
+        for (let si = 0; si < 6; si++)
+          for (let f = 0; f <= nF; f++){
+            const x = L + f*fw, y = T + si*sg;
+            s += `<circle cx="${x}" cy="${y}" r="8.4" class="sh-dot"/>`;
+            s += `<text x="${x}" y="${y + 3}" class="sh-t">${noteFmt(SHARPS[(STRINGS[si].pc + f) % 12])}</text>`;
+          }
+      } else {
+        for (let si = 0; si < 6; si++)
+          for (let f = 0; f <= nF; f++){
+            const x = L + f*fw, y = T + si*sg;
+            s += `<circle cx="${x}" cy="${y}" r="6" class="sh-dot" style="fill:none;stroke:#999;stroke-width:1"/>`;
+          }
+      }
+      return s + '</svg>';
+    };
+
+    let html = `<div class="sh-head">Fretboard note map (print both sides)</div>
+    <p class="sh-desc"><b>Front side:</b> Two complete fretboard diagrams with all notes labeled. One shows sharps, one shows flats — same notes, different spelling. Study both until you can recognize every note instantly.</p>
+
+    <div class="sh-lesson"><div class="sh-lbl"><b>All notes with SHARPS (#)</b></div></div>
+    ${neckSVG(true)}
+
+    <div style="margin-top:20px;" class="sh-lesson"><div class="sh-lbl"><b>All notes with FLATS (♭)</b></div></div>
+    ${neckSVG(true)}
+
+    <div style="margin-top:40px;border-top:3px dashed #000;padding-top:30px;page-break-before:always"><p class="sh-desc" style="font-weight:bold">BACK SIDE: Fill in the notes yourself. Practice until you can name every fret on every string from memory.</p>
+
+    <div class="sh-lesson"><div class="sh-lbl"><b>Practice diagram 1 (blank)</b></div></div>
+    ${neckSVG(false)}
+
+    <div style="margin-top:20px;" class="sh-lesson"><div class="sh-lbl"><b>Practice diagram 2 (blank)</b></div></div>
+    ${neckSVG(false)}</div>`;
+
     sheet.innerHTML = html;
   } else if (what === 'sweep'){
     let html = `<div class="sh-head">Sweep picking &amp; arpeggios</div>
