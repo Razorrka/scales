@@ -4070,8 +4070,9 @@ function renderSheet(){
     html += '</div></div>';
     sheet.innerHTML = html;
   } else if (what === 'neckdiagram'){
-    const neckSVG = (filled) => {
+    const neckSVG = (filled, useFlats) => {
       const nF = 12, L = 20, T = 12, fw = 30, sg = 18, W = L + nF*fw + 14, H = T + 5*sg + 18;
+      const NN = useFlats ? FLATS : SHARPS;
       let s = `<svg viewBox="0 0 ${W} ${H}" class="sheet-svg" preserveAspectRatio="xMinYMid meet">`;
       for (let si = 0; si < 6; si++){
         const y = T + si*sg;
@@ -4088,7 +4089,7 @@ function renderSheet(){
           for (let f = 0; f <= nF; f++){
             const x = L + f*fw, y = T + si*sg;
             s += `<circle cx="${x}" cy="${y}" r="8.4" class="sh-dot"/>`;
-            s += `<text x="${x}" y="${y + 3}" class="sh-t">${noteFmt(SHARPS[(STRINGS[si].pc + f) % 12])}</text>`;
+            s += `<text x="${x}" y="${y + 3}" class="sh-t">${noteFmt(NN[(STRINGS[si].pc + f) % 12])}</text>`;
           }
       } else {
         for (let si = 0; si < 6; si++)
@@ -4104,10 +4105,10 @@ function renderSheet(){
     <p class="sh-desc"><b>Front side:</b> Two complete fretboard diagrams with all notes labeled. One shows sharps, one shows flats — same notes, different spelling. Study both until you can recognize every note instantly.</p>
 
     <div class="sh-lesson"><div class="sh-lbl"><b>All notes with SHARPS (#)</b></div></div>
-    ${neckSVG(true)}
+    ${neckSVG(true, false)}
 
     <div style="margin-top:20px;" class="sh-lesson"><div class="sh-lbl"><b>All notes with FLATS (♭)</b></div></div>
-    ${neckSVG(true)}
+    ${neckSVG(true, true)}
 
     <div style="margin-top:40px;border-top:3px dashed #000;padding-top:30px;page-break-before:always"><p class="sh-desc" style="font-weight:bold">BACK SIDE: Fill in the notes yourself. Practice until you can name every fret on every string from memory.</p>
 
