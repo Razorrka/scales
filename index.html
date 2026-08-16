@@ -890,6 +890,31 @@
   .sl-pct{width:46px;text-align:right;font-size:12px;color:var(--muted)}
   .sl-time{width:74px;font-size:11.5px;color:var(--muted)}
   .sl-warn{font-size:12.5px;color:var(--root);margin-top:10px;line-height:1.5}
+  /* analyzer options + progression timeline */
+  .sl-opts{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 12px}
+  .sl-opt{flex:1;min-width:190px}
+  .sl-opt label{display:block;font-size:11.5px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--muted);margin:0 0 5px 2px}
+  .sl-opt select{width:100%;font:inherit;font-size:13.5px;color:var(--ink);background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;padding:9px 10px}
+  .sl-opt select:focus{outline:none;border-color:var(--scale)}
+  .sl-sum{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 10px}
+  .sl-chip{font-size:12.5px;color:var(--ink);background:var(--panel-2);border:1px solid var(--line);
+    border-radius:99px;padding:6px 12px}
+  .sl-chip b{color:var(--root)}
+  .sl-timeline{display:flex;flex-direction:column;gap:6px}
+  .sl-seg{display:flex;align-items:center;gap:10px;width:100%;text-align:left;cursor:pointer;
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 11px;
+    color:var(--ink);font:inherit;transition:border-color .12s,transform .12s}
+  .sl-seg:hover{border-color:var(--scale);transform:translateX(2px)}
+  .sl-seg.weak{opacity:.62}
+  .sl-st{width:52px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .sl-sc{width:78px;font-weight:800;font-size:16px}
+  .sl-sr{width:52px;font-size:12px;color:var(--root);font-weight:700}
+  .sl-sb{flex:1;height:8px;border-radius:99px;background:var(--panel-2);overflow:hidden;min-width:40px}
+  .sl-sb i{display:block;height:100%;background:var(--scale)}
+  .sl-seg.weak .sl-sb i{background:var(--root)}
+  .sl-prog-line{font-size:14px;font-weight:700;color:var(--ink);line-height:1.6;margin:2px 0 0}
 </style>
 </head>
 <body>
@@ -1278,7 +1303,7 @@
   <div id="view-songs" hidden>
     <div id="sl-browse">
       <p class="sub">Your songbook. Drop in the chords and it builds the lesson — shapes, theory, the solo box, and the feel.</p>
-      <input class="sl-search" id="sl-search" type="search" placeholder="Search your songs&hellip;" autocomplete="off">
+      <input class="sl-search" id="sl-search" type="search" placeholder="Search by song, artist, chord (Fmaj7) or key (G major)&hellip;" autocomplete="off">
       <div class="sl-list" id="sl-list"></div>
       <div class="sl-row"><button id="sl-add">+&nbsp; Add a song</button></div>
       <p class="hint">Nothing is looked up online &mdash; you supply the chords (your ear, or paste them from anywhere) and the lesson is built from them.</p>
@@ -1339,13 +1364,37 @@
           <div class="sl-parsed" id="sl-f-parsed"></div>
         </div>
         <div id="sl-analyze" hidden>
-          <div class="sl-row" style="margin-top:0">
-            <button id="sl-run">&#127911;&nbsp; Listen &amp; find the roots</button>
+          <div class="sl-opts">
+            <div class="sl-opt">
+              <label for="sl-detail">Chords to look for</label>
+              <select id="sl-detail">
+                <option value="triads">Triads only — major / minor</option>
+                <option value="sevenths" selected>+ 7ths — pop, soul, R&amp;B</option>
+                <option value="all">Everything — jazz &amp; neo soul</option>
+              </select>
+            </div>
+            <div class="sl-opt">
+              <label for="sl-grain">How finely to slice it</label>
+              <select id="sl-grain">
+                <option value="0.9">Loose — one chord per bar</option>
+                <option value="0.55" selected>Normal</option>
+                <option value="0.3">Fine — fast changes</option>
+              </select>
+            </div>
           </div>
+          <div class="sl-row" style="margin-top:0">
+            <button id="sl-run">&#127911;&nbsp; Listen to the preview</button>
+            <button id="sl-run-sel" hidden>&#127911;&nbsp; Just the looped part</button>
+          </div>
+          <p class="sl-tip" id="sl-runtip">Reads the 30&#8209;second preview and works out the chord progression in order, with timings.</p>
           <div id="sl-guessbox" hidden>
-            <div class="sl-guess" id="sl-guesses"></div>
+            <div class="sl-sum" id="sl-sum"></div>
+            <div class="sl-timeline" id="sl-timeline"></div>
             <p class="sl-warn" id="sl-warn"></p>
-            <div class="sl-row"><button class="primary" id="sl-use">Use the top 3 as a draft</button></div>
+            <div class="sl-row">
+              <button class="primary" id="sl-use">Use this progression</button>
+              <button id="sl-use-uniq">Use unique chords only</button>
+            </div>
           </div>
           <div class="sl-loop" id="sl-looper" style="margin-top:14px" hidden>
             <div style="font-weight:700;font-size:14px">Loop it and check by ear</div>
@@ -4959,16 +5008,107 @@ function slSolo(chords, key){
   return {scale:'Major Pentatonic', root:key.root,
     why:`${tonic} major pentatonic is the clean fit — the same five shapes as minor pentatonic, just anchored three frets lower.`};
 }
+/* Starter songbook. These are the progressions as they're commonly taught —
+   a place to start, not gospel. Check anything you're going to keep by ear. */
 const SL_SEED = [
   {id:'seed-wf', title:'White Ferrari', artist:'Frank Ocean', chords:'C G Fmaj7',
    feel:'slow · sparse · reverby — let each chord ring, almost no strumming'},
   {id:'seed-lm', title:'Lost Me', artist:'Givēon', chords:'Bbmaj7 Dm C', keyRoot:2, keyMinor:true,
-   feel:'~88 BPM, slow & smooth — with a capo on 5 these become Fmaj7 · Am · G'}
+   feel:'~88 BPM, slow & smooth — with a capo on 5 these become Fmaj7 · Am · G'},
+
+  // — the I–V–vi–IV family: four chords, hundreds of songs —
+  {id:'seed-letitbe', title:'Let It Be', artist:'The Beatles', chords:'C G Am F',
+   feel:'~72 BPM · piano-style, steady quarters — the plainest version of these four chords'},
+  {id:'seed-nowoman', title:'No Woman No Cry', artist:'Bob Marley', chords:'C G Am F',
+   feel:'~78 BPM · skank the off-beats, let the downbeat breathe'},
+  {id:'seed-someoneloved', title:'Someone You Loved', artist:'Lewis Capaldi', chords:'C G Am F',
+   feel:'~110 BPM · ballad — arpeggiate it rather than strum'},
+  {id:'seed-standbyme', title:'Stand By Me', artist:'Ben E. King', chords:'A F#m D E',
+   feel:'~120 BPM · the I–vi–IV–V doo-wop turn — bass walks, guitar stays out of the way'},
+  {id:'seed-perfect', title:'Perfect', artist:'Ed Sheeran', chords:'G Em C D',
+   feel:'6/8 waltz feel — count 1-2-3 · big open ringing chords'},
+  {id:'seed-imyours', title:"I'm Yours", artist:'Jason Mraz', chords:'G D Em C',
+   feel:'~150 BPM · light reggae up-strums, muted and bouncy'},
+  {id:'seed-riptide', title:'Riptide', artist:'Vance Joy', chords:'Am G C',
+   feel:'~102 BPM · ukulele-ish strum, keep it driving and simple'},
+
+  // — minor-key and modal —
+  {id:'seed-zombie', title:'Zombie', artist:'The Cranberries', chords:'Em C G D', keyRoot:4, keyMinor:true,
+   feel:'~84 BPM · clean and restrained in the verse, then let it get loud'},
+  {id:'seed-withorwithout', title:'With or Without You', artist:'U2', chords:'D A Bm G',
+   feel:'~110 BPM · one bar each, never changes — the whole song is this loop'},
+  {id:'seed-someonelike', title:'Someone Like You', artist:'Adele', chords:'A E F#m D',
+   feel:'~135 BPM · arpeggiated triplets, piano-style — pick don\'t strum'},
+  {id:'seed-africa', title:'Africa', artist:'Toto', chords:'F#m D A E',
+   feel:'~92 BPM · the chorus loop — steady, wide, lots of space'},
+  {id:'seed-hallelujah', title:'Hallelujah', artist:'Leonard Cohen', chords:'C Am C Am F G C',
+   feel:'6/8 · slow arpeggios — the famous "fourth, the fifth, the minor fall"'},
+  {id:'seed-knockin', title:"Knockin' on Heaven's Door", artist:'Bob Dylan', chords:'G D Am',
+   feel:'~70 BPM · two bars each, endlessly — the simplest loop on this list'},
+  {id:'seed-creep', title:'Creep', artist:'Radiohead', chords:'G B C Cm',
+   feel:'~92 BPM · four bars each — that B and the final Cm are what make it hurt'},
+  {id:'seed-wonderwall', title:'Wonderwall', artist:'Oasis', chords:'Em7 G Dsus4 A7sus4',
+   feel:'~87 BPM · capo 2 · steady down-up strum, never let the pattern drop'},
+
+  // — blues, soul, R&B —
+  {id:'seed-sweethome', title:'Sweet Home Alabama', artist:'Lynyrd Skynyrd', chords:'D C G',
+   feel:'~98 BPM · southern-rock shuffle — the whole song, verse and chorus'},
+  {id:'seed-isntshe', title:'Isn\'t She Lovely', artist:'Stevie Wonder', chords:'E C#m7 A B',
+   feel:'~120 BPM · bright and bouncy · a straight ii–V feel over a shuffle'},
+  {id:'seed-sundaymorning', title:'Sunday Morning', artist:'Maroon 5', chords:'Dm7 G7 Cmaj7 Fmaj7',
+   feel:'~96 BPM · a jazzy ii–V–I–IV — smooth, brushed, laid back'},
+
+  // — jazz standards, for the neo-soul vocabulary —
+  {id:'seed-flyme', title:'Fly Me to the Moon', artist:'jazz standard', chords:'Am7 Dm7 G7 Cmaj7 Fmaj7 Bm7b5 E7 Am7',
+   feel:'~120 BPM swing · circle of fifths all the way down — the best ii–V drill there is'},
+  {id:'seed-autumn', title:'Autumn Leaves', artist:'jazz standard', chords:'Am7 D7 Gmaj7 Cmaj7 F#m7b5 B7 Em7',
+   feel:'~110 BPM · major ii–V–I, then the relative minor ii–V–i — one song, both doors'},
+  {id:'seed-bluebossa', title:'Blue Bossa', artist:'Kenny Dorham', chords:'Cm7 Fm7 Dm7b5 G7 Cm7', keyRoot:0, keyMinor:true,
+   feel:'~150 BPM bossa · latin feel — thumb steady, fingers syncopated'},
+  {id:'seed-sowhat', title:'So What', artist:'Miles Davis', chords:'Dm7 Ebm7', keyRoot:2, keyMinor:true,
+   feel:'~136 BPM · 16 bars of Dm7, 8 of Ebm7, 8 back — modal, wide open for soloing'},
+  {id:'seed-ipanema', title:'The Girl from Ipanema', artist:'Jobim', chords:'Fmaj7 G7 Gm7 F#7 Fmaj7',
+   feel:'~130 BPM bossa · soft, even, never rushed'},
+];
+/* Progression patterns — not songs, just the shapes worth owning. */
+const SL_PATTERNS = [
+  {id:'pat-1564', title:'I–V–vi–IV (the pop loop)', artist:'pattern · in C', chords:'C G Am F',
+   feel:'The most used progression in pop. Bright, resolves easy. Try it in every key.'},
+  {id:'pat-6415', title:'vi–IV–I–V (the sad-pop loop)', artist:'pattern · in C', chords:'Am F C G',
+   feel:'Same four chords starting on the minor — instantly more wistful.'},
+  {id:'pat-1451', title:'I–IV–V (three-chord rock)', artist:'pattern · in A', chords:'A D E A',
+   feel:'Rock, country, punk, folk. If you only know three chords, know these.'},
+  {id:'pat-1625', title:'I–vi–ii–V (the doo-wop / rhythm changes turn)', artist:'pattern · in C', chords:'C Am Dm7 G7',
+   feel:'The classic turnaround. Endlessly loopable — every jazz tune uses it somewhere.'},
+  {id:'pat-251maj', title:'ii–V–I (major)', artist:'pattern · in C', chords:'Dm7 G7 Cmaj7',
+   feel:'The single most important move in jazz. Drill it through all twelve keys.'},
+  {id:'pat-251min', title:'ii°–V–i (minor)', artist:'pattern · in A minor', chords:'Bm7b5 E7 Am7', keyRoot:9, keyMinor:true,
+   feel:'The minor version — darker, and the E7 pulls much harder than a plain Em.'},
+  {id:'pat-blues', title:'12-bar blues', artist:'pattern · in A', chords:'A7 A7 A7 A7 D7 D7 A7 A7 E7 D7 A7 E7',
+   feel:'Twelve bars, one per chord above. Shuffle it. The entire blues canon lives here.'},
+  {id:'pat-andalusian', title:'Andalusian cadence (i–VII–VI–V)', artist:'pattern · in A minor', chords:'Am G F E', keyRoot:9, keyMinor:true,
+   feel:'Flamenco, surf, "Hit the Road Jack". Walks down and then pulls hard back to the top.'},
+  {id:'pat-canon', title:'Pachelbel / Canon loop', artist:'pattern · in D', chords:'D A Bm F#m G D G A',
+   feel:'Eight chords that have been recycled into a hundred pop songs.'},
+  {id:'pat-neosoul', title:'Neo-soul drift (Imaj7–iii7–vi7–IV)', artist:'pattern · in C', chords:'Cmaj7 Em7 Am7 Fmaj7',
+   feel:'All sevenths, no urgency. This is the sound — play it slow with lots of space.'},
 ];
 let slSongs = (function(){
-  try{ const raw = localStorage.getItem('sv-songs'); if (raw) return JSON.parse(raw); }catch(e){}
-  localStorage.setItem('sv-songs', JSON.stringify(SL_SEED));
-  return SL_SEED.slice();
+  const base = SL_SEED.concat(SL_PATTERNS);
+  let saved = null;
+  try{ const raw = localStorage.getItem('sv-songs'); if (raw) saved = JSON.parse(raw); }catch(e){}
+  if (!Array.isArray(saved)){
+    localStorage.setItem('sv-songs', JSON.stringify(base));
+    return base.slice();
+  }
+  // keep everything the user has; fold in any starter entries they've never seen
+  const have = new Set(saved.map(s => s.id));
+  const added = base.filter(s => !have.has(s.id));
+  if (added.length){
+    saved = saved.concat(added);
+    localStorage.setItem('sv-songs', JSON.stringify(saved));
+  }
+  return saved;
 })();
 const slSave = () => localStorage.setItem('sv-songs', JSON.stringify(slSongs));
 const slEsc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -4988,10 +5128,17 @@ function slPane(p){
 function slRenderList(filter){
   const q = (filter || '').toLowerCase().trim();
   const el = document.getElementById('sl-list');
-  const hits = slSongs.filter(s => !q || (s.title + ' ' + (s.artist || '')).toLowerCase().includes(q));
+  // search the title, the artist, the chords themselves, and the key
+  const hits = slSongs.filter(s => {
+    if (!q) return true;
+    const key = slKeyOf(s), NN = FLAT_KEYS.has(key.root) ? FLATS : SHARPS;
+    const hay = [s.title, s.artist || '', s.chords || '', s.feel || '',
+                 NN[key.root] + (key.minor ? 'm minor' : ' major')].join(' ').toLowerCase();
+    return q.split(/\s+/).every(w => hay.includes(w));
+  });
   el.innerHTML = '';
   if (!hits.length){
-    el.innerHTML = `<div class="sl-empty">${slSongs.length ? 'Nothing matches that.' : 'No songs yet — add your first one below.'}</div>`;
+    el.innerHTML = `<div class="sl-empty">${slSongs.length ? 'Nothing matches that. Try a chord (“Fmaj7”), a key (“G major”), or an artist.' : 'No songs yet — add your first one below.'}</div>`;
     return;
   }
   hits.forEach(s => {
@@ -5142,7 +5289,7 @@ document.getElementById('sl-q').addEventListener('input', e => {
   slQTimer = setTimeout(async () => {
     box.innerHTML = '<div class="sl-note">Searching&hellip;</div>';
     try{
-      const url = 'https://itunes.apple.com/search?entity=song&limit=6&term=' + encodeURIComponent(q);
+      const url = 'https://itunes.apple.com/search?entity=song&limit=14&term=' + encodeURIComponent(q);
       const r = await fetch(url);
       const d = await r.json();
       if (!d.results.length){ box.innerHTML = '<div class="sl-note">Nothing found.</div>'; return; }
@@ -5182,10 +5329,13 @@ function slChoose(t){
 
 /* ---------- the looper (pitch-preserved slow-down) ---------- */
 let slAu = null, slLoopA = 0, slLoopB = 0, slRate = 1, slDur = 30;
+let slBuf = null, slLastRep = null;      // decoded preview + last report, so re-runs are instant
 function slAudioReset(){
   if (slAu){ slAu.pause(); slAu.src = ''; }
   slAu = null; slLoopA = 0; slLoopB = 0; slRate = 1;
+  slBuf = null; slLastRep = null;              // new song = re-decode, re-analyse
   const rt = document.getElementById('sl-rate'); if (rt) rt.textContent = '1×';
+  const rs = document.getElementById('sl-run-sel'); if (rs) rs.hidden = true;
 }
 function slAudio(){
   if (slAu) return slAu;
@@ -5296,44 +5446,146 @@ function slFFT(re, im){
     }
   }
 }
-/* Chroma with a separate bass band. The bass is what makes root detection
-   work; the full band is what tells major from minor. */
-function slChroma(buf, sr){
+/* Frame-by-frame chroma, so we get a progression in time instead of one
+   averaged guess. Two bands: the bass band names the root, the full band
+   tells major from minor. Harmonics are subtracted first — otherwise one
+   ringing low note throws its own 3rd and 5th harmonic and fakes a major
+   chord that was never played. */
+function slFrames(buf, sr){
   const ds = new Float32Array(Math.floor(buf.length / 4));   // downsample: chords live low
   for (let i = 0; i < ds.length; i++)
     ds[i] = (buf[4*i] + buf[4*i+1] + buf[4*i+2] + buf[4*i+3]) / 4;
-  const rate = sr / 4, N = 8192, HOP = 2048;
+  const rate = sr / 4, N = 4096, HOP = 1024;                 // ~0.37s window, ~0.093s hop
   const win = new Float32Array(N);
   for (let i = 0; i < N; i++) win[i] = 0.5 - 0.5 * Math.cos(2*Math.PI*i/(N-1));
   const pcOf = new Int8Array(N/2), isBass = new Uint8Array(N/2);
   for (let b = 1; b < N/2; b++){
     const f = b * rate / N;
-    if (f < 58 || f > 1100){ pcOf[b] = -1; continue; }
+    if (f < 55 || f > 1600){ pcOf[b] = -1; continue; }
     pcOf[b] = ((Math.round(69 + 12*Math.log2(f/440)) % 12) + 12) % 12;
     isBass[b] = f < 260 ? 1 : 0;
   }
   const re = new Float32Array(N), im = new Float32Array(N);
-  const agg = new Float32Array(12), bass = new Float32Array(12);
-  let frames = 0;
+  const treb = [], bass = [], times = [], flux = [];
+  let prevMag = null;
+  const norm = a => { let mx = 0; for (let i=0;i<12;i++) mx = Math.max(mx, a[i]);
+                      if (mx > 0) for (let i=0;i<12;i++) a[i] /= mx; };
   for (let s = 0; s + N <= ds.length; s += HOP){
     for (let i = 0; i < N; i++){ re[i] = ds[s+i] * win[i]; im[i] = 0; }
     slFFT(re, im);
-    const ch = new Float32Array(12), bs = new Float32Array(12);
+    const raw = new Float32Array(12), bs = new Float32Array(12), mag = new Float32Array(N/2);
+    let fl = 0;
     for (let b = 1; b < N/2; b++){
+      const m = Math.hypot(re[b], im[b]);
+      mag[b] = m;
+      if (prevMag) fl += Math.max(0, m - prevMag[b]);
       const pc = pcOf[b];
       if (pc < 0) continue;
-      const m = Math.hypot(re[b], im[b]);
-      ch[pc] += m;
+      raw[pc] += m;
       if (isBass[b]) bs[pc] += m;
     }
-    const norm = a => { let mx = 0; for (let i=0;i<12;i++) mx = Math.max(mx, a[i]);
-                        if (mx > 0) for (let i=0;i<12;i++) a[i] /= mx; };
-    norm(ch); norm(bs);
-    for (let p = 0; p < 12; p++){ agg[p] += ch[p]; bass[p] += bs[p]; }
-    frames++;
+    prevMag = mag; flux.push(fl);
+    // subtract the harmonics each pitch class throws: 3rd -> +7, 5th -> +4
+    const sal = new Float32Array(12), sbass = new Float32Array(12);
+    for (let p = 0; p < 12; p++){
+      sal[p]   = Math.max(0, raw[p] - 0.45*raw[(p+5)%12] - 0.18*raw[(p+8)%12]);
+      sbass[p] = Math.max(0, bs[p]  - 0.45*bs[(p+5)%12]  - 0.18*bs[(p+8)%12]);
+    }
+    norm(sal); norm(sbass);
+    treb.push(sal); bass.push(sbass); times.push(s / rate);
   }
-  for (let p = 0; p < 12; p++){ agg[p] /= frames || 1; bass[p] /= frames || 1; }
-  return {agg, bass};
+  return {times, treb, bass, flux, hop: HOP / rate};
+}
+/* Tempo from the onset envelope — autocorrelation over a musical BPM range.
+   Returns null unless the peak really stands out, so we stay quiet rather
+   than print a confident-looking number for something with no clear beat. */
+function slTempo(flux, hop){
+  if (flux.length < 40) return null;
+  const mean = flux.reduce((a,b)=>a+b,0) / flux.length;
+  const f = flux.map(v => Math.max(0, v - mean));
+  const scores = [];
+  let best = null;
+  for (let bpm = 60; bpm <= 190; bpm += 0.5){
+    const lag = Math.round((60 / bpm) / hop);
+    if (lag < 2 || lag >= f.length - 2) continue;
+    let s = 0;
+    for (let i = 0; i + lag < f.length; i++) s += f[i] * f[i+lag];
+    s /= (f.length - lag);
+    scores.push(s);
+    if (!best || s > best.s) best = {bpm, s};
+  }
+  if (!best || !scores.length) return null;
+  const avg = scores.reduce((a,b)=>a+b,0) / scores.length;
+  if (avg <= 0 || best.s / avg < 1.35) return null;   // no peak worth reporting
+  return Math.round(best.bpm);
+}
+/* Chord templates. Weighted, not binary: the root and the third decide the
+   chord's identity, the fifth barely does. */
+const SL_TPL = {
+  'maj'  :{0:1.0, 4:1.0, 7:0.7},
+  'm'    :{0:1.0, 3:1.0, 7:0.7},
+  '7'    :{0:1.0, 4:0.9, 7:0.5, 10:0.9},
+  'm7'   :{0:1.0, 3:0.9, 7:0.5, 10:0.9},
+  'maj7' :{0:1.0, 4:0.9, 7:0.5, 11:0.9},
+  'm7b5' :{0:1.0, 3:0.9, 6:0.8, 10:0.8},
+  'dim'  :{0:1.0, 3:0.9, 6:0.9},
+  'sus4' :{0:1.0, 5:0.9, 7:0.8},
+  'sus2' :{0:1.0, 2:0.9, 7:0.8},
+  '6'    :{0:1.0, 4:0.9, 7:0.5, 9:0.8},
+  'm6'   :{0:1.0, 3:0.9, 7:0.5, 9:0.8},
+  '9'    :{0:1.0, 2:0.7, 4:0.9, 7:0.4, 10:0.8},
+  'add9' :{0:1.0, 2:0.7, 4:0.9, 7:0.6},
+};
+const SL_SETS = {
+  triads:   ['maj','m'],
+  sevenths: ['maj','m','7','m7','maj7','sus4'],
+  all:      ['maj','m','7','m7','maj7','m7b5','dim','sus4','sus2','6','m6','9','add9'],
+};
+function slBuildTemplates(set){
+  const out = [];
+  SL_SETS[set].forEach(q => {
+    const t = SL_TPL[q];
+    for (let root = 0; root < 12; root++){
+      const v = new Float32Array(12);
+      Object.keys(t).forEach(k => { v[(root + (+k)) % 12] = t[k]; });
+      let n = 0; for (let i = 0; i < 12; i++) n += v[i]*v[i];
+      n = Math.sqrt(n) || 1;
+      for (let i = 0; i < 12; i++) v[i] /= n;
+      out.push({root, quality:q, vec:v});
+    }
+  });
+  return out;
+}
+function slCos(a, b){
+  let d = 0, na = 0;
+  for (let i = 0; i < 12; i++){ d += a[i]*b[i]; na += a[i]*a[i]; }
+  return d / (Math.sqrt(na) || 1);            // b is already unit length
+}
+/* Viterbi over the frames. The self-transition bonus is what stops the
+   chord flickering every frame and gives you real, held segments. */
+function slViterbi(emit, nStates, hold){
+  const T = emit.length;
+  const dp = new Float32Array(nStates), ndp = new Float32Array(nStates);
+  const back = [];
+  for (let s = 0; s < nStates; s++) dp[s] = emit[0][s];
+  for (let t = 1; t < T; t++){
+    let bestPrev = 0;
+    for (let s = 1; s < nStates; s++) if (dp[s] > dp[bestPrev]) bestPrev = s;
+    const bp = new Int32Array(nStates);
+    for (let s = 0; s < nStates; s++){
+      const stay = dp[s] + hold, move = dp[bestPrev];
+      if (stay >= move){ ndp[s] = stay + emit[t][s]; bp[s] = s; }
+      else { ndp[s] = move + emit[t][s]; bp[s] = bestPrev; }
+    }
+    back.push(bp);
+    dp.set(ndp);
+  }
+  let last = 0;
+  for (let s = 1; s < nStates; s++) if (dp[s] > dp[last]) last = s;
+  const path = new Int32Array(T);
+  path[T-1] = last;
+  for (let t = T - 2; t >= 0; t--) path[t] = back[t][path[t+1]];
+  return path;
 }
 /* Krumhansl–Schmuckler key profiles */
 const SL_KMAJ = [6.35,2.23,3.48,2.33,4.38,4.09,2.52,5.19,2.39,3.66,2.29,2.88];
@@ -5354,77 +5606,208 @@ function slKeyGuess(agg){
     });
   return best;
 }
-/* Measured against songs with known chords: the top 2–3 bass roots and their
-   major/minor call came out right; extensions never did. So that's all we claim. */
-function slRootReport(mono, sampleRate){
-  const {agg, bass} = slChroma(mono, sampleRate);
-  const key = slKeyGuess(agg);
-  const order = Array.from(bass.keys()).sort((a,b) => bass[b] - bass[a]);
-  const top = order.slice(0, 4).map(pc => {
-    const M = agg[(pc+4)%12], m = agg[(pc+3)%12];
-    const diff = (M - m) / Math.max(M, m, 0.001);
-    return {pc, strength: bass[pc],
-            quality: Math.abs(diff) < 0.12 ? '?' : (M > m ? 'maj' : 'm')};
+/* Two passes. The first finds the chords cold; we read the key off that, then
+   run it again nudging the diatonic chords of that key. That second pass is
+   what fixes the usual wrong answers — a iii heard as a I, a vi heard as its
+   relative major. */
+function slAnalyzeTrack(mono, sampleRate, opts){
+  const set = (opts && opts.set) || 'sevenths';
+  const grain = (opts && opts.grain) || 0.55;
+  const F = slFrames(mono, sampleRate);
+  const T = F.times.length;
+  if (T < 8) return null;
+  const tpl = slBuildTemplates(set);
+  const nS = tpl.length + 1;                       // + a "no chord" state
+  const NOCH = tpl.length;
+
+  // base emissions: how well each template fits the frame, plus a bass bonus
+  const base = [];
+  for (let t = 0; t < T; t++){
+    const row = new Float32Array(nS);
+    let loud = 0;
+    for (let i = 0; i < 12; i++) loud += F.treb[t][i];
+    for (let k = 0; k < tpl.length; k++)
+      row[k] = slCos(F.treb[t], tpl[k].vec) + 0.35 * F.bass[t][tpl[k].root];
+    row[NOCH] = loud < 1.2 ? 0.62 : 0.30;          // near-silence gets to say nothing
+    base.push(row);
+  }
+  const hold = 0.05 + 0.42 * grain;                // longer hold = fewer, longer chords
+
+  const runPass = bonus => {
+    const emit = base.map(row => {
+      if (!bonus) return row;
+      const r = new Float32Array(nS);
+      for (let s = 0; s < nS; s++) r[s] = row[s] + (bonus[s] || 0);
+      return r;
+    });
+    return slViterbi(emit, nS, hold);
+  };
+  const segsOf = path => {
+    const out = [];
+    let s = 0;
+    for (let t = 1; t <= T; t++){
+      if (t === T || path[t] !== path[s]){
+        const st = tpl[path[s]];
+        const end = t < T ? F.times[t] : F.times[T-1] + F.hop;
+        if (st){
+          let conf = 0;
+          for (let i = s; i < t; i++) conf += base[i][path[s]];
+          out.push({root:st.root, quality:st.quality, start:F.times[s], end,
+                    conf: conf / (t - s)});
+        }
+        s = t;
+      }
+    }
+    return out;
+  };
+
+  let segs = segsOf(runPass(null));
+  // duration-weighted chroma of what we heard -> key
+  const agg = new Float32Array(12);
+  for (let t = 0; t < T; t++) for (let i = 0; i < 12; i++) agg[i] += F.treb[t][i];
+  for (let i = 0; i < 12; i++) agg[i] /= T;
+  let key = slKeyGuess(agg);
+  if (segs.length){
+    const asChords = segs.filter(s => s.end - s.start > 0.4)
+                         .map(s => ({pc:s.root, quality:s.quality}));
+    if (asChords.length >= 2){
+      const byChord = slDetectKey(asChords);
+      if (byChord) key = {root:byChord.root, minor:byChord.minor, fit:key.fit};
+    }
+  }
+  // pass two: nudge whatever is diatonic in that key
+  const degs = key.minor ? SL_MIN_DEG : SL_MAJ_DEG;
+  const quals = key.minor ? SL_MIN_Q : SL_MAJ_Q;
+  const bonus = new Float32Array(nS);
+  tpl.forEach((c, k) => {
+    const i = degs.indexOf((c.root - key.root + 12) % 12);
+    if (i < 0) return;
+    const bq = slBase(c.quality);
+    bonus[k] = (bq === quals[i] || bq === 'any') ? 0.055 : 0.022;
   });
-  return {key, top};
+  segs = segsOf(runPass(bonus));
+
+  // drop the flecks, then fuse neighbours that ended up the same chord
+  const minDur = Math.max(0.35, grain * 0.9);
+  const kept = segs.filter(s => s.end - s.start >= minDur);
+  // a short clip can lose everything to that filter — keep the best of what we had
+  segs = kept.length ? kept
+       : segs.filter(s => s.end - s.start >= minDur / 2)
+             .sort((a,b) => b.conf - a.conf).slice(0, 8)
+             .sort((a,b) => a.start - b.start);
+  const merged = [];
+  segs.forEach(s => {
+    const p = merged[merged.length-1];
+    if (p && p.root === s.root && p.quality === s.quality && s.start - p.end < 0.5){
+      p.end = s.end; p.conf = Math.max(p.conf, s.conf);
+    } else merged.push({...s});
+  });
+  return {key, segs: merged, bpm: slTempo(F.flux, F.hop), frames: T};
 }
 function slChordName(root, q){
   const NN = FLAT_KEYS.has(root) ? FLATS : SHARPS;
   return NN[root] + (q === 'maj' ? '' : q === '?' ? '' : q);
 }
-document.getElementById('sl-run').addEventListener('click', async () => {
-  const btn = document.getElementById('sl-run');
+const slFmtT = t => Math.floor(t/60) + ':' + String(Math.floor(t%60)).padStart(2,'0');
+function slRenderReport(rep){
+  const NN = FLAT_KEYS.has(rep.key.root) ? FLATS : SHARPS;
+  const keyLine = `${NN[rep.key.root]}${rep.key.minor ? ' minor' : ' major'}`;
+  const names = rep.segs.map(s => slChordName(s.root, s.quality));
+  const uniq = [...new Set(names)];
+
+  document.getElementById('sl-sum').innerHTML =
+    `<span class="sl-chip">Key <b>${keyLine}</b></span>` +
+    (rep.bpm ? `<span class="sl-chip">About <b>${rep.bpm} BPM</b></span>` : '') +
+    `<span class="sl-chip"><b>${rep.segs.length}</b> chord changes</span>` +
+    `<span class="sl-chip"><b>${uniq.length}</b> different chords</span>` +
+    `<div class="sl-prog-line">${names.join('&nbsp; &rarr; &nbsp;') || '—'}</div>`;
+
+  const tl = document.getElementById('sl-timeline');
+  tl.innerHTML = '';
+  if (!rep.segs.length){
+    tl.innerHTML = '<div class="sl-note">Nothing came through clearly — try “Loose” slicing, or loop a section and run it on just that.</div>';
+  }
+  const hi = rep.segs.reduce((m,s) => Math.max(m, s.conf), 0.001);
+  rep.segs.forEach(s => {
+    const nm = slChordName(s.root, s.quality);
+    const rn = slRoman({pc:s.root, quality:s.quality}, rep.key);
+    const pct = Math.round(100 * s.conf / hi);
+    const weak = s.conf < hi * 0.72;
+    const b = document.createElement('button');
+    b.className = 'sl-seg' + (weak ? ' weak' : '');
+    b.innerHTML = `<span class="sl-st">${slFmtT(s.start)}</span>
+      <span class="sl-sc">${nm}</span>
+      <span class="sl-sr">${rn}</span>
+      <span class="sl-sb"><i style="width:${Math.max(8,pct)}%"></i></span>`;
+    b.addEventListener('click', () => {          // hear the chord, and jump the loop there
+      const c = slParse(nm);
+      if (c) slStrum(slShape(c), 0, 0.03, 0.5);
+      slLoopA = s.start; slLoopB = s.end; slDrawRegion();
+      const a = slAudio(); a.currentTime = s.start;
+    });
+    tl.appendChild(b);
+  });
+
+  document.getElementById('sl-warn').innerHTML =
+    `This reads the <b>30-second preview</b> only — that's all iTunes hands out, so it's usually the hook, not the whole song. ` +
+    `It's signal processing, not a trained ear: <b>held, clean chords come out well; busy mixes and quick passing chords don't.</b> ` +
+    `Faded rows are the ones it was least sure of. Loop each one below and check it against your ear before you trust it.`;
+
+  document.getElementById('sl-use').onclick = () => {
+    const f = document.getElementById('sl-f-chords');
+    f.value = names.join(' ');
+    f.dispatchEvent(new Event('input'));
+  };
+  document.getElementById('sl-use-uniq').onclick = () => {
+    const f = document.getElementById('sl-f-chords');
+    f.value = uniq.join(' ');
+    f.dispatchEvent(new Event('input'));
+  };
+
+  // A/B row: the chords it found, plus both flavours of each root to test against
+  const row = document.getElementById('sl-abrow');
+  row.innerHTML = '<span class="sl-sp" style="width:100%">Play these against the loop — keep what matches:</span>';
+  const roots = [...new Set(rep.segs.map(s => s.root))].slice(0, 4);
+  roots.forEach(pc => {
+    ['', 'm', 'maj7', 'm7', '7'].forEach(suf => {
+      const nm = NN[pc] + suf;
+      const b = document.createElement('button');
+      b.textContent = nm;
+      b.addEventListener('click', () => {
+        const c = slParse(nm);
+        if (c) slStrum(slShape(c), 0, 0.03, 0.5);
+      });
+      row.appendChild(b);
+    });
+  });
+}
+async function slRunAnalysis(sectionOnly){
+  const btn = document.getElementById(sectionOnly ? 'sl-run-sel' : 'sl-run');
   if (!slPick || !slPick.preview) return;
+  const label = btn.innerHTML;
   btn.disabled = true; btn.textContent = 'Listening…';
   try{
-    const ab = await (await fetch(slPick.preview)).arrayBuffer();
-    const audio = await ensureCtx().decodeAudioData(ab);
-    const rep = slRootReport(audio.getChannelData(0), audio.sampleRate);
-    const NN = FLAT_KEYS.has(rep.key.root) ? FLATS : SHARPS;
-    const box = document.getElementById('sl-guesses');
-    box.innerHTML = '';
-    const maxS = rep.top[0] ? rep.top[0].strength : 1;
-    rep.top.forEach((r, i) => {
-      const pct = Math.round(100 * r.strength / (maxS || 1));
-      const row = document.createElement('div');
-      row.className = 'sl-grow';
-      row.innerHTML = `<span class="sl-time">${i < 2 ? 'likely' : 'maybe'}</span>
-        <span class="sl-gc">${slChordName(r.pc, r.quality)}</span>
-        <span class="sl-bar"><i class="${i < 2 ? '' : 'low'}" style="width:${Math.max(6,pct)}%"></i></span>
-        <span class="sl-pct">${r.quality === '?' ? '?' : r.quality === 'm' ? 'min' : 'maj'}</span>`;
-      box.appendChild(row);
+    if (!slBuf){
+      const ab = await (await fetch(slPick.preview)).arrayBuffer();
+      slBuf = await ensureCtx().decodeAudioData(ab);
+    }
+    let mono = slBuf.getChannelData(0);
+    if (sectionOnly && slLoopB - slLoopA > 1.5){
+      const a = Math.floor(slLoopA * slBuf.sampleRate), b = Math.floor(slLoopB * slBuf.sampleRate);
+      mono = mono.slice(Math.max(0,a), Math.min(mono.length, b));
+    }
+    const rep = slAnalyzeTrack(mono, slBuf.sampleRate, {
+      set:   document.getElementById('sl-detail').value,
+      grain: +document.getElementById('sl-grain').value,
     });
-    const fit = rep.key.fit;
-    const keyLine = `${NN[rep.key.root]}${rep.key.minor ? ' minor' : ' major'}`;
-    document.getElementById('sl-warn').innerHTML =
-      `<b>Key looks like ${keyLine}</b>${fit < 0.8 ? ' — but the fit is weak, so treat it as a hint' : ''}. ` +
-      `The top two roots are usually right; the greyed ones often aren\'t. ` +
-      `<b>Extensions don\'t show up at all</b> — if it sounds dreamier than a plain triad it\'s probably a maj7 or m7, ` +
-      `and only your ear can call that. Loop it below and check.`;
+    if (!rep) throw new Error('clip too short to read');
+    if (sectionOnly) rep.segs.forEach(s => { s.start += slLoopA; s.end += slLoopA; });
+    slLastRep = rep;
+    slRenderReport(rep);
     document.getElementById('sl-guessbox').hidden = false;
     document.getElementById('sl-looper').hidden = false;
+    document.getElementById('sl-run-sel').hidden = false;
     slDrawRegion();
-    // A/B: hear each candidate against the loop, both flavours
-    const row = document.getElementById('sl-abrow');
-    row.innerHTML = '<span class="sl-sp" style="width:100%">Play these against the loop — keep what matches:</span>';
-    rep.top.slice(0, 3).forEach(r => {
-      [['', 'maj'], ['m', 'm'], ['maj7', 'maj7'], ['m7', 'm7']].forEach(([suf, q]) => {
-        const nm = NN[r.pc] + suf;
-        const b = document.createElement('button');
-        b.textContent = nm;
-        b.addEventListener('click', () => {
-          const c = slParse(nm);
-          if (c) slStrum(slShape(c), 0, 0.03, 0.5);
-        });
-        row.appendChild(b);
-      });
-    });
-    document.getElementById('sl-use').onclick = () => {
-      const seq = rep.top.slice(0, 3).map(r => slChordName(r.pc, r.quality));
-      const f = document.getElementById('sl-f-chords');
-      f.value = seq.join(' ');
-      f.dispatchEvent(new Event('input'));
-    };
   }catch(err){
     document.getElementById('sl-warn').textContent =
       'Could not analyse that preview (' + err.message + '). The looper still works.';
@@ -5432,8 +5815,13 @@ document.getElementById('sl-run').addEventListener('click', async () => {
     document.getElementById('sl-looper').hidden = false;
   }
   btn.disabled = false;
-  btn.innerHTML = '&#127911;&nbsp; Listen &amp; find the roots';
-});
+  btn.innerHTML = label;
+}
+document.getElementById('sl-run').addEventListener('click', () => slRunAnalysis(false));
+document.getElementById('sl-run-sel').addEventListener('click', () => slRunAnalysis(true));
+// changing an option re-reads the clip we already have — no refetch
+['sl-detail','sl-grain'].forEach(id =>
+  document.getElementById(id).addEventListener('change', () => { if (slBuf && slLastRep) slRunAnalysis(false); }));
 
 /* ---------- offline support (only active when hosted over https) ---------- */
 if ('serviceWorker' in navigator && location.protocol === 'https:')
