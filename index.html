@@ -915,6 +915,60 @@
   .sl-sb i{display:block;height:100%;background:var(--scale)}
   .sl-seg.weak .sl-sb i{background:var(--root)}
   .sl-prog-line{font-size:14px;font-weight:700;color:var(--ink);line-height:1.6;margin:2px 0 0}
+
+  /* ---------- pocket: tap a shape, get the chord ---------- */
+  .pk-sec{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--line);
+    border-radius:16px;padding:16px 15px;margin-top:16px}
+  .pk-h{font-size:17px;font-weight:800;color:var(--ink);margin:0 0 4px}
+  .pk-why{color:var(--muted);font-size:13.5px;margin:0 0 14px;line-height:1.5}
+  .pk-row{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+  .pk-boardwrap{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  .pk-pos{display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:34px}
+  .pk-pos button{width:40px;height:40px;font-size:19px;font-weight:800;padding:0}
+  .pk-posn{font-size:11px;color:var(--muted);letter-spacing:.05em;text-align:center;line-height:1.3}
+  .pk-posn b{display:block;font-size:15px;color:var(--root)}
+  .pk-board{flex:1;min-width:236px;max-width:320px}
+  .pk-nut{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;margin-bottom:5px}
+  .pk-open{height:30px;border-radius:8px;border:1px solid var(--line);background:var(--panel);
+    color:var(--muted);font:inherit;font-size:14px;font-weight:800;cursor:pointer;padding:0}
+  .pk-open.o{color:var(--scale);border-color:var(--scale)}
+  .pk-open.x{color:var(--muted);opacity:.7}
+  .pk-slbl{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;margin-bottom:3px}
+  .pk-slbl span{text-align:center;font-size:10.5px;font-weight:800;color:var(--muted);letter-spacing:.04em}
+  .pk-frets{border-top:4px solid var(--ink);border-radius:2px}
+  .pk-frow{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;position:relative}
+  .pk-cell{height:44px;border:none;border-bottom:1px solid var(--line);background:none;
+    cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;position:relative}
+  .pk-cell::before{content:'';position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+  .pk-cell .pkd{width:28px;height:28px;border-radius:50%;background:var(--scale);
+    display:none;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;
+    color:#fff;line-height:1}
+  .pk-cell.on .pkd{display:flex}
+  .pk-readout{margin-top:16px;text-align:center;min-height:58px}
+  .pk-name{font-size:32px;font-weight:800;color:var(--ink);line-height:1.1}
+  .pk-sub{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.5}
+  .pk-sub b{color:var(--root)}
+  .pk-hint{font-size:14px;color:var(--muted);padding-top:14px}
+  .pk-strip{display:flex;flex-wrap:wrap;gap:12px}
+  .pk-card{text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:9px 8px 6px;width:112px;position:relative;cursor:pointer}
+  .pk-card:hover{border-color:var(--scale)}
+  .pk-cn{font-weight:800;font-size:15px;color:var(--ink)}
+  .pk-cr{font-size:11px;font-weight:700;color:var(--root);letter-spacing:.04em;min-height:14px}
+  .pk-x{position:absolute;top:-7px;right:-7px;width:24px;height:24px;border-radius:50%;
+    border:1px solid var(--line);background:var(--panel-2);color:var(--muted);
+    font-size:13px;line-height:1;cursor:pointer;padding:0}
+  .pk-x:hover{color:var(--bad,#ff6b6b)}
+  .pk-group{margin-top:16px}
+  .pk-gh{font-size:14.5px;font-weight:800;color:var(--ink);margin:0 0 3px}
+  .pk-gw{font-size:12.5px;color:var(--muted);margin:0 0 10px;line-height:1.5}
+  .pk-sug{display:grid;grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:13px}
+  .pk-s{text-align:center;cursor:pointer;border:1px solid transparent;border-radius:12px;
+    padding:7px 5px 4px;transition:border-color .12s,transform .12s}
+  .pk-s:hover{border-color:var(--scale);transform:translateY(-2px)}
+  .pk-sn{font-weight:800;font-size:15px;color:var(--ink)}
+  .pk-sr{font-size:11px;font-weight:700;color:var(--root);letter-spacing:.04em}
+  .pk-sw{font-size:11.5px;color:var(--muted);line-height:1.4;margin-top:3px}
 </style>
 </head>
 <body>
@@ -1001,6 +1055,7 @@
       <button class="tab" data-tab="decoder">&#129517; Decoder</button>
       <button class="tab" data-tab="chords">&#9995; Chords</button>
       <button class="tab" data-tab="songs">&#127925; Songs</button>
+      <button class="tab" data-tab="pocket">&#129513; Pocket</button>
       <button class="tab" data-tab="sheets">&#128424;&#65039; Sheets</button>
       <button class="tab" data-tab="notes">&#128221; Notes</button>
     </div>
@@ -1419,6 +1474,45 @@
       </div>
     </div>
   </div><!-- /view-songs -->
+
+  <div id="view-pocket" hidden>
+    <p class="sub">Don't know what you're playing? <b>Tap the shape onto the neck</b> and it'll name it. Add each chord of your progression, and it works out the pocket you're in and what else lives there.</p>
+
+    <div class="pk-sec">
+      <div class="pk-h">1 &middot; Lay the chord on the neck</div>
+      <p class="pk-why">Tap a dot for every finger. Tap the circle above a string for <b>open</b>, tap again for <b>muted</b>. Slide the position if your shape is further up.</p>
+      <div class="pk-boardwrap">
+        <div class="pk-pos">
+          <button id="pk-down" aria-label="Move down the neck">&minus;</button>
+          <span class="pk-posn">fret <b id="pk-basen">1</b></span>
+          <button id="pk-up" aria-label="Move up the neck">+</button>
+        </div>
+        <div class="pk-board" id="pk-board"></div>
+      </div>
+      <div class="pk-readout" id="pk-readout"></div>
+      <div class="pk-row">
+        <button id="pk-hear">&#9654;&nbsp; Hear it</button>
+        <button class="primary" id="pk-add">Add to the progression</button>
+        <button id="pk-clear">Clear</button>
+      </div>
+    </div>
+
+    <div class="pk-sec">
+      <div class="pk-h">2 &middot; Your progression</div>
+      <p class="pk-why" id="pk-progwhy">Nothing yet — build a chord above and add it.</p>
+      <div class="pk-strip" id="pk-strip"></div>
+      <div class="pk-row" id="pk-progrow" hidden>
+        <button id="pk-play">&#9654;&nbsp; Play the progression</button>
+        <button id="pk-reset">Start over</button>
+      </div>
+    </div>
+
+    <div class="pk-sec" id="pk-pocketsec" hidden>
+      <div class="pk-h">3 &middot; The pocket you're in</div>
+      <p class="pk-why" id="pk-keyline"></p>
+      <div id="pk-suggest"></div>
+    </div>
+  </div><!-- /view-pocket -->
 
   <div id="view-sheets" hidden>
     <p class="sub">Printable black-&amp;-white reference sheets. Pick what you want and a key, then <b>Print / Save</b> — on a phone the print dialog lets you “Save as PDF” or save an image. Or just screenshot the white sheet below.</p>
@@ -4441,7 +4535,7 @@ function buildSheets(){
 }
 
 /* ---------- tabs: folded into one button ---------- */
-const TAB_EMOJI = {explore:'🎸', map:'🗺️', intervals:'📏', neo:'🎹', phrasing:'🎤', rhythm:'🥁', finger:'🖐️', insp:'📖', quiz:'🎯', decoder:'🧭', chords:'✋', songs:'🎵', sheets:'🖨️', notes:'📝'};
+const TAB_EMOJI = {explore:'🎸', map:'🗺️', intervals:'📏', neo:'🎹', phrasing:'🎤', rhythm:'🥁', finger:'🖐️', insp:'📖', quiz:'🎯', decoder:'🧭', chords:'✋', songs:'🎵', pocket:'🧩', sheets:'🖨️', notes:'📝'};
 const TAB_VIEWS = {
   explore:   document.getElementById('view-explore'),
   map:       document.getElementById('view-map'),
@@ -4455,6 +4549,7 @@ const TAB_VIEWS = {
   decoder:   document.getElementById('view-decoder'),
   chords:    document.getElementById('view-chords'),
   songs:     document.getElementById('view-songs'),
+  pocket:    document.getElementById('view-pocket'),
   sheets:    document.getElementById('view-sheets'),
   notes:     document.getElementById('view-notes'),
 };
@@ -4516,6 +4611,9 @@ function showTab(t){
   } else if (t === 'songs'){
     document.getElementById('title').textContent = 'Song Lab';
     slRenderList(document.getElementById('sl-search').value);
+  } else if (t === 'pocket'){
+    document.getElementById('title').textContent = 'Pocket';
+    buildPocket();
   } else {
     render();               // restores the scale title + sub line
   }
@@ -5822,6 +5920,321 @@ document.getElementById('sl-run-sel').addEventListener('click', () => slRunAnaly
 // changing an option re-reads the clip we already have — no refetch
 ['sl-detail','sl-grain'].forEach(id =>
   document.getElementById(id).addEventListener('change', () => { if (slBuf && slLastRep) slRunAnalysis(false); }));
+
+/* ---------- pocket: lay a shape on the neck, get the chord back ---------- */
+/* Naming table, simplest first — when two names fit the same notes we want
+   the plain one. suffix is what gets appended to the letter. */
+const PK_QUAL = [
+  ['5',     [0,7],           '5'   ],
+  ['maj',   [0,4,7],         ''    ],
+  ['m',     [0,3,7],         'm'   ],
+  ['dim',   [0,3,6],         'dim' ],
+  ['aug',   [0,4,8],         'aug' ],
+  ['sus2',  [0,2,7],         'sus2'],
+  ['sus4',  [0,5,7],         'sus4'],
+  ['6',     [0,4,7,9],       '6'   ],
+  ['m6',    [0,3,7,9],       'm6'  ],
+  ['7',     [0,4,7,10],      '7'   ],
+  ['maj7',  [0,4,7,11],      'maj7'],
+  ['m7',    [0,3,7,10],      'm7'  ],
+  ['m7b5',  [0,3,6,10],      'm7b5'],
+  ['dim7',  [0,3,6,9],       'dim7'],
+  ['mMaj7', [0,3,7,11],      'mMaj7'],
+  ['7sus4', [0,5,7,10],      '7sus4'],
+  ['add9',  [0,2,4,7],       'add9'],
+  ['madd9', [0,2,3,7],       'madd9'],
+  ['9',     [0,2,4,7,10],    '9'   ],
+  ['maj9',  [0,2,4,7,11],    'maj9'],
+  ['m9',    [0,2,3,7,10],    'm9'  ],
+];
+/* fold the rich names down to something slDetectKey understands */
+const PK_TO_SL = {'5':'5','maj':'maj','m':'m','dim':'dim','aug':'maj','sus2':'sus2','sus4':'sus4',
+  '6':'6','m6':'m6','7':'7','maj7':'maj7','m7':'m7','m7b5':'m7b5','dim7':'dim','mMaj7':'m',
+  '7sus4':'sus4','add9':'add9','madd9':'m','9':'9','maj9':'maj7','m9':'m7'};
+const pkNote = pc => (FLAT_KEYS.has(pc) ? FLATS : SHARPS)[pc];
+const PK_IVNAME = {1:'a flat 2nd',2:'a whole step',3:'a minor 3rd',4:'a major 3rd',5:'a 4th',
+  6:'a tritone',7:'a 5th',8:'a minor 6th',9:'a major 6th',10:'a flat 7th',11:'a major 7th'};
+
+function pkIdentify(frets){
+  const midis = [];
+  frets.forEach((f, i) => { if (f >= 0) midis.push(SL_MIDI[i] + f); });
+  if (midis.length < 2) return null;
+  const pcs = [...new Set(midis.map(m => ((m % 12) + 12) % 12))];
+  const bass = ((Math.min(...midis) % 12) + 12) % 12;
+  if (pcs.length === 2){
+    const iv = (pcs[0] - pcs[1] + 12) % 12, ivb = Math.min(iv, 12 - iv);
+    if (ivb !== 5)                                     // not a bare 5th -> just an interval
+      return {twoNote:true, bass, pcs,
+              text:`Two notes — ${PK_IVNAME[ivb] || 'an interval'} apart. Add a third one and it becomes a chord.`};
+  }
+  const pset = new Set(pcs);
+  let best = null;
+  for (let r = 0; r < 12; r++){
+    PK_QUAL.forEach(([id, iv, suf]) => {
+      const tset = new Set(iv.map(i => (r + i) % 12));
+      let miss = 0, extra = 0;
+      tset.forEach(p => { if (!pset.has(p)) miss++; });
+      pset.forEach(p => { if (!tset.has(p)) extra++; });
+      let score = -3.2 * miss - 4.5 * extra;
+      if (r === bass) score += 2.6;                    // root in the bass is the usual case
+      score -= iv.length * 0.14;                       // tie-break toward the simpler name
+      if (!best || score > best.score) best = {score, root:r, id, suf, miss, extra};
+    });
+  }
+  const slash = best.root !== bass;
+  const name = pkNote(best.root) + best.suf + (slash ? '/' + pkNote(bass) : '');
+  return {root:best.root, quality:best.id, suffix:best.suf, bass, slash, pcs,
+          exact: best.miss === 0 && best.extra === 0,
+          name, display: noteFmt(pkNote(best.root)) + best.suf + (slash ? '/' + noteFmt(pkNote(bass)) : '')};
+}
+
+let pkFrets = [-1,-1,-1,-1,-1,-1], pkBase = 1, pkChords = [], pkBuilt = false;
+const PK_SNAME = ['E','A','D','G','B','e'];
+
+function pkRenderBoard(){
+  const b = document.getElementById('pk-board');
+  let h = '<div class="pk-slbl">' + PK_SNAME.map(s => `<span>${s}</span>`).join('') + '</div>';
+  h += '<div class="pk-nut">';
+  for (let s = 0; s < 6; s++){
+    const st = pkFrets[s] === 0 ? 'o' : pkFrets[s] < 0 ? 'x' : '';
+    h += `<button class="pk-open ${st}" data-open="${s}">${pkFrets[s] === 0 ? '○' : pkFrets[s] < 0 ? '✕' : '&nbsp;'}</button>`;
+  }
+  h += '</div><div class="pk-frets">';
+  for (let r = 0; r < 5; r++){
+    const fret = pkBase + r;
+    h += '<div class="pk-frow">';
+    for (let s = 0; s < 6; s++)
+      h += `<button class="pk-cell${pkFrets[s] === fret ? ' on' : ''}" data-s="${s}" data-f="${fret}">
+              <span class="pkd">${fret}</span></button>`;
+    h += '</div>';
+  }
+  document.getElementById('pk-basen').textContent = pkBase;
+  b.innerHTML = h + '</div>';
+  pkReadout();
+}
+function pkReadout(){
+  const el = document.getElementById('pk-readout');
+  const id = pkIdentify(pkFrets);
+  document.getElementById('pk-add').disabled = !id || id.twoNote;
+  if (!id){
+    el.innerHTML = '<div class="pk-hint">Tap in at least two notes and I\'ll name it.</div>';
+    return;
+  }
+  if (id.twoNote){ el.innerHTML = `<div class="pk-hint">${id.text}</div>`; return; }
+  const notes = id.pcs.map(p => noteFmt(pkNote(p))).join(' · ');
+  let line = `<b>${notes}</b>`;
+  if (!id.exact) line += ' — closest match; it may be missing a note or have an extra one';
+  else if (id.slash) line += ` — same chord, but the lowest note is ${noteFmt(pkNote(id.bass))}`;
+  el.innerHTML = `<div class="pk-name">${id.display}</div><div class="pk-sub">${line}</div>`;
+}
+function pkSetCell(s, f){
+  pkFrets[s] = (pkFrets[s] === f) ? -1 : f;      // tapping the same dot clears the string
+  pkRenderBoard();
+}
+function pkToggleOpen(s){
+  pkFrets[s] = pkFrets[s] === 0 ? -1 : 0;        // open -> muted -> open
+  pkRenderBoard();
+}
+
+/* ---- the progression strip ---- */
+function pkRenderStrip(){
+  const strip = document.getElementById('pk-strip');
+  const why = document.getElementById('pk-progwhy');
+  document.getElementById('pk-progrow').hidden = !pkChords.length;
+  if (!pkChords.length){
+    strip.innerHTML = '';
+    why.textContent = 'Nothing yet — build a chord above and add it.';
+    document.getElementById('pk-pocketsec').hidden = true;
+    return;
+  }
+  const key = pkKey();
+  why.innerHTML = pkChords.length === 1
+    ? 'One chord down. Add at least one more and I can work out the pocket.'
+    : `Your loop: <b>${pkChords.map(c => c.display).join(' → ')}</b>`;
+  strip.innerHTML = '';
+  pkChords.forEach((c, i) => {
+    const d = document.createElement('div');
+    d.className = 'pk-card';
+    const rn = key ? slRoman({pc:c.root, quality:PK_TO_SL[c.quality] || 'maj'}, key) : '';
+    d.innerHTML = `<button class="pk-x" data-del="${i}" aria-label="Remove">✕</button>
+      <div class="pk-cn">${c.display}</div><div class="pk-cr">${rn}</div>
+      ${chordSVG(c.frets, c.root, FLAT_KEYS.has(c.root))}`;
+    d.addEventListener('click', e => {
+      if (e.target.closest('[data-del]')){
+        pkChords.splice(i, 1); pkRenderStrip(); return;
+      }
+      slStrum(c.frets, 0, 0.03, 0.5);
+    });
+    strip.appendChild(d);
+  });
+  pkRenderPocket();
+}
+function pkKey(){
+  if (pkChords.length < 2) return null;
+  return slDetectKey(pkChords.map(c => ({pc:c.root, quality:PK_TO_SL[c.quality] || 'maj'})));
+}
+
+/* ---- what else lives in this pocket ---- */
+const PK_WHY_MAJ = [
+  'home — everything wants to land here',
+  'the set-up chord; it almost always walks into the 5th one',
+  'the moody one — slips in between the 1st and 4th',
+  'lifts away from home without adding any tension',
+  'the pull — it wants to fall back to home',
+  'the sad cousin of home; swap it in wherever home goes',
+  'pure tension, best used passing through',
+];
+const PK_WHY_MIN = [
+  'home — the darkest, most settled chord here',
+  'tense set-up into the 5th one',
+  'the bright relief; this is the major key hiding inside',
+  'deepens the sadness — a classic move from home',
+  'the pull home (make it a 7 for more bite)',
+  'warm, open lift out of the gloom',
+  'steps down to the 6th or straight back up to home',
+];
+/* the seventh each scale degree actually gets — a G in A minor is G7, not Gmaj7 */
+const PK_MAJ_7 = ['maj7','m7','m7','maj7','7','m7','m7b5'];
+const PK_MIN_7 = ['m7','m7b5','maj7','m7','m7','maj7','7'];
+function pkSuggest(key){
+  const degs  = key.minor ? SL_MIN_DEG : SL_MAJ_DEG;
+  const quals = key.minor ? SL_MIN_Q   : SL_MAJ_Q;
+  const sevs  = key.minor ? PK_MIN_7   : PK_MAJ_7;
+  const whys  = key.minor ? PK_WHY_MIN : PK_WHY_MAJ;
+  const played   = new Set(pkChords.map(c => c.root + ':' + (PK_TO_SL[c.quality] || 'maj')));
+  const playedRoot = new Set(pkChords.map(c => c.root));
+  const seen = new Set(played);                    // nothing gets offered twice
+  const take = list => list.filter(o => {
+    const k = o.root + ':' + o.quality;
+    if (seen.has(k)) return false;
+    seen.add(k); return true;
+  });
+  // match their vocabulary: if they're playing sevenths, suggest sevenths
+  const seventhy = pkChords.filter(c => /7|9/.test(c.quality)).length >= pkChords.length / 2;
+  const groups = [];
+
+  const fam = [];
+  degs.forEach((d, i) => {
+    const root = (key.root + d) % 12;
+    if (playedRoot.has(root)) return;              // they already have this root covered
+    fam.push({root, quality: seventhy ? sevs[i] : quals[i], why:whys[i]});
+  });
+  const famT = take(fam);
+  if (famT.length) groups.push({h:'The rest of the family',
+    w:'These are the chords built from the same seven notes — anything here will fit straight away.', items:famT});
+
+  const col = [];
+  pkChords.forEach(c => {
+    const base = PK_TO_SL[c.quality] || 'maj';
+    if (base !== 'maj' && base !== 'm') return;    // already a coloured chord
+    const i = degs.indexOf((c.root - key.root + 12) % 12);
+    const q = i >= 0 ? sevs[i] : (base === 'maj' ? 'maj7' : 'm7');
+    const why = q === '7'      ? 'adds the bluesy pull back to home'
+              : q === 'maj7'   ? 'same chord, dreamier — the neo-soul version'
+              : q === 'm7b5'   ? 'the tense one, softened just a little'
+              :                  'softer and more soulful than the plain minor';
+    col.push({root:c.root, quality:q, why});
+  });
+  const colT = take(col);
+  if (colT.length) groups.push({h:'Colour up what you already have',
+    w:'Same roots, richer chords. Swap these in one at a time and keep whichever you like.', items:colT});
+
+  const out = [];
+  if (!key.minor){
+    out.push({root:(key.root + 10) % 12, quality:'maj', why:'borrowed from a darker scale — rock and soul lean on this constantly'});
+    out.push({root:(key.root + 5)  % 12, quality:'m',   why:'the heartbreak chord — put it where the 4th normally goes'});
+    out.push({root:(key.root + 8)  % 12, quality:'maj', why:'a big cinematic lift from outside the key'});
+    out.push({root:(key.root + 2)  % 12, quality:'7',   why:'a detour that makes the 5th chord land much harder'});
+  } else {
+    out.push({root:(key.root + 7)  % 12, quality:'7',   why:'turns the 5th into a real pull — the strongest way home'});
+    out.push({root:(key.root + 5)  % 12, quality:'maj', why:'the 4th turned major — brightens it without losing the mood'});
+    out.push({root: key.root,            quality:'maj', why:'home, but major. A classic way to end a sad progression'});
+    out.push({root:(key.root + 2)  % 12, quality:'7',   why:'a detour that makes the 5th chord land much harder'});
+  }
+  const outT = take(out);
+  if (outT.length) groups.push({h:'Outside the family (used all the time)',
+    w:'Not strictly in the key, but every one of these is a standard move. Try them where they surprise you.',
+    items: outT});
+  return groups;
+}
+function pkRenderPocket(){
+  const sec = document.getElementById('pk-pocketsec');
+  const key = pkKey();
+  if (!key){ sec.hidden = true; return; }
+  sec.hidden = false;
+  const kn = noteFmt(pkNote(key.root)) + (key.minor ? ' minor' : ' major');
+  const rel = key.minor ? (key.root + 3) % 12 : (key.root + 9) % 12;
+  document.getElementById('pk-keyline').innerHTML =
+    `Those chords sit in <b>${kn}</b> — its relative ${key.minor ? 'major' : 'minor'} is ` +
+    `<b>${noteFmt(pkNote(rel))}${key.minor ? '' : ' minor'}</b>, which shares every note. ` +
+    `Tap any chord below to hear it.`;
+  const wrap = document.getElementById('pk-suggest');
+  wrap.innerHTML = '';
+  pkSuggest(key).forEach(g => {
+    if (!g.items.length) return;
+    const gd = document.createElement('div');
+    gd.className = 'pk-group';
+    gd.innerHTML = `<div class="pk-gh">${g.h}</div><div class="pk-gw">${g.w}</div>`;
+    const grid = document.createElement('div');
+    grid.className = 'pk-sug';
+    g.items.forEach(it => {
+      const nm = pkNote(it.root) + (PK_SUFFIX[it.quality] !== undefined ? PK_SUFFIX[it.quality] : it.quality);
+      const ch = slParse(nm);
+      const fr = ch ? slShape(ch) : null;
+      if (!fr) return;
+      const rn = slRoman({pc:it.root, quality:it.quality}, key);
+      const d = document.createElement('div');
+      d.className = 'pk-s';
+      d.innerHTML = `<div class="pk-sn">${noteFmt(pkNote(it.root))}${PK_SUFFIX[it.quality] ?? it.quality}</div>
+        <div class="pk-sr">${rn}</div>${chordSVG(fr, it.root, FLAT_KEYS.has(it.root))}
+        <div class="pk-sw">${it.why}</div>`;
+      d.addEventListener('click', () => slStrum(fr, 0, 0.03, 0.5));
+      grid.appendChild(d);
+    });
+    gd.appendChild(grid);
+    wrap.appendChild(gd);
+  });
+}
+/* how each quality is written when we name a suggestion */
+const PK_SUFFIX = {'maj':'','m':'m','7':'7','m7':'m7','maj7':'maj7','dim':'dim','m7b5':'m7b5',
+  'sus2':'sus2','sus4':'sus4','6':'6','m6':'m6','add9':'add9','9':'9','5':'5'};
+
+function buildPocket(){
+  if (pkBuilt){ pkRenderBoard(); pkRenderStrip(); return; }
+  pkBuilt = true;
+  const board = document.getElementById('pk-board');
+  board.addEventListener('click', e => {
+    const o = e.target.closest('[data-open]');
+    if (o){ pkToggleOpen(+o.dataset.open); return; }
+    const c = e.target.closest('.pk-cell');
+    if (c) pkSetCell(+c.dataset.s, +c.dataset.f);
+  });
+  document.getElementById('pk-up').addEventListener('click', () => {
+    if (pkBase < 12){ pkBase++; pkRenderBoard(); }
+  });
+  document.getElementById('pk-down').addEventListener('click', () => {
+    if (pkBase > 1){ pkBase--; pkRenderBoard(); }
+  });
+  document.getElementById('pk-hear').addEventListener('click', () => slStrum(pkFrets, 0, 0.035, 0.5));
+  document.getElementById('pk-clear').addEventListener('click', () => {
+    pkFrets = [-1,-1,-1,-1,-1,-1]; pkRenderBoard();
+  });
+  document.getElementById('pk-add').addEventListener('click', () => {
+    const id = pkIdentify(pkFrets);
+    if (!id || id.twoNote) return;
+    pkChords.push({root:id.root, quality:id.quality, name:id.name,
+                   display:id.display, frets:pkFrets.slice()});
+    pkFrets = [-1,-1,-1,-1,-1,-1];
+    pkRenderBoard(); pkRenderStrip();
+  });
+  document.getElementById('pk-reset').addEventListener('click', () => {
+    pkChords = []; pkRenderStrip();
+  });
+  document.getElementById('pk-play').addEventListener('click', () => {
+    pkChords.forEach((c, i) => slStrum(c.frets, i * 1.05, 0.03, 0.45));
+  });
+  pkRenderBoard(); pkRenderStrip();
+}
 
 /* ---------- offline support (only active when hosted over https) ---------- */
 if ('serviceWorker' in navigator && location.protocol === 'https:')
