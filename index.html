@@ -935,6 +935,10 @@
   .sl-sb i{display:block;height:100%;background:var(--scale)}
   .sl-seg.weak .sl-sb i{background:var(--root)}
   .sl-prog-line{font-size:14px;font-weight:700;color:var(--ink);line-height:1.6;margin:2px 0 0}
+  .verline{display:block;margin:34px auto 0;padding:8px 14px;border-radius:999px;
+    font:inherit;font-size:11px;letter-spacing:.06em;color:var(--muted);
+    background:transparent;border:1px solid var(--line);cursor:pointer;opacity:.65}
+  .verline:hover{opacity:1;color:var(--ink)}
 
   /* ---------- pocket: tap a shape, get the chord ---------- */
   .pk-row{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
@@ -1736,6 +1740,7 @@
     <p class="insp-saved" id="insp-saved"></p>
     <p class="hint">Pick a card, set a timer for two minutes, and just play to the feeling — don't stop to judge it. The best ideas come from not aiming.</p>
   </div><!-- /view-insp -->
+  <button class="verline" id="verline" title="Check for a new version"></button>
 </div>
 
 <script>
@@ -6308,9 +6313,47 @@ function buildPocket(){
   pkBarreBtn(); pkRenderBoard(); pkRenderStrip();
 }
 
-/* ---------- offline support (only active when hosted over https) ---------- */
-if ('serviceWorker' in navigator && location.protocol === 'https:')
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
+/* ---------- offline support + keeping the installed app up to date ----------
+   The app gets added to a home screen, so a stale cached copy is the single
+   most confusing failure there is: the site updates and the app doesn't. The
+   worker below checks for a new version on every load and whenever the app
+   comes back to the foreground, then reloads itself once when one arrives. */
+const APP_BUILD = '202608162055';
+const verEl = document.getElementById('verline');
+function verShow(msg){
+  verEl.textContent = msg || ('build ' + APP_BUILD + ' · tap to check for updates');
+}
+verShow();
+if ('serviceWorker' in navigator && location.protocol === 'https:'){
+  const hadWorker = !!navigator.serviceWorker.controller;
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadWorker || reloading) return;      // first install shouldn't bounce the page
+    reloading = true;
+    verShow('new version — reloading…');
+    location.reload();
+  });
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    const check = () => reg.update().catch(() => {});
+    check();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') check();
+    });
+    setInterval(check, 30 * 60 * 1000);
+    verEl.addEventListener('click', async () => {
+      verShow('checking…');
+      try {
+        await reg.update();
+        // network-first on the page means a plain reload also picks up new HTML
+        setTimeout(() => { if (!reloading) location.reload(); }, 600);
+      } catch (_) {
+        verShow('no connection — still on build ' + APP_BUILD);
+      }
+    });
+  }).catch(() => {});
+} else {
+  verEl.addEventListener('click', () => location.reload());
+}
 </script>
 </body>
 </html>
