@@ -798,6 +798,59 @@
     box-shadow:0 0 18px rgba(255,61,220,.45);
   }
   html.theme-tokyo .dot.root{color:#2a0322}
+
+  /* ---------- song lab ---------- */
+  .sl-search{width:100%;max-width:460px;font:inherit;color:var(--ink);background:var(--panel);
+    border:1px solid var(--line);border-radius:12px;padding:13px 16px;margin:14px 0 4px}
+  .sl-search:focus{outline:none;border-color:var(--scale)}
+  .sl-list{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+  .sl-card{display:flex;align-items:center;gap:14px;text-align:left;width:100%;
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line);border-radius:14px;padding:15px 18px;cursor:pointer;
+    transition:border-color .15s, transform .08s}
+  .sl-card:hover{border-color:var(--scale);transform:translateX(2px)}
+  .sl-main{flex:1;min-width:0}
+  .sl-t{font-weight:700;font-size:16px;color:var(--ink)}
+  .sl-a{font-size:13px;color:var(--muted);margin-top:1px}
+  .sl-k{font-size:12px;font-weight:700;color:var(--root);white-space:nowrap;
+    border:1px solid var(--root-soft,var(--line));border-radius:999px;padding:4px 10px}
+  .sl-empty{color:var(--muted);font-size:14px;padding:20px 2px}
+  .sl-facts{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 20px}
+  .sl-fact{font-size:12.5px;color:var(--ink);background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:6px 13px}
+  .sl-fact b{color:var(--root)}
+  .sl-sec{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--line);
+    border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+  .sl-sec h3{margin:0 0 4px;font-size:17px}
+  .sl-why{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+  .sl-grips{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:14px}
+  .sl-grip{text-align:center;cursor:pointer;border:1px solid transparent;border-radius:12px;
+    padding:8px 4px 4px;transition:border-color .15s,transform .1s}
+  .sl-grip:hover{border-color:var(--scale);transform:translateY(-2px)}
+  .sl-gname{font-weight:700;font-size:15px}
+  .sl-grn{font-size:11.5px;color:var(--root);font-weight:700;letter-spacing:.04em}
+  .sl-prog{display:flex;flex-wrap:wrap;gap:10px}
+  .sl-step{flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;padding:12px 14px}
+  .sl-pn{font-size:12px;font-weight:800;color:var(--root);letter-spacing:.06em}
+  .sl-pc{font-size:19px;font-weight:800;margin:2px 0 4px}
+  .sl-pj{font-size:12.5px;color:var(--muted);line-height:1.45}
+  .sl-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+  .sl-pattern{display:flex;gap:6px;margin:10px 0 4px;flex-wrap:wrap}
+  .sl-beat{width:38px;height:44px;border-radius:9px;border:1px solid var(--line);background:var(--panel);
+    display:flex;align-items:center;justify-content:center;font-size:17px;color:var(--muted)}
+  .sl-beat.hit{color:var(--ink);border-color:var(--root-soft,var(--line))}
+  .sl-field{margin-bottom:12px}
+  .sl-field label{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+  .sl-field input,.sl-field textarea{width:100%;font:inherit;color:var(--ink);background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+  .sl-field input:focus,.sl-field textarea:focus{outline:none;border-color:var(--scale)}
+  .sl-field textarea{min-height:74px;resize:vertical}
+  .sl-tip{font-size:12px;color:var(--muted);margin-top:5px}
+  .sl-parsed{font-size:13px;color:var(--muted);min-height:20px;margin-top:4px}
+  .sl-parsed b{color:var(--root)}
+  .sl-danger{color:#ff6b6b}
 </style>
 </head>
 <body>
@@ -883,6 +936,7 @@
       <button class="tab" data-tab="quiz">&#127919; Neck quiz</button>
       <button class="tab" data-tab="decoder">&#129517; Decoder</button>
       <button class="tab" data-tab="chords">&#9995; Chords</button>
+      <button class="tab" data-tab="songs">&#127925; Songs</button>
       <button class="tab" data-tab="sheets">&#128424;&#65039; Sheets</button>
       <button class="tab" data-tab="notes">&#128221; Notes</button>
     </div>
@@ -1180,6 +1234,70 @@
     <div class="ch-grid" id="ch-grid"></div>
     <p class="hint">These follow the Decoder's key — change it here or there. &times; = don't play that string, &#9675; = open string, orange dot = the root, side number = starting fret.</p>
   </div><!-- /view-chords -->
+
+
+  <div id="view-songs" hidden>
+    <div id="sl-browse">
+      <p class="sub">Your songbook. Drop in the chords and it builds the lesson — shapes, theory, the solo box, and the feel.</p>
+      <input class="sl-search" id="sl-search" type="search" placeholder="Search your songs&hellip;" autocomplete="off">
+      <div class="sl-list" id="sl-list"></div>
+      <div class="sl-row"><button id="sl-add">+&nbsp; Add a song</button></div>
+      <p class="hint">Nothing is looked up online &mdash; you supply the chords (your ear, or paste them from anywhere) and the lesson is built from them.</p>
+    </div>
+
+    <div id="sl-lesson" hidden>
+      <div class="sl-row" style="margin:0 0 12px">
+        <button id="sl-back">&larr;&nbsp; All songs</button>
+        <button id="sl-del" class="sl-danger">Delete</button>
+      </div>
+      <h2 id="sl-title" style="font-size:clamp(24px,4vw,34px);margin:6px 0 2px;line-height:1.1"></h2>
+      <p class="sub" id="sl-by" style="margin:0"></p>
+      <div class="sl-facts" id="sl-fx"></div>
+
+      <div class="sl-sec">
+        <h3>The shapes</h3>
+        <p class="sl-why">Tap any chord to hear it.</p>
+        <div class="sl-grips" id="sl-grips"></div>
+      </div>
+
+      <div class="sl-sec">
+        <h3>Why it sounds like that</h3>
+        <p class="sl-why" id="sl-keyline"></p>
+        <div class="sl-prog" id="sl-progress"></div>
+        <div class="sl-row"><button id="sl-loop">&#9654;&nbsp; Play the progression</button></div>
+      </div>
+
+      <div class="sl-sec">
+        <h3>Solo over it</h3>
+        <p class="sl-why" id="sl-solowhy"></p>
+        <div class="sl-row"><button class="primary" id="sl-solo">Show me the box &rarr;</button></div>
+      </div>
+
+      <div class="sl-sec">
+        <h3>Feel &amp; rhythm</h3>
+        <p class="sl-why" id="sl-feel"></p>
+        <div class="sl-pattern" id="sl-pat"></div>
+        <div class="sl-row"><button id="sl-strum">&#9654;&nbsp; Play the feel</button></div>
+      </div>
+    </div>
+
+    <div id="sl-addform" hidden>
+      <div class="sl-row" style="margin:0 0 14px"><button id="sl-cancel">&larr;&nbsp; Cancel</button></div>
+      <div class="sl-sec">
+        <div class="sl-field"><label>Song</label><input id="sl-f-title" placeholder="White Ferrari"></div>
+        <div class="sl-field"><label>Artist</label><input id="sl-f-artist" placeholder="Frank Ocean"></div>
+        <div class="sl-field">
+          <label>Chords</label>
+          <textarea id="sl-f-chords" placeholder="C G Fmaj7"></textarea>
+          <div class="sl-tip">Paste from anywhere &mdash; messy is fine, it pulls the chords out.</div>
+          <div class="sl-parsed" id="sl-f-parsed"></div>
+        </div>
+        <div class="sl-field"><label>Tempo &amp; feel <span style="text-transform:none;font-weight:400">(optional)</span></label>
+          <input id="sl-f-feel" placeholder="slow &middot; sparse &middot; reverby"></div>
+        <div class="sl-row"><button class="primary" id="sl-save">Save song</button></div>
+      </div>
+    </div>
+  </div><!-- /view-songs -->
 
   <div id="view-sheets" hidden>
     <p class="sub">Printable black-&amp;-white reference sheets. Pick what you want and a key, then <b>Print / Save</b> — on a phone the print dialog lets you “Save as PDF” or save an image. Or just screenshot the white sheet below.</p>
@@ -4202,7 +4320,7 @@ function buildSheets(){
 }
 
 /* ---------- tabs: folded into one button ---------- */
-const TAB_EMOJI = {explore:'🎸', map:'🗺️', intervals:'📏', neo:'🎹', phrasing:'🎤', rhythm:'🥁', finger:'🖐️', insp:'📖', quiz:'🎯', decoder:'🧭', chords:'✋', sheets:'🖨️', notes:'📝'};
+const TAB_EMOJI = {explore:'🎸', map:'🗺️', intervals:'📏', neo:'🎹', phrasing:'🎤', rhythm:'🥁', finger:'🖐️', insp:'📖', quiz:'🎯', decoder:'🧭', chords:'✋', songs:'🎵', sheets:'🖨️', notes:'📝'};
 const TAB_VIEWS = {
   explore:   document.getElementById('view-explore'),
   map:       document.getElementById('view-map'),
@@ -4215,6 +4333,7 @@ const TAB_VIEWS = {
   quiz:      document.getElementById('view-quiz'),
   decoder:   document.getElementById('view-decoder'),
   chords:    document.getElementById('view-chords'),
+  songs:     document.getElementById('view-songs'),
   sheets:    document.getElementById('view-sheets'),
   notes:     document.getElementById('view-notes'),
 };
@@ -4271,6 +4390,9 @@ function showTab(t){
   } else if (t === 'chords'){
     document.getElementById('title').textContent = 'Chord Shapes';
     renderChords();
+  } else if (t === 'songs'){
+    document.getElementById('title').textContent = 'Song Lab';
+    slRenderList(document.getElementById('sl-search').value);
   } else {
     render();               // restores the scale title + sub line
   }
@@ -4578,6 +4700,354 @@ document.getElementById('mx-reset').addEventListener('click', () => {
 document.getElementById('mx-done').addEventListener('click', () => { mixEl.hidden = true; });
 
 applyTheme();
+
+
+/* ======================================================================
+   SONG LAB — you supply the chords, it builds the lesson.
+   Nothing is fetched: no chord database, no scraping. Every shape below
+   was verified by pitch-class check before shipping.
+   ====================================================================== */
+const SL_QUAL = {
+  'maj':[0,4,7],'m':[0,3,7],'7':[0,4,7,10],'m7':[0,3,7,10],'maj7':[0,4,7,11],
+  'sus2':[0,2,7],'sus4':[0,5,7],'dim':[0,3,6],'m7b5':[0,3,6,10],'6':[0,4,7,9],
+  'm6':[0,3,7,9],'add9':[0,2,4,7],'9':[0,2,4,7,10],'5':[0,7]
+};
+const SL_ALIAS = {
+  '':'maj','M':'maj','maj':'maj','major':'maj','m':'m','min':'m','-':'m','minor':'m',
+  'm7':'m7','min7':'m7','-7':'m7','maj7':'maj7','M7':'maj7','Δ':'maj7','Δ7':'maj7','ma7':'maj7',
+  '7':'7','dom7':'7','sus':'sus4','sus4':'sus4','sus2':'sus2','dim':'dim','°':'dim','o':'dim',
+  'm7b5':'m7b5','ø':'m7b5','ø7':'m7b5','min7b5':'m7b5','-7b5':'m7b5','6':'6','maj6':'6',
+  'm6':'m6','min6':'m6','-6':'m6','add9':'add9','add2':'add9','9':'9','5':'5'
+};
+const SL_OPEN = {            // low E -> high e, null = don't play
+  'C':[null,3,2,0,1,0],'Cmaj7':[null,3,2,0,0,0],'Cadd9':[null,3,2,0,3,3],
+  'A':[null,0,2,2,2,0],'Am':[null,0,2,2,1,0],'Am7':[null,0,2,0,1,0],'Amaj7':[null,0,2,1,2,0],
+  'A7':[null,0,2,0,2,0],'Asus2':[null,0,2,2,0,0],'Asus4':[null,0,2,2,3,0],
+  'G':[3,2,0,0,0,3],'G7':[3,2,0,0,0,1],'Gmaj7':[3,2,0,0,0,2],
+  'E':[0,2,2,1,0,0],'Em':[0,2,2,0,0,0],'Em7':[0,2,0,0,0,0],'E7':[0,2,0,1,0,0],'Esus4':[0,2,2,2,0,0],
+  'D':[null,null,0,2,3,2],'Dm':[null,null,0,2,3,1],'Dm7':[null,null,0,2,1,1],
+  'D7':[null,null,0,2,1,2],'Dmaj7':[null,null,0,2,2,2],'Dsus2':[null,null,0,2,3,0],'Dsus4':[null,null,0,2,3,3],
+  'F':[1,3,3,2,1,1],'Fmaj7':[null,null,3,2,1,0],'Bm':[null,2,4,4,3,2],'Bm7':[null,2,0,2,0,2],
+  'Bbmaj7':[null,1,3,2,3,null]
+};
+const SL_MOV = {             // offsets from the root fret
+  6:{'maj':[0,2,2,1,0,0],'m':[0,2,2,0,0,0],'7':[0,2,0,1,0,0],'m7':[0,2,0,0,0,0],
+     'maj7':[0,null,1,1,0,null],'sus4':[0,2,2,2,0,0],'sus2':[0,2,4,4,0,null],
+     'dim':[0,1,2,0,null,null],'m7b5':[0,1,0,0,null,null],'6':[0,2,2,1,2,0],
+     'm6':[0,2,2,0,2,0],'add9':[0,2,4,1,0,null],'9':[0,2,0,1,0,2],'5':[0,2,2,null,null,null]},
+  5:{'maj':[null,0,2,2,2,0],'m':[null,0,2,2,1,0],'7':[null,0,2,0,2,0],'m7':[null,0,2,0,1,0],
+     'maj7':[null,0,2,1,2,0],'sus4':[null,0,2,2,3,0],'sus2':[null,0,2,2,0,0],
+     'dim':[null,0,1,2,1,null],'m7b5':[null,0,1,0,1,null],'6':[null,0,2,2,2,2],
+     'm6':[null,0,2,2,1,2],'add9':[null,0,2,4,2,null],'9':[null,0,2,4,2,3],'5':[null,0,2,null,null,null]}
+};
+const SL_MIDI = [40,45,50,55,59,64];
+const SL_PC = {'C':0,'D':2,'E':4,'F':5,'G':7,'A':9,'B':11};
+
+function slParse(tok){
+  const m = /^([A-Ga-g])([#b♯♭]?)(.*)$/.exec(tok.trim());
+  if (!m) return null;
+  let pc = SL_PC[m[1].toUpperCase()];
+  if (m[2] === '#' || m[2] === '♯') pc = (pc + 1) % 12;
+  if (m[2] === 'b' || m[2] === '♭') pc = (pc + 11) % 12;
+  let rest = m[3].replace(/\s+/g, '');
+  const slash = rest.indexOf('/');
+  if (slash >= 0) rest = rest.slice(0, slash);      // ignore the bass note
+  const q = SL_ALIAS[rest];
+  if (q === undefined) return null;
+  const acc = m[2] === '♯' ? '#' : m[2] === '♭' ? 'b' : m[2];
+  return {pc, quality:q, name: m[1].toUpperCase() + acc + rest};
+}
+function slParseLine(text){
+  const out = [];
+  (text || '').split(/[\s,|\-–—>→\n\r\t()\[\]]+/).forEach(t => {
+    if (!t) return;
+    const c = slParse(t);
+    if (c) out.push(c);
+  });
+  return out;
+}
+function slShape(ch){                                // -> frets array in app format (-1 = mute)
+  const conv = a => a.map(f => f === null ? -1 : f);
+  if (SL_OPEN[ch.name]) return conv(SL_OPEN[ch.name]);
+  let best = null;
+  [6,5].forEach(rs => {
+    const shape = SL_MOV[rs][ch.quality];
+    if (!shape) return;
+    const openPc = rs === 6 ? 4 : 9;
+    let rf = (ch.pc - openPc + 12) % 12;
+    if (rf === 0) rf = 12;
+    const frets = shape.map(o => o === null ? null : o + rf);
+    const top = Math.max(...frets.filter(f => f !== null));
+    if (!best || top < best.top) best = {frets, top};
+  });
+  return best ? conv(best.frets) : null;
+}
+const SL_MAJ_DEG = [0,2,4,5,7,9,11], SL_MAJ_Q = ['maj','m','m','maj','maj','m','dim'];
+const SL_MIN_DEG = [0,2,3,5,7,8,10], SL_MIN_Q = ['m','dim','maj','m','m','maj','maj'];
+const SL_RN_MAJ = ['I','ii','iii','IV','V','vi','vii°'];
+const SL_RN_MIN = ['i','ii°','III','iv','v','VI','VII'];
+function slBase(q){
+  if (['maj7','7','6','add9','9'].includes(q)) return 'maj';
+  if (['m7','m6'].includes(q)) return 'm';
+  if (q === 'm7b5') return 'dim';
+  if (['sus2','sus4','5'].includes(q)) return 'any';
+  return q;
+}
+function slDetectKey(chords){
+  if (!chords.length) return {root:0, minor:false};
+  let best = null;
+  for (let r = 0; r < 12; r++){
+    [false,true].forEach(minor => {
+      const degs = minor ? SL_MIN_DEG : SL_MAJ_DEG, quals = minor ? SL_MIN_Q : SL_MAJ_Q;
+      let score = 0;
+      chords.forEach(ch => {
+        const i = degs.indexOf((ch.pc - r + 12) % 12);
+        if (i < 0) return;
+        const bq = slBase(ch.quality);
+        score += (bq === quals[i] || bq === 'any') ? 2 : 1;
+      });
+      if (chords[0].pc === r) score += 1.5;
+      if (chords[chords.length-1].pc === r) score += 1;
+      const firstQ = slBase(chords[0].quality);
+      if (chords[0].pc === r && ((minor && firstQ === 'm') || (!minor && firstQ === 'maj'))) score += 1;
+      if (!best || score > best.score) best = {root:r, minor, score};
+    });
+  }
+  return best;
+}
+function slKeyOf(s){
+  if (s && s.keyRoot !== undefined && s.keyRoot !== null)
+    return {root:s.keyRoot, minor: !!s.keyMinor};
+  return slDetectKey(slParseLine(s.chords));
+}
+function slRoman(ch, key){
+  const d = (ch.pc - key.root + 12) % 12;
+  const degs = key.minor ? SL_MIN_DEG : SL_MAJ_DEG;
+  const rns = key.minor ? SL_RN_MIN : SL_RN_MAJ;
+  const i = degs.indexOf(d);
+  const CH_MAJ = {1:'bII',3:'bIII',6:'#IV',8:'bVI',10:'bVII'};
+  const CH_MIN = {1:'bII',4:'#III',6:'#IV',9:'#VI',11:'#VII'};
+  let rn = i >= 0 ? rns[i] : ((key.minor ? CH_MIN : CH_MAJ)[d] || '?');
+  const bq = slBase(ch.quality);
+  const pre = /^[b#]/.test(rn) ? rn[0] : '';
+  let num = rn.slice(pre.length);
+  if (bq === 'm' || bq === 'dim') num = num.toLowerCase();
+  else if (bq === 'maj') num = num.replace('°','').toUpperCase();
+  if (ch.quality === 'dim' && !num.includes('°')) num += '°';
+  rn = pre + num;
+  if (ch.quality === 'maj7') rn += 'maj7';
+  else if (ch.quality === '7' || ch.quality === 'm7') rn += '7';
+  else if (ch.quality === 'sus4') rn += 'sus4';
+  else if (ch.quality === 'sus2') rn += 'sus2';
+  return rn;
+}
+function slJob(ch, key){
+  const d = (ch.pc - key.root + 12) % 12;
+  const MJ = {
+    0:'Home. Everything resolves here — this is the ground.',
+    2:'The gentle setup. Leans toward the 5 without any drama.',
+    4:'Bittersweet middle — half bright, half sad.',
+    5:'The lift. Opens the room up without leaving home.',
+    7:'Tension. It wants to fall back to the 1 — that pull is the whole engine.',
+    9:'The sad relative. Same notes as home, but the floor drops out.',
+    11:'Unstable on purpose. Passing through, never landing.',
+    10:'Borrowed from outside the key — that flat-7 nostalgia.',
+    3:'Borrowed brightness, from somewhere the key never promised.',
+    8:'Borrowed darkness. The heavy one.'
+  };
+  const MN = {
+    0:'Home. The sad centre everything falls back to.',
+    2:'Unstable and tense — it rarely sits still.',
+    3:'The bright relative. Sunlight through the minor.',
+    5:'Deepens it. Sadder than home without leaving.',
+    7:'Tension pulling home. Made major, it turns desperate.',
+    8:'The heavy lift — big, cinematic, aching.',
+    10:'The nostalgic one. Softens the key instead of pushing it.'
+  };
+  let t = (key.minor ? MN : MJ)[d] || 'Outside the key — a colour chord.';
+  if (ch.quality === 'maj7') t += ' The maj7 makes it dreamy rather than plain.';
+  else if (ch.quality === 'm7') t += ' The m7 softens the edges — that R&B blur.';
+  else if (ch.quality === '7') t += ' The dominant 7 adds bluesy grit.';
+  else if (ch.quality === 'sus4' || ch.quality === 'sus2') t += ' Suspended — no 3rd, so the mood stays undecided.';
+  return t;
+}
+function slSolo(chords, key){
+  const NN = FLAT_KEYS.has(key.root) ? FLATS : SHARPS;
+  const tonic = NN[key.root];
+  const flat7 = chords.some(c => (c.pc - key.root + 12) % 12 === 10);
+  const dom = chords.some(c => c.quality === '7');
+  if (key.minor)
+    return {scale:'Minor Pentatonic', root:key.root,
+      why:`${tonic} minor pentatonic sits inside every one of these chords — the safe, always-right choice. For more colour, ${tonic} natural minor adds the two notes it leaves out.`};
+  if (flat7 || dom)
+    return {scale:'Mixolydian', root:key.root,
+      why:`There's a flat 7 in this loop, so plain major will fight it. ${tonic} mixolydian is major with that flat 7 built in — it fits the whole thing.`};
+  return {scale:'Major Pentatonic', root:key.root,
+    why:`${tonic} major pentatonic is the clean fit — the same five shapes as minor pentatonic, just anchored three frets lower.`};
+}
+const SL_SEED = [
+  {id:'seed-wf', title:'White Ferrari', artist:'Frank Ocean', chords:'C G Fmaj7',
+   feel:'slow · sparse · reverby — let each chord ring, almost no strumming'},
+  {id:'seed-lm', title:'Lost Me', artist:'Givēon', chords:'Bbmaj7 Dm C', keyRoot:2, keyMinor:true,
+   feel:'~88 BPM, slow & smooth — with a capo on 5 these become Fmaj7 · Am · G'}
+];
+let slSongs = (function(){
+  try{ const raw = localStorage.getItem('sv-songs'); if (raw) return JSON.parse(raw); }catch(e){}
+  localStorage.setItem('sv-songs', JSON.stringify(SL_SEED));
+  return SL_SEED.slice();
+})();
+const slSave = () => localStorage.setItem('sv-songs', JSON.stringify(slSongs));
+const slEsc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function slStrum(frets, when = 0, spread = 0.028, vel = 0.42){
+  if (!frets) return;
+  frets.forEach((f, i) => { if (f >= 0) pluck(SL_MIDI[i] + f, when + i * spread, vel); });
+}
+let slCurrent = null;
+const slBrowse = document.getElementById('sl-browse'),
+      slLessonEl = document.getElementById('sl-lesson'),
+      slAddEl = document.getElementById('sl-addform');
+function slPane(p){
+  slBrowse.hidden = p !== 'browse';
+  slLessonEl.hidden = p !== 'lesson';
+  slAddEl.hidden = p !== 'add';
+}
+function slRenderList(filter){
+  const q = (filter || '').toLowerCase().trim();
+  const el = document.getElementById('sl-list');
+  const hits = slSongs.filter(s => !q || (s.title + ' ' + (s.artist || '')).toLowerCase().includes(q));
+  el.innerHTML = '';
+  if (!hits.length){
+    el.innerHTML = `<div class="sl-empty">${slSongs.length ? 'Nothing matches that.' : 'No songs yet — add your first one below.'}</div>`;
+    return;
+  }
+  hits.forEach(s => {
+    const key = slKeyOf(s), NN = FLAT_KEYS.has(key.root) ? FLATS : SHARPS;
+    const n = slParseLine(s.chords).length;
+    const b = document.createElement('button');
+    b.className = 'sl-card';
+    b.innerHTML = `<div class="sl-main"><div class="sl-t">${slEsc(s.title)}</div>
+      <div class="sl-a">${slEsc(s.artist || '')}${s.artist ? ' · ' : ''}${n} chords</div></div>
+      <span class="sl-k">${NN[key.root]}${key.minor ? 'm' : ''}</span>`;
+    b.addEventListener('click', () => slOpen(s));
+    el.appendChild(b);
+  });
+}
+function slOpen(s){
+  slCurrent = s;
+  const chords = slParseLine(s.chords);
+  const key = slKeyOf(s);
+  const NN = FLAT_KEYS.has(key.root) ? FLATS : SHARPS;
+  const keyName = NN[key.root] + (key.minor ? ' minor' : ' major');
+  const relRoot = key.minor ? (key.root + 3) % 12 : (key.root + 9) % 12;
+  const relNN = FLAT_KEYS.has(relRoot) ? FLATS : SHARPS;
+  const relName = relNN[relRoot] + (key.minor ? ' major' : ' minor');
+
+  document.getElementById('sl-title').textContent = s.title;
+  document.getElementById('sl-by').textContent = s.artist || '';
+  document.getElementById('sl-fx').innerHTML =
+    `<span class="sl-fact" id="sl-keychip" style="cursor:pointer" title="Sounds more like ${relName}? Tap to switch.">Key <b>${keyName}</b> &#8646;</span>` +
+    `<span class="sl-fact">${chords.length} chords</span>` +
+    (s.feel ? `<span class="sl-fact">${slEsc(s.feel)}</span>` : '');
+  document.getElementById('sl-keychip').onclick = () => {
+    s.keyRoot = relRoot; s.keyMinor = !key.minor; slSave(); slOpen(s);
+  };
+
+  const gw = document.getElementById('sl-grips');
+  gw.innerHTML = '';
+  chords.forEach(ch => {
+    const fr = slShape(ch);
+    const d = document.createElement('div');
+    d.className = 'sl-grip';
+    d.innerHTML = `<div class="sl-gname">${slEsc(ch.name)}</div>
+      ${fr ? chordSVG(fr, ch.pc, FLAT_KEYS.has(key.root)) : ''}
+      <div class="sl-grn">${slRoman(ch, key)}</div>`;
+    if (fr) d.addEventListener('click', () => slStrum(fr));
+    gw.appendChild(d);
+  });
+
+  document.getElementById('sl-keyline').textContent =
+    `In ${keyName}, the loop reads as ${chords.map(c => slRoman(c, key)).join(' → ')}.`;
+  const pw = document.getElementById('sl-progress');
+  pw.innerHTML = '';
+  chords.forEach(ch => {
+    const d = document.createElement('div');
+    d.className = 'sl-step';
+    d.innerHTML = `<div class="sl-pn">${slRoman(ch, key)}</div>
+      <div class="sl-pc">${slEsc(ch.name)}</div><div class="sl-pj">${slJob(ch, key)}</div>`;
+    pw.appendChild(d);
+  });
+
+  const adv = slSolo(chords, key);
+  document.getElementById('sl-solowhy').textContent = adv.why;
+  document.getElementById('sl-solo').onclick = () => {
+    keyPc = adv.root; scaleName = adv.scale; anchor = null;
+    keySel.value = keyPc; scaleSel.value = scaleName;
+    render(); showTab('explore');
+    window.scrollTo({top:0, behavior:'smooth'});
+  };
+
+  document.getElementById('sl-feel').textContent = s.feel ||
+    'No feel notes yet — try it slow and even first, then push the pocket.';
+  const pat = (s.pattern || 'd-du-udu').split('');
+  const pe = document.getElementById('sl-pat');
+  pe.innerHTML = '';
+  pat.forEach(c => {
+    const b = document.createElement('div');
+    b.className = 'sl-beat' + (c === '-' ? '' : ' hit');
+    b.textContent = c === 'd' ? '↓' : c === 'u' ? '↑' : '·';
+    pe.appendChild(b);
+  });
+  document.getElementById('sl-strum').onclick = () => {
+    const fr = chords.length ? slShape(chords[0]) : null;
+    if (!fr) return;
+    const step = 60 / 88 / 2;
+    pat.forEach((c, i) => {
+      if (c === '-') return;
+      slStrum(fr, i * step, c === 'u' ? -0.02 : 0.028, c === 'u' ? 0.3 : 0.45);
+    });
+  };
+  document.getElementById('sl-loop').onclick = () => {
+    chords.forEach((ch, i) => slStrum(slShape(ch), i * 1.15));
+  };
+  slPane('lesson');
+}
+document.getElementById('sl-search').addEventListener('input', e => slRenderList(e.target.value));
+document.getElementById('sl-back').addEventListener('click', () => {
+  slPane('browse'); slRenderList(document.getElementById('sl-search').value);
+});
+document.getElementById('sl-add').addEventListener('click', () => {
+  ['sl-f-title','sl-f-artist','sl-f-chords','sl-f-feel'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('sl-f-parsed').innerHTML = '';
+  slPane('add');
+});
+document.getElementById('sl-cancel').addEventListener('click', () => slPane('browse'));
+document.getElementById('sl-del').addEventListener('click', () => {
+  if (!slCurrent) return;
+  slSongs = slSongs.filter(x => x.id !== slCurrent.id);
+  slSave(); slPane('browse'); slRenderList('');
+});
+document.getElementById('sl-f-chords').addEventListener('input', e => {
+  const chords = slParseLine(e.target.value);
+  const out = document.getElementById('sl-f-parsed');
+  if (!chords.length){ out.innerHTML = ''; return; }
+  const key = slDetectKey(chords), NN = FLAT_KEYS.has(key.root) ? FLATS : SHARPS;
+  out.innerHTML = `Found <b>${chords.map(c => slEsc(c.name)).join(' · ')}</b> — looks like ${NN[key.root]}${key.minor ? ' minor' : ' major'}.`;
+});
+document.getElementById('sl-save').addEventListener('click', () => {
+  const title = document.getElementById('sl-f-title').value.trim();
+  const raw = document.getElementById('sl-f-chords').value.trim();
+  const chords = slParseLine(raw);
+  if (!title || !chords.length){
+    document.getElementById('sl-f-parsed').innerHTML =
+      '<b>Need a title and at least one chord I can read.</b>';
+    return;
+  }
+  const song = {id:'u' + Date.now(), title,
+    artist: document.getElementById('sl-f-artist').value.trim(),
+    chords: raw, feel: document.getElementById('sl-f-feel').value.trim()};
+  slSongs.push(song); slSave(); slOpen(song);
+});
+slRenderList('');
 
 /* ---------- offline support (only active when hosted over https) ---------- */
 if ('serviceWorker' in navigator && location.protocol === 'https:')
