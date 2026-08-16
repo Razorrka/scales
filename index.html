@@ -938,27 +938,12 @@
 
   /* ---------- pocket: tap a shape, get the chord ---------- */
   .pk-row{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
-  .pk-boardwrap{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
-  .pk-pos{display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:34px}
-  .pk-pos button{width:40px;height:40px;font-size:19px;font-weight:800;padding:0}
-  .pk-posn{font-size:11px;color:var(--muted);letter-spacing:.05em;text-align:center;line-height:1.3}
-  .pk-posn b{display:block;font-size:15px;color:var(--root)}
-  .pk-board{flex:1;min-width:236px;max-width:320px}
-  .pk-nut{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-bottom:5px}
-  .pk-open{height:30px;border-radius:8px;border:1px solid var(--line);background:var(--panel);
-    color:var(--muted);font:inherit;font-size:14px;font-weight:800;cursor:pointer;padding:0}
-  .pk-open.o{color:var(--scale);border-color:var(--scale)}
-  .pk-open.x{color:var(--muted);opacity:.7}
-  .pk-slbl{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-bottom:4px}
-  .pk-slbl span{text-align:center;font-size:10.5px;font-weight:800;color:var(--muted);letter-spacing:.04em}
-  .pk-frets{border-top:4px solid var(--ink);border-radius:2px}
-  .pk-frow{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--line)}
-  .pk-frow:last-child{border-bottom:none}
-  .pk-cell{height:44px;border:none;background:none;cursor:pointer;padding:0;
-    display:flex;align-items:center;justify-content:center;position:relative}
-  .pk-cell::before{content:'';position:absolute;top:0;bottom:0;left:50%;
-    transform:translateX(-50%);width:1px;background:var(--line)}
-  .pk-cell.on::before{opacity:0}
+  /* the pocket board is the same full neck the rest of the app uses */
+  #pk-grid .cell{cursor:pointer}
+  #pk-grid .cell:hover::after{content:'';position:absolute;width:30px;height:30px;
+    border-radius:50%;border:1px dashed var(--root-soft)}
+  #pk-grid .cell.has:hover::after{display:none}
+  #pk-grid .slabel.off{opacity:.35}
   .pk-cell .pkd{width:28px;height:28px;border-radius:50%;background:var(--scale);
     display:none;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;
     color:#fff;line-height:1}
@@ -1520,14 +1505,10 @@
 
     <div class="pk-sec">
       <div class="pk-h">1 &middot; Lay the chord on the neck</div>
-      <p class="pk-why">Tap a dot for every finger. Tap the circle above a string for <b>open</b>, tap again for <b>muted</b>. Slide the position if your shape is further up.</p>
-      <div class="pk-boardwrap">
-        <div class="pk-pos">
-          <button id="pk-down" aria-label="Move down the neck">&minus;</button>
-          <span class="pk-posn">fret <b id="pk-basen">1</b></span>
-          <button id="pk-up" aria-label="Move up the neck">+</button>
-        </div>
-        <div class="pk-board" id="pk-board"></div>
+      <p class="pk-why">The whole neck, same as everywhere else in the app. <b>Tap where each finger goes</b> — one dot per string. The <b>0</b> column on the left means that string rings open. Tap a dot again to take that string out.</p>
+      <div class="board">
+        <div class="grid" id="pk-grid"></div>
+        <div class="frets" id="pk-fretnums"></div>
       </div>
       <div class="pk-readout" id="pk-readout"></div>
       <div class="pk-row">
@@ -6039,28 +6020,30 @@ function pkIdentify(frets){
           name, display: noteFmt(pkNote(best.root)) + best.suf + (slash ? '/' + noteFmt(pkNote(bass)) : '')};
 }
 
-let pkFrets = [-1,-1,-1,-1,-1,-1], pkBase = 1, pkChords = [], pkBuilt = false;
-const PK_SNAME = ['E','A','D','G','B','e'];
+let pkFrets = [-1,-1,-1,-1,-1,-1], pkChords = [], pkBuilt = false;
 
+/* STRINGS runs high-e first; pkFrets runs low-E first, so the rows flip */
+const pkStr = si => 5 - si;
 function pkRenderBoard(){
-  const b = document.getElementById('pk-board');
-  let h = '<div class="pk-slbl">' + PK_SNAME.map(s => `<span>${s}</span>`).join('') + '</div>';
-  h += '<div class="pk-nut">';
-  for (let s = 0; s < 6; s++){
-    const st = pkFrets[s] === 0 ? 'o' : pkFrets[s] < 0 ? 'x' : '';
-    h += `<button class="pk-open ${st}" data-open="${s}">${pkFrets[s] === 0 ? '○' : pkFrets[s] < 0 ? '✕' : '&nbsp;'}</button>`;
-  }
-  h += '</div><div class="pk-frets">';
-  for (let r = 0; r < 5; r++){
-    const fret = pkBase + r;
-    h += '<div class="pk-frow">';
-    for (let s = 0; s < 6; s++)
-      h += `<button class="pk-cell${pkFrets[s] === fret ? ' on' : ''}" data-s="${s}" data-f="${fret}">
-              <span class="pkd">${fret}</span></button>`;
-    h += '</div>';
-  }
-  document.getElementById('pk-basen').textContent = pkBase;
-  b.innerHTML = h + '</div>';
+  const grid = document.getElementById('pk-grid');
+  let h = '';
+  STRINGS.forEach((st, si) => {
+    const s = pkStr(si);
+    h += `<div class="slabel${pkFrets[s] < 0 ? ' off' : ''}">${st.lbl}</div>`;
+    for (let f = 0; f <= FRETS; f++){
+      const on = pkFrets[s] === f;
+      h += `<div class="cell${f === 0 ? ' fret0' : ''}${f === 1 ? ' nut' : ''}${on ? ' has' : ''}"`
+         + ` data-s="${s}" data-f="${f}">`
+         + (on ? `<div class="dot">${f === 0 ? '&#9711;' : f}</div>` : '')
+         + '</div>';
+    }
+  });
+  grid.innerHTML = h;
+  const fr = document.getElementById('pk-fretnums');
+  let n = '<div></div>';
+  for (let f = 0; f <= FRETS; f++)
+    n += `<div class="fnum${INLAYS.has(f) ? ' inlay' : ''}">${f}</div>`;
+  fr.innerHTML = n;
   pkReadout();
 }
 function pkReadout(){
@@ -6079,11 +6062,7 @@ function pkReadout(){
   el.innerHTML = `<div class="pk-name">${id.display}</div><div class="pk-sub">${line}</div>`;
 }
 function pkSetCell(s, f){
-  pkFrets[s] = (pkFrets[s] === f) ? -1 : f;      // tapping the same dot clears the string
-  pkRenderBoard();
-}
-function pkToggleOpen(s){
-  pkFrets[s] = pkFrets[s] === 0 ? -1 : 0;        // open -> muted -> open
+  pkFrets[s] = (pkFrets[s] === f) ? -1 : f;      // tapping the same dot takes the string out
   pkRenderBoard();
 }
 
@@ -6253,18 +6232,9 @@ const PK_SUFFIX = {'maj':'','m':'m','7':'7','m7':'m7','maj7':'maj7','dim':'dim',
 function buildPocket(){
   if (pkBuilt){ pkRenderBoard(); pkRenderStrip(); return; }
   pkBuilt = true;
-  const board = document.getElementById('pk-board');
-  board.addEventListener('click', e => {
-    const o = e.target.closest('[data-open]');
-    if (o){ pkToggleOpen(+o.dataset.open); return; }
-    const c = e.target.closest('.pk-cell');
+  document.getElementById('pk-grid').addEventListener('click', e => {
+    const c = e.target.closest('.cell');
     if (c) pkSetCell(+c.dataset.s, +c.dataset.f);
-  });
-  document.getElementById('pk-up').addEventListener('click', () => {
-    if (pkBase < 12){ pkBase++; pkRenderBoard(); }
-  });
-  document.getElementById('pk-down').addEventListener('click', () => {
-    if (pkBase > 1){ pkBase--; pkRenderBoard(); }
   });
   document.getElementById('pk-hear').addEventListener('click', () => slStrum(pkFrets, 0, 0.035, 0.5));
   document.getElementById('pk-clear').addEventListener('click', () => {
