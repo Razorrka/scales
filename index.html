@@ -59,10 +59,10 @@
   }
   .mark b{color:var(--root)}
   h1{
-    font-size:clamp(28px,4.5vw,42px);font-weight:800;line-height:1.05;
-    margin:10px 0 6px;letter-spacing:-.01em;
+    font-size:clamp(26px,4.2vw,38px);font-weight:800;line-height:1.05;
+    margin:14px 0 6px;letter-spacing:-.015em;
   }
-  .sub{color:var(--ink);margin:0;font-size:15px}
+  .sub{color:var(--ink);margin:0;font-size:14.5px;line-height:1.55;max-width:62ch}
   .formula{color:var(--muted);font-size:13px;margin:4px 0 0}
   .formula b{color:var(--ink);font-weight:600}
 
@@ -139,8 +139,8 @@
   .swatch.ghosted{background:transparent;border:2px dashed var(--root-soft)}
   .hint{color:var(--muted);font-size:13px;margin-top:20px}
 
-  /* tabs — folded into one button, expands on tap */
-  .tabs{display:flex;gap:8px;margin:16px 0 0;align-items:center}
+  /* tabs — one button that opens a grouped menu */
+  .tabs{display:flex;gap:8px;margin:14px 0 0;align-items:center;position:relative}
   .tab{
     font:inherit;font-size:13px;font-weight:700;letter-spacing:.04em;
     color:var(--muted);background:transparent;border:1px solid var(--line);
@@ -149,16 +149,35 @@
   }
   .tab:hover{border-color:#3d4b73;color:var(--ink)}
   .tab.active{background:var(--scale);border-color:transparent;color:var(--bg)}
-  .tf-cur{display:inline-flex;align-items:center;gap:7px;flex:none;
-    min-height:44px;padding:0 15px;font-size:14.5px;font-weight:700;line-height:1;
+  .tf-cur{display:inline-flex;align-items:center;gap:8px;flex:none;
+    min-height:44px;padding:0 16px;font-size:14.5px;font-weight:700;line-height:1;
     color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:999px;
     cursor:pointer;white-space:nowrap;transition:border-color .15s, transform .12s}
-  .tf-cur .tf-chev{color:var(--muted);font-size:11px}
-  .tf-opts .tab{min-height:44px}
-  .tf-cur:hover{border-color:#3d4b73;transform:scale(1.06)}
-  .tf-opts{display:flex;gap:8px;flex-wrap:wrap}
-  @keyframes tfIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
-  .tf-opts:not([hidden]){animation:tfIn .18s ease}
+  .tf-cur .tf-chev{color:var(--muted);font-size:10px;transition:transform .18s}
+  .tf-cur[aria-expanded="true"] .tf-chev{transform:rotate(180deg)}
+  .tf-cur:hover{border-color:#3d4b73}
+  .tf-back{position:fixed;inset:0;z-index:55;background:rgba(0,0,0,.4)}
+  .tf-sheet{position:absolute;z-index:60;top:calc(100% + 8px);left:0;
+    width:min(600px, calc(100vw - 32px));max-height:min(72vh, 620px);overflow:auto;
+    background:var(--panel);border:1px solid var(--line);border-radius:18px;
+    box-shadow:0 22px 60px rgba(0,0,0,.5);padding:10px 10px 12px}
+  @keyframes tfIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+  .tf-sheet:not([hidden]){animation:tfIn .16s ease}
+  .tf-glab{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);margin:12px 6px 6px}
+  .tf-grp:first-child .tf-glab{margin-top:3px}
+  .tf-items{display:grid;grid-template-columns:1fr;gap:3px}
+  @media (min-width:540px){ .tf-items{grid-template-columns:1fr 1fr} }
+  .tf-sheet .tab{display:flex;align-items:center;gap:11px;width:100%;min-height:46px;
+    text-align:left;letter-spacing:normal;padding:7px 11px;border-radius:12px;
+    border:1px solid transparent;background:transparent;color:var(--ink);font-size:14px}
+  .tf-sheet .tab:hover{background:var(--panel-2);border-color:var(--line);color:var(--ink)}
+  .tf-sheet .tab.active{background:var(--scale);border-color:transparent;color:var(--bg)}
+  .tf-e{font-size:17px;line-height:1;flex:none;width:22px;text-align:center}
+  .tf-t{display:flex;flex-direction:column;min-width:0;gap:1px}
+  .tf-n{font-weight:700;font-size:14px;line-height:1.2}
+  .tf-d{font-size:11.5px;line-height:1.25;color:var(--muted);font-weight:400;letter-spacing:.01em}
+  .tf-sheet .tab.active .tf-d{color:var(--bg);opacity:.72}
 
   /* chord shapes */
   .ch-head{display:flex;align-items:center;gap:12px;margin:18px 0 4px}
@@ -345,11 +364,11 @@
   }
 
   /* neo soul tab */
-  .neo-sec{margin-top:28px}
-  .neo-h{font-size:16px;font-weight:800;letter-spacing:.01em;color:var(--ink);margin:0 0 4px;
+  .neo-sec{margin-top:24px}
+  .neo-h{font-size:16.5px;font-weight:800;letter-spacing:-.005em;color:var(--ink);margin:0 0 4px;
     display:flex;align-items:center}
   .neo-h .em{margin-right:8px;font-size:18px}
-  .neo-p{color:var(--muted);font-size:14px;margin:0 0 12px;line-height:1.6}
+  .neo-p{color:var(--muted);font-size:13.5px;margin:0 0 13px;line-height:1.55}
   .neo-p b{color:var(--ink)}
   .neo-tips{display:grid;gap:9px}
   .neo-tip{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--root);
@@ -822,10 +841,11 @@
   .sl-fact{font-size:12.5px;color:var(--ink);background:var(--panel);border:1px solid var(--line);
     border-radius:999px;padding:6px 13px}
   .sl-fact b{color:var(--root)}
-  .sl-sec{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--line);
-    border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
-  .sl-sec h3{margin:0 0 4px;font-size:17px}
-  .sl-why{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+  .sl-sec,.pk-sec{background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line);border-radius:16px;padding:17px 16px;
+    margin:0 0 14px;box-shadow:var(--shadow)}
+  .sl-sec h3,.pk-h{margin:0 0 4px;font-size:16.5px;font-weight:800;color:var(--ink);letter-spacing:-.005em}
+  .sl-why,.pk-why{color:var(--muted);font-size:13.5px;margin:0 0 13px;line-height:1.55}
   .sl-grips{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:14px}
   .sl-grip{text-align:center;cursor:pointer;border:1px solid transparent;border-radius:12px;
     padding:8px 4px 4px;transition:border-color .15s,transform .1s}
@@ -917,10 +937,6 @@
   .sl-prog-line{font-size:14px;font-weight:700;color:var(--ink);line-height:1.6;margin:2px 0 0}
 
   /* ---------- pocket: tap a shape, get the chord ---------- */
-  .pk-sec{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--line);
-    border-radius:16px;padding:16px 15px;margin-top:16px}
-  .pk-h{font-size:17px;font-weight:800;color:var(--ink);margin:0 0 4px}
-  .pk-why{color:var(--muted);font-size:13.5px;margin:0 0 14px;line-height:1.5}
   .pk-row{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
   .pk-boardwrap{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
   .pk-pos{display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:34px}
@@ -928,18 +944,21 @@
   .pk-posn{font-size:11px;color:var(--muted);letter-spacing:.05em;text-align:center;line-height:1.3}
   .pk-posn b{display:block;font-size:15px;color:var(--root)}
   .pk-board{flex:1;min-width:236px;max-width:320px}
-  .pk-nut{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;margin-bottom:5px}
+  .pk-nut{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-bottom:5px}
   .pk-open{height:30px;border-radius:8px;border:1px solid var(--line);background:var(--panel);
     color:var(--muted);font:inherit;font-size:14px;font-weight:800;cursor:pointer;padding:0}
   .pk-open.o{color:var(--scale);border-color:var(--scale)}
   .pk-open.x{color:var(--muted);opacity:.7}
-  .pk-slbl{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;margin-bottom:3px}
+  .pk-slbl{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-bottom:4px}
   .pk-slbl span{text-align:center;font-size:10.5px;font-weight:800;color:var(--muted);letter-spacing:.04em}
   .pk-frets{border-top:4px solid var(--ink);border-radius:2px}
-  .pk-frow{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;position:relative}
-  .pk-cell{height:44px;border:none;border-bottom:1px solid var(--line);background:none;
-    cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;position:relative}
-  .pk-cell::before{content:'';position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+  .pk-frow{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--line)}
+  .pk-frow:last-child{border-bottom:none}
+  .pk-cell{height:44px;border:none;background:none;cursor:pointer;padding:0;
+    display:flex;align-items:center;justify-content:center;position:relative}
+  .pk-cell::before{content:'';position:absolute;top:0;bottom:0;left:50%;
+    transform:translateX(-50%);width:1px;background:var(--line)}
+  .pk-cell.on::before{opacity:0}
   .pk-cell .pkd{width:28px;height:28px;border-radius:50%;background:var(--scale);
     display:none;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;
     color:#fff;line-height:1}
@@ -1042,23 +1061,44 @@
   <div class="mark">Scale&nbsp;<b>Visualizer</b></div>
   <div class="tabs">
     <button class="tf-cur" id="tf-cur" title="Switch view" aria-label="Switch view">&#127928; Explore <span class="tf-chev">&#9662;</span></button>
-    <div class="tf-opts" id="tf-opts" hidden>
-      <button class="tab" data-tab="explore">&#127928; Explore</button>
-      <button class="tab" data-tab="map">&#128506;&#65039; Map</button>
-      <button class="tab" data-tab="intervals">&#128207; Intervals</button>
-      <button class="tab" data-tab="neo">&#127924; Neo soul</button>
-      <button class="tab" data-tab="phrasing">&#127908; Phrasing</button>
-      <button class="tab" data-tab="rhythm">&#129345; Rhythm</button>
-      <button class="tab" data-tab="finger">&#128400;&#65039; Fingerstyle</button>
-      <button class="tab" data-tab="insp">&#128214; Inspiration</button>
-      <button class="tab" data-tab="quiz">&#127919; Neck quiz</button>
-      <button class="tab" data-tab="decoder">&#129517; Decoder</button>
-      <button class="tab" data-tab="chords">&#9995; Chords</button>
-      <button class="tab" data-tab="songs">&#127925; Songs</button>
-      <button class="tab" data-tab="pocket">&#129513; Pocket</button>
-      <button class="tab" data-tab="sheets">&#128424;&#65039; Sheets</button>
-      <button class="tab" data-tab="notes">&#128221; Notes</button>
+    <div class="tf-sheet" id="tf-opts" hidden>
+      <div class="tf-grp">
+        <div class="tf-glab">Fretboard</div>
+        <div class="tf-items">
+          <button class="tab" data-tab="explore" data-label="Explore"><span class="tf-e">&#127928;</span><span class="tf-t"><span class="tf-n">Explore</span><span class="tf-d">scales on the neck</span></span></button>
+          <button class="tab" data-tab="map" data-label="Map"><span class="tf-e">&#128506;&#65039;</span><span class="tf-t"><span class="tf-n">Map</span><span class="tf-d">every note, memorised</span></span></button>
+          <button class="tab" data-tab="intervals" data-label="Intervals"><span class="tf-e">&#128207;</span><span class="tf-t"><span class="tf-n">Intervals</span><span class="tf-d">the distance between notes</span></span></button>
+          <button class="tab" data-tab="quiz" data-label="Neck quiz"><span class="tf-e">&#127919;</span><span class="tf-t"><span class="tf-n">Neck quiz</span><span class="tf-d">drill what you know</span></span></button>
+        </div>
+      </div>
+      <div class="tf-grp">
+        <div class="tf-glab">Chords &amp; songs</div>
+        <div class="tf-items">
+          <button class="tab" data-tab="chords" data-label="Chords"><span class="tf-e">&#9995;</span><span class="tf-t"><span class="tf-n">Chords</span><span class="tf-d">shapes in any key</span></span></button>
+          <button class="tab" data-tab="pocket" data-label="Pocket"><span class="tf-e">&#129513;</span><span class="tf-t"><span class="tf-n">Pocket</span><span class="tf-d">tap a shape, name it</span></span></button>
+          <button class="tab" data-tab="songs" data-label="Songs"><span class="tf-e">&#127925;</span><span class="tf-t"><span class="tf-n">Songs</span><span class="tf-d">your songbook &amp; chord finder</span></span></button>
+          <button class="tab" data-tab="decoder" data-label="Decoder"><span class="tf-e">&#129517;</span><span class="tf-t"><span class="tf-n">Decoder</span><span class="tf-d">the key wheel</span></span></button>
+        </div>
+      </div>
+      <div class="tf-grp">
+        <div class="tf-glab">Style &amp; technique</div>
+        <div class="tf-items">
+          <button class="tab" data-tab="neo" data-label="Neo soul"><span class="tf-e">&#127924;</span><span class="tf-t"><span class="tf-n">Neo soul</span><span class="tf-d">the R&amp;B toolkit</span></span></button>
+          <button class="tab" data-tab="phrasing" data-label="Phrasing"><span class="tf-e">&#127908;</span><span class="tf-t"><span class="tf-n">Phrasing</span><span class="tf-d">how to say it</span></span></button>
+          <button class="tab" data-tab="rhythm" data-label="Rhythm"><span class="tf-e">&#129345;</span><span class="tf-t"><span class="tf-n">Rhythm</span><span class="tf-d">time and groove</span></span></button>
+          <button class="tab" data-tab="finger" data-label="Fingerstyle"><span class="tf-e">&#128400;&#65039;</span><span class="tf-t"><span class="tf-n">Fingerstyle</span><span class="tf-d">p-i-m-a patterns</span></span></button>
+        </div>
+      </div>
+      <div class="tf-grp">
+        <div class="tf-glab">Yours</div>
+        <div class="tf-items">
+          <button class="tab" data-tab="insp" data-label="Inspiration"><span class="tf-e">&#128214;</span><span class="tf-t"><span class="tf-n">Inspiration</span><span class="tf-d">prompts to play</span></span></button>
+          <button class="tab" data-tab="sheets" data-label="Sheets"><span class="tf-e">&#128424;&#65039;</span><span class="tf-t"><span class="tf-n">Sheets</span><span class="tf-d">printable references</span></span></button>
+          <button class="tab" data-tab="notes" data-label="Notes"><span class="tf-e">&#128221;</span><span class="tf-t"><span class="tf-n">Notes</span><span class="tf-d">your scratchpad</span></span></button>
+        </div>
+      </div>
     </div>
+    <div class="tf-back" id="tf-back" hidden></div>
   </div>
   <h1 id="title"></h1>
 
@@ -4569,9 +4609,9 @@ function showTab(t){
   tfOpts.querySelectorAll('[data-tab]').forEach(b =>
     b.classList.toggle('active', b.dataset.tab === t));
   const _opt = tfOpts.querySelector('[data-tab="' + t + '"]');
-  tfCur.innerHTML = (_opt ? _opt.textContent.trim() : TAB_EMOJI[t]) +
+  tfCur.innerHTML = `${TAB_EMOJI[t] || ''} ${_opt ? _opt.dataset.label : ''}` +
     ' <span class="tf-chev">&#9662;</span>';
-  tfOpts.hidden = true;
+  tfMenu(false);
   if (t === 'map'){
     document.getElementById('title').textContent = 'Fretboard Map';
     renderMap();
@@ -4618,11 +4658,20 @@ function showTab(t){
     render();               // restores the scale title + sub line
   }
 }
-tfCur.addEventListener('click', () => { tfOpts.hidden = !tfOpts.hidden; });
+const tfBack = document.getElementById('tf-back');
+function tfMenu(open){
+  tfOpts.hidden = !open;
+  tfBack.hidden = !open;
+  tfCur.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) tfOpts.scrollTop = 0;
+}
+tfCur.addEventListener('click', () => tfMenu(tfOpts.hidden));
+tfBack.addEventListener('click', () => tfMenu(false));
 tfOpts.addEventListener('click', e => {
   const b = e.target.closest('[data-tab]');
   if (b) showTab(b.dataset.tab);
 });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !tfOpts.hidden) tfMenu(false); });
 
 /* ---------- themes: every tab keeps its own colors ---------- */
 const THEME_BG = {classic:'#0d1220', pom:'#1c060f', peach:'#241008', tokyo:'#120521'};
@@ -4921,6 +4970,8 @@ document.getElementById('mx-reset').addEventListener('click', () => {
 document.getElementById('mx-done').addEventListener('click', () => { mixEl.hidden = true; });
 
 applyTheme();
+// mark the tab we boot into, so the menu shows where you are the first time
+tfOpts.querySelector('[data-tab="' + curTab + '"]')?.classList.add('active');
 
 
 /* ======================================================================
