@@ -149,9 +149,12 @@
   }
   .tab:hover{border-color:#3d4b73;color:var(--ink)}
   .tab.active{background:var(--scale);border-color:transparent;color:var(--bg)}
-  .tf-cur{width:46px;height:40px;padding:0;font-size:19px;line-height:1;text-align:center;
-    background:var(--panel);border:1px solid var(--line);border-radius:999px;cursor:pointer;
-    transition:border-color .15s, transform .12s}
+  .tf-cur{display:inline-flex;align-items:center;gap:7px;flex:none;
+    min-height:44px;padding:0 15px;font-size:14.5px;font-weight:700;line-height:1;
+    color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    cursor:pointer;white-space:nowrap;transition:border-color .15s, transform .12s}
+  .tf-cur .tf-chev{color:var(--muted);font-size:11px}
+  .tf-opts .tab{min-height:44px}
   .tf-cur:hover{border-color:#3d4b73;transform:scale(1.06)}
   .tf-opts{display:flex;gap:8px;flex-wrap:wrap}
   @keyframes tfIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
@@ -959,7 +962,7 @@
 <div class="wrap">
   <div class="mark">Scale&nbsp;<b>Visualizer</b></div>
   <div class="tabs">
-    <button class="tf-cur" id="tf-cur" title="Switch view" aria-label="Switch view">&#127928;</button>
+    <button class="tf-cur" id="tf-cur" title="Switch view" aria-label="Switch view">&#127928; Explore <span class="tf-chev">&#9662;</span></button>
     <div class="tf-opts" id="tf-opts" hidden>
       <button class="tab" data-tab="explore">&#127928; Explore</button>
       <button class="tab" data-tab="map">&#128506;&#65039; Map</button>
@@ -4421,7 +4424,9 @@ function showTab(t){
   mixEl.hidden = true;        // don't leave the mixer editing another tab
   tfOpts.querySelectorAll('[data-tab]').forEach(b =>
     b.classList.toggle('active', b.dataset.tab === t));
-  tfCur.textContent = TAB_EMOJI[t];
+  const _opt = tfOpts.querySelector('[data-tab="' + t + '"]');
+  tfCur.innerHTML = (_opt ? _opt.textContent.trim() : TAB_EMOJI[t]) +
+    ' <span class="tf-chev">&#9662;</span>';
   tfOpts.hidden = true;
   if (t === 'map'){
     document.getElementById('title').textContent = 'Fretboard Map';
