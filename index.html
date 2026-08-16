@@ -851,6 +851,42 @@
   .sl-parsed{font-size:13px;color:var(--muted);min-height:20px;margin-top:4px}
   .sl-parsed b{color:var(--root)}
   .sl-danger{color:#ff6b6b}
+
+  /* ---------- song search + ear tools ---------- */
+  .sl-res{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+  .sl-hit{display:flex;align-items:center;gap:12px;text-align:left;width:100%;cursor:pointer;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 12px;
+    transition:border-color .15s,transform .08s}
+  .sl-hit:hover{border-color:var(--scale);transform:translateX(2px)}
+  .sl-hit img{width:44px;height:44px;border-radius:7px;flex:none;background:var(--panel-2)}
+  .sl-hit .h-t{font-weight:700;font-size:14.5px;color:var(--ink)}
+  .sl-hit .h-a{font-size:12.5px;color:var(--muted)}
+  .sl-art{width:46px;height:46px;border-radius:8px;flex:none;background:var(--panel-2)}
+  .sl-picked{display:flex;align-items:center;gap:12px;background:var(--panel-2);
+    border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:10px 0}
+  .sl-picked img{width:52px;height:52px;border-radius:8px;flex:none}
+  .sl-note{font-size:12.5px;color:var(--muted);line-height:1.5}
+  /* looper */
+  .sl-loop{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .sl-track{position:relative;height:34px;background:var(--panel-2);border-radius:8px;
+    overflow:hidden;cursor:pointer;margin:10px 0 8px}
+  .sl-region{position:absolute;top:0;bottom:0;background:var(--root);opacity:.28}
+  .sl-play{position:absolute;top:0;bottom:0;width:2px;background:var(--ink)}
+  .sl-ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .sl-ctl button{padding:8px 12px;font-size:13px}
+  .sl-ctl .sl-sp{font-size:12.5px;color:var(--muted)}
+  .sl-ab{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+  .sl-ab button{padding:7px 12px;font-size:13px;font-weight:700}
+  /* analyzer */
+  .sl-guess{display:flex;flex-direction:column;gap:7px;margin-top:12px}
+  .sl-grow{display:flex;align-items:center;gap:10px}
+  .sl-gc{width:74px;font-weight:800;font-size:15px}
+  .sl-bar{flex:1;height:9px;border-radius:99px;background:var(--panel-2);overflow:hidden}
+  .sl-bar i{display:block;height:100%;background:var(--scale)}
+  .sl-bar i.low{background:var(--root)}
+  .sl-pct{width:46px;text-align:right;font-size:12px;color:var(--muted)}
+  .sl-time{width:74px;font-size:11.5px;color:var(--muted)}
+  .sl-warn{font-size:12.5px;color:var(--root);margin-top:10px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -1284,6 +1320,13 @@
     <div id="sl-addform" hidden>
       <div class="sl-row" style="margin:0 0 14px"><button id="sl-cancel">&larr;&nbsp; Cancel</button></div>
       <div class="sl-sec">
+        <div class="sl-field">
+          <label>Find the song</label>
+          <input id="sl-q" placeholder="white ferrari" autocomplete="off">
+          <div class="sl-tip">Fills in the title, artist and artwork &mdash; and grabs a 30&#8209;second preview you can loop and analyse.</div>
+          <div class="sl-res" id="sl-res"></div>
+        </div>
+        <div id="sl-picked" hidden></div>
         <div class="sl-field"><label>Song</label><input id="sl-f-title" placeholder="White Ferrari"></div>
         <div class="sl-field"><label>Artist</label><input id="sl-f-artist" placeholder="Frank Ocean"></div>
         <div class="sl-field">
@@ -1291,6 +1334,32 @@
           <textarea id="sl-f-chords" placeholder="C G Fmaj7"></textarea>
           <div class="sl-tip">Paste from anywhere &mdash; messy is fine, it pulls the chords out.</div>
           <div class="sl-parsed" id="sl-f-parsed"></div>
+        </div>
+        <div id="sl-analyze" hidden>
+          <div class="sl-row" style="margin-top:0">
+            <button id="sl-run">&#127911;&nbsp; Listen &amp; find the roots</button>
+          </div>
+          <div id="sl-guessbox" hidden>
+            <div class="sl-guess" id="sl-guesses"></div>
+            <p class="sl-warn" id="sl-warn"></p>
+            <div class="sl-row"><button class="primary" id="sl-use">Use the top 3 as a draft</button></div>
+          </div>
+          <div class="sl-loop" id="sl-looper" style="margin-top:14px" hidden>
+            <div style="font-weight:700;font-size:14px">Loop it and check by ear</div>
+            <div class="sl-note">Drag across the bar to pick a section. Slow it down, then A/B a chord against it &mdash; trust your ear over the guess.</div>
+            <div class="sl-track" id="sl-track">
+              <div class="sl-region" id="sl-region"></div>
+              <div class="sl-play" id="sl-head" style="left:0"></div>
+            </div>
+            <div class="sl-ctl">
+              <button id="sl-toggle">&#9654; Play</button>
+              <button id="sl-slower">&minus;</button>
+              <span class="sl-sp" id="sl-rate">1&times;</span>
+              <button id="sl-faster">+</button>
+              <button id="sl-clear">Whole clip</button>
+            </div>
+            <div class="sl-ab" id="sl-abrow"></div>
+          </div>
         </div>
         <div class="sl-field"><label>Tempo &amp; feel <span style="text-transform:none;font-weight:400">(optional)</span></label>
           <input id="sl-f-feel" placeholder="slow &middot; sparse &middot; reverby"></div>
@@ -4925,7 +4994,7 @@ function slRenderList(filter){
     const n = slParseLine(s.chords).length;
     const b = document.createElement('button');
     b.className = 'sl-card';
-    b.innerHTML = `<div class="sl-main"><div class="sl-t">${slEsc(s.title)}</div>
+    b.innerHTML = `${s.art ? `<img class="sl-art" src="${s.art}" alt="">` : ''}<div class="sl-main"><div class="sl-t">${slEsc(s.title)}</div>
       <div class="sl-a">${slEsc(s.artist || '')}${s.artist ? ' · ' : ''}${n} chords</div></div>
       <span class="sl-k">${NN[key.root]}${key.minor ? 'm' : ''}</span>`;
     b.addEventListener('click', () => slOpen(s));
@@ -5044,10 +5113,322 @@ document.getElementById('sl-save').addEventListener('click', () => {
   }
   const song = {id:'u' + Date.now(), title,
     artist: document.getElementById('sl-f-artist').value.trim(),
-    chords: raw, feel: document.getElementById('sl-f-feel').value.trim()};
+    chords: raw, feel: document.getElementById('sl-f-feel').value.trim(),
+    art: slPick && slPick.title === title ? slPick.art : '',
+    preview: slPick && slPick.title === title ? slPick.preview : ''};
   slSongs.push(song); slSave(); slOpen(song);
 });
 slRenderList('');
+
+
+/* ======================================================================
+   EAR TOOLS — song search, chord guessing, and a looper to check by ear.
+   The guess is a chromagram + template match: a starting point, not truth.
+   ====================================================================== */
+let slPick = null;                       // {title, artist, art, preview}
+
+/* ---------- search (iTunes Search API: free, no key, CORS-open) ---------- */
+let slQTimer = null;
+document.getElementById('sl-q').addEventListener('input', e => {
+  clearTimeout(slQTimer);
+  const q = e.target.value.trim();
+  const box = document.getElementById('sl-res');
+  if (q.length < 2){ box.innerHTML = ''; return; }
+  slQTimer = setTimeout(async () => {
+    box.innerHTML = '<div class="sl-note">Searching&hellip;</div>';
+    try{
+      const url = 'https://itunes.apple.com/search?entity=song&limit=6&term=' + encodeURIComponent(q);
+      const r = await fetch(url);
+      const d = await r.json();
+      if (!d.results.length){ box.innerHTML = '<div class="sl-note">Nothing found.</div>'; return; }
+      box.innerHTML = '';
+      d.results.forEach(t => {
+        const b = document.createElement('button');
+        b.className = 'sl-hit';
+        b.innerHTML = `<img src="${t.artworkUrl100 || ''}" alt="">
+          <div style="flex:1;min-width:0"><div class="h-t">${slEsc(t.trackName || '')}</div>
+          <div class="h-a">${slEsc(t.artistName || '')}${t.collectionName ? ' · ' + slEsc(t.collectionName) : ''}</div></div>`;
+        b.addEventListener('click', () => slChoose(t));
+        box.appendChild(b);
+      });
+    }catch(err){
+      box.innerHTML = '<div class="sl-note">Couldn\'t search — you\'re offline, so just type the title in below.</div>';
+    }
+  }, 320);
+});
+function slChoose(t){
+  slPick = {title:t.trackName || '', artist:t.artistName || '',
+            art:(t.artworkUrl100 || '').replace('100x100','200x200'), preview:t.previewUrl || ''};
+  document.getElementById('sl-f-title').value = slPick.title;
+  document.getElementById('sl-f-artist').value = slPick.artist;
+  document.getElementById('sl-res').innerHTML = '';
+  document.getElementById('sl-q').value = '';
+  const p = document.getElementById('sl-picked');
+  p.hidden = false;
+  p.className = 'sl-picked';
+  p.innerHTML = `<img src="${slPick.art}" alt="">
+    <div style="flex:1;min-width:0"><div style="font-weight:700">${slEsc(slPick.title)}</div>
+    <div class="sl-note">${slEsc(slPick.artist)}</div></div>`;
+  document.getElementById('sl-analyze').hidden = !slPick.preview;
+  document.getElementById('sl-guessbox').hidden = true;
+  document.getElementById('sl-looper').hidden = true;
+  slAudioReset();
+}
+
+/* ---------- the looper (pitch-preserved slow-down) ---------- */
+let slAu = null, slLoopA = 0, slLoopB = 0, slRate = 1, slDur = 30;
+function slAudioReset(){
+  if (slAu){ slAu.pause(); slAu.src = ''; }
+  slAu = null; slLoopA = 0; slLoopB = 0; slRate = 1;
+  const rt = document.getElementById('sl-rate'); if (rt) rt.textContent = '1×';
+}
+function slAudio(){
+  if (slAu) return slAu;
+  slAu = new Audio();
+  slAu.crossOrigin = 'anonymous';
+  slAu.src = slPick.preview;
+  slAu.preservesPitch = true;
+  slAu.mozPreservesPitch = true;
+  slAu.webkitPreservesPitch = true;
+  slAu.addEventListener('loadedmetadata', () => {
+    slDur = slAu.duration || 30;
+    if (!slLoopB) slLoopB = slDur;
+    slDrawRegion();
+  });
+  slAu.addEventListener('timeupdate', () => {
+    if (slLoopB && slAu.currentTime >= slLoopB) slAu.currentTime = slLoopA;
+    const head = document.getElementById('sl-head');
+    if (head) head.style.left = (100 * slAu.currentTime / (slDur || 30)) + '%';
+  });
+  slAu.addEventListener('ended', () => {
+    document.getElementById('sl-toggle').innerHTML = '&#9654; Play';
+  });
+  return slAu;
+}
+function slDrawRegion(){
+  const r = document.getElementById('sl-region');
+  if (!r) return;
+  const a = 100 * slLoopA / (slDur || 30), b = 100 * (slLoopB || slDur) / (slDur || 30);
+  r.style.left = a + '%';
+  r.style.width = Math.max(0, b - a) + '%';
+}
+(function slWireLooper(){
+  const track = document.getElementById('sl-track');
+  let dragFrom = null;
+  const posOf = e => {
+    const rect = track.getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    return Math.max(0, Math.min(1, x / rect.width)) * (slDur || 30);
+  };
+  track.addEventListener('pointerdown', e => {
+    dragFrom = posOf(e);
+    slLoopA = dragFrom; slLoopB = dragFrom;
+    slDrawRegion();
+    track.setPointerCapture(e.pointerId);
+  });
+  track.addEventListener('pointermove', e => {
+    if (dragFrom === null) return;
+    const p = posOf(e);
+    slLoopA = Math.min(dragFrom, p); slLoopB = Math.max(dragFrom, p);
+    slDrawRegion();
+  });
+  track.addEventListener('pointerup', e => {
+    if (dragFrom === null) return;
+    if (slLoopB - slLoopA < 0.4){        // a tap = seek, not a loop
+      slLoopA = 0; slLoopB = slDur;
+      const a = slAudio(); a.currentTime = posOf(e);
+    } else {
+      const a = slAudio(); a.currentTime = slLoopA;
+    }
+    dragFrom = null;
+    slDrawRegion();
+  });
+  document.getElementById('sl-toggle').addEventListener('click', () => {
+    const a = slAudio();
+    if (a.paused){
+      a.playbackRate = slRate;
+      if (slLoopB && (a.currentTime < slLoopA || a.currentTime >= slLoopB)) a.currentTime = slLoopA;
+      a.play();
+      document.getElementById('sl-toggle').innerHTML = '&#9208; Pause';
+    } else {
+      a.pause();
+      document.getElementById('sl-toggle').innerHTML = '&#9654; Play';
+    }
+  });
+  const setRate = d => {
+    slRate = Math.max(0.5, Math.min(1, +(slRate + d).toFixed(2)));
+    document.getElementById('sl-rate').textContent = slRate + '×';
+    if (slAu) slAu.playbackRate = slRate;
+  };
+  document.getElementById('sl-slower').addEventListener('click', () => setRate(-0.25));
+  document.getElementById('sl-faster').addEventListener('click', () => setRate(0.25));
+  document.getElementById('sl-clear').addEventListener('click', () => {
+    slLoopA = 0; slLoopB = slDur; slDrawRegion();
+  });
+})();
+
+/* ---------- chroma analysis ---------- */
+function slFFT(re, im){
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++){
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j){ let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; }
+  }
+  for (let len = 2; len <= n; len <<= 1){
+    const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for (let i = 0; i < n; i += len){
+      let cr = 1, ci = 0;
+      for (let k = 0; k < len / 2; k++){
+        const ur = re[i+k], ui = im[i+k];
+        const vr = re[i+k+len/2]*cr - im[i+k+len/2]*ci;
+        const vi = re[i+k+len/2]*ci + im[i+k+len/2]*cr;
+        re[i+k] = ur + vr; im[i+k] = ui + vi;
+        re[i+k+len/2] = ur - vr; im[i+k+len/2] = ui - vi;
+        const ncr = cr*wr - ci*wi; ci = cr*wi + ci*wr; cr = ncr;
+      }
+    }
+  }
+}
+/* Chroma with a separate bass band. The bass is what makes root detection
+   work; the full band is what tells major from minor. */
+function slChroma(buf, sr){
+  const ds = new Float32Array(Math.floor(buf.length / 4));   // downsample: chords live low
+  for (let i = 0; i < ds.length; i++)
+    ds[i] = (buf[4*i] + buf[4*i+1] + buf[4*i+2] + buf[4*i+3]) / 4;
+  const rate = sr / 4, N = 8192, HOP = 2048;
+  const win = new Float32Array(N);
+  for (let i = 0; i < N; i++) win[i] = 0.5 - 0.5 * Math.cos(2*Math.PI*i/(N-1));
+  const pcOf = new Int8Array(N/2), isBass = new Uint8Array(N/2);
+  for (let b = 1; b < N/2; b++){
+    const f = b * rate / N;
+    if (f < 58 || f > 1100){ pcOf[b] = -1; continue; }
+    pcOf[b] = ((Math.round(69 + 12*Math.log2(f/440)) % 12) + 12) % 12;
+    isBass[b] = f < 260 ? 1 : 0;
+  }
+  const re = new Float32Array(N), im = new Float32Array(N);
+  const agg = new Float32Array(12), bass = new Float32Array(12);
+  let frames = 0;
+  for (let s = 0; s + N <= ds.length; s += HOP){
+    for (let i = 0; i < N; i++){ re[i] = ds[s+i] * win[i]; im[i] = 0; }
+    slFFT(re, im);
+    const ch = new Float32Array(12), bs = new Float32Array(12);
+    for (let b = 1; b < N/2; b++){
+      const pc = pcOf[b];
+      if (pc < 0) continue;
+      const m = Math.hypot(re[b], im[b]);
+      ch[pc] += m;
+      if (isBass[b]) bs[pc] += m;
+    }
+    const norm = a => { let mx = 0; for (let i=0;i<12;i++) mx = Math.max(mx, a[i]);
+                        if (mx > 0) for (let i=0;i<12;i++) a[i] /= mx; };
+    norm(ch); norm(bs);
+    for (let p = 0; p < 12; p++){ agg[p] += ch[p]; bass[p] += bs[p]; }
+    frames++;
+  }
+  for (let p = 0; p < 12; p++){ agg[p] /= frames || 1; bass[p] /= frames || 1; }
+  return {agg, bass};
+}
+/* Krumhansl–Schmuckler key profiles */
+const SL_KMAJ = [6.35,2.23,3.48,2.33,4.38,4.09,2.52,5.19,2.39,3.66,2.29,2.88];
+const SL_KMIN = [6.33,2.68,3.52,5.38,2.60,3.53,2.54,4.75,3.98,2.69,3.34,3.17];
+function slCorr(a, b){
+  const ma = a.reduce((x,y)=>x+y,0)/12, mb = b.reduce((x,y)=>x+y,0)/12;
+  let n = 0, da = 0, db = 0;
+  for (let i = 0; i < 12; i++){ const x = a[i]-ma, y = b[i]-mb; n += x*y; da += x*x; db += y*y; }
+  return n / (Math.sqrt(da*db) || 1);
+}
+function slKeyGuess(agg){
+  let best = null;
+  for (let r = 0; r < 12; r++)
+    [[SL_KMAJ,false],[SL_KMIN,true]].forEach(([prof, minor]) => {
+      const rot = Array.from({length:12}, (_, i) => prof[(i - r + 12) % 12]);
+      const s = slCorr(Array.from(agg), rot);
+      if (!best || s > best.fit) best = {root:r, minor, fit:s};
+    });
+  return best;
+}
+/* Measured against songs with known chords: the top 2–3 bass roots and their
+   major/minor call came out right; extensions never did. So that's all we claim. */
+function slRootReport(mono, sampleRate){
+  const {agg, bass} = slChroma(mono, sampleRate);
+  const key = slKeyGuess(agg);
+  const order = Array.from(bass.keys()).sort((a,b) => bass[b] - bass[a]);
+  const top = order.slice(0, 4).map(pc => {
+    const M = agg[(pc+4)%12], m = agg[(pc+3)%12];
+    const diff = (M - m) / Math.max(M, m, 0.001);
+    return {pc, strength: bass[pc],
+            quality: Math.abs(diff) < 0.12 ? '?' : (M > m ? 'maj' : 'm')};
+  });
+  return {key, top};
+}
+function slChordName(root, q){
+  const NN = FLAT_KEYS.has(root) ? FLATS : SHARPS;
+  return NN[root] + (q === 'maj' ? '' : q === '?' ? '' : q);
+}
+document.getElementById('sl-run').addEventListener('click', async () => {
+  const btn = document.getElementById('sl-run');
+  if (!slPick || !slPick.preview) return;
+  btn.disabled = true; btn.textContent = 'Listening…';
+  try{
+    const ab = await (await fetch(slPick.preview)).arrayBuffer();
+    const audio = await ensureCtx().decodeAudioData(ab);
+    const rep = slRootReport(audio.getChannelData(0), audio.sampleRate);
+    const NN = FLAT_KEYS.has(rep.key.root) ? FLATS : SHARPS;
+    const box = document.getElementById('sl-guesses');
+    box.innerHTML = '';
+    const maxS = rep.top[0] ? rep.top[0].strength : 1;
+    rep.top.forEach((r, i) => {
+      const pct = Math.round(100 * r.strength / (maxS || 1));
+      const row = document.createElement('div');
+      row.className = 'sl-grow';
+      row.innerHTML = `<span class="sl-time">${i < 2 ? 'likely' : 'maybe'}</span>
+        <span class="sl-gc">${slChordName(r.pc, r.quality)}</span>
+        <span class="sl-bar"><i class="${i < 2 ? '' : 'low'}" style="width:${Math.max(6,pct)}%"></i></span>
+        <span class="sl-pct">${r.quality === '?' ? '?' : r.quality === 'm' ? 'min' : 'maj'}</span>`;
+      box.appendChild(row);
+    });
+    const fit = rep.key.fit;
+    const keyLine = `${NN[rep.key.root]}${rep.key.minor ? ' minor' : ' major'}`;
+    document.getElementById('sl-warn').innerHTML =
+      `<b>Key looks like ${keyLine}</b>${fit < 0.8 ? ' — but the fit is weak, so treat it as a hint' : ''}. ` +
+      `The top two roots are usually right; the greyed ones often aren\'t. ` +
+      `<b>Extensions don\'t show up at all</b> — if it sounds dreamier than a plain triad it\'s probably a maj7 or m7, ` +
+      `and only your ear can call that. Loop it below and check.`;
+    document.getElementById('sl-guessbox').hidden = false;
+    document.getElementById('sl-looper').hidden = false;
+    slDrawRegion();
+    // A/B: hear each candidate against the loop, both flavours
+    const row = document.getElementById('sl-abrow');
+    row.innerHTML = '<span class="sl-sp" style="width:100%">Play these against the loop — keep what matches:</span>';
+    rep.top.slice(0, 3).forEach(r => {
+      [['', 'maj'], ['m', 'm'], ['maj7', 'maj7'], ['m7', 'm7']].forEach(([suf, q]) => {
+        const nm = NN[r.pc] + suf;
+        const b = document.createElement('button');
+        b.textContent = nm;
+        b.addEventListener('click', () => {
+          const c = slParse(nm);
+          if (c) slStrum(slShape(c), 0, 0.03, 0.5);
+        });
+        row.appendChild(b);
+      });
+    });
+    document.getElementById('sl-use').onclick = () => {
+      const seq = rep.top.slice(0, 3).map(r => slChordName(r.pc, r.quality));
+      const f = document.getElementById('sl-f-chords');
+      f.value = seq.join(' ');
+      f.dispatchEvent(new Event('input'));
+    };
+  }catch(err){
+    document.getElementById('sl-warn').textContent =
+      'Could not analyse that preview (' + err.message + '). The looper still works.';
+    document.getElementById('sl-guessbox').hidden = false;
+    document.getElementById('sl-looper').hidden = false;
+  }
+  btn.disabled = false;
+  btn.innerHTML = '&#127911;&nbsp; Listen &amp; find the roots';
+});
 
 /* ---------- offline support (only active when hosted over https) ---------- */
 if ('serviceWorker' in navigator && location.protocol === 'https:')
