@@ -944,6 +944,12 @@
     border-radius:50%;border:1px dashed var(--root-soft)}
   #pk-grid .cell.has:hover::after{display:none}
   #pk-grid .slabel.off{opacity:.35}
+  #pk-grid .pkbar{position:absolute;left:50%;transform:translateX(-50%);width:34px;top:0;bottom:0;
+    background:var(--scale);box-shadow:0 0 12px var(--glow-scale);z-index:1}
+  #pk-grid .bar-top .pkbar{border-top-left-radius:17px;border-top-right-radius:17px}
+  #pk-grid .bar-bot .pkbar{border-bottom-left-radius:17px;border-bottom-right-radius:17px}
+  #pk-grid .bardot{background:transparent;box-shadow:none}
+  #pk-barre.armed{background:var(--root);border-color:transparent;color:var(--bg);font-weight:800}
   .pk-cell .pkd{width:28px;height:28px;border-radius:50%;background:var(--scale);
     display:none;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;
     color:#fff;line-height:1}
@@ -1505,13 +1511,14 @@
 
     <div class="pk-sec">
       <div class="pk-h">1 &middot; Lay the chord on the neck</div>
-      <p class="pk-why">The whole neck, same as everywhere else in the app. <b>Tap where each finger goes</b> — one dot per string. The <b>0</b> column on the left means that string rings open. Tap a dot again to take that string out.</p>
+      <p class="pk-why">The whole neck, same as everywhere else in the app. <b>Tap where each finger goes</b> — one dot per string. The <b>0</b> column on the left means that string rings open, and tapping a dot again takes that string out.<br><b>Playing a barre chord?</b> Hit <b>Add a barre</b>, then tap the fret on the lowest string you're barring — it lays the bar across everything above it in one go. Add your other fingers on top as normal.</p>
       <div class="board">
         <div class="grid" id="pk-grid"></div>
         <div class="frets" id="pk-fretnums"></div>
       </div>
       <div class="pk-readout" id="pk-readout"></div>
       <div class="pk-row">
+        <button id="pk-barre">&#9647;&nbsp; Add a barre</button>
         <button id="pk-hear">&#9654;&nbsp; Hear it</button>
         <button class="primary" id="pk-add">Add to the progression</button>
         <button id="pk-clear">Clear</button>
@@ -6020,22 +6027,37 @@ function pkIdentify(frets){
           name, display: noteFmt(pkNote(best.root)) + best.suf + (slash ? '/' + noteFmt(pkNote(bass)) : '')};
 }
 
-let pkFrets = [-1,-1,-1,-1,-1,-1], pkChords = [], pkBuilt = false;
+/* pkFrets[s]: -1 nothing, -2 deliberately muted, >=0 a finger at that fret.
+   pkBarre lays one finger flat from string `from` up through the high e. */
+let pkFrets = [-1,-1,-1,-1,-1,-1], pkBarre = null, pkArm = false;
+let pkChords = [], pkBuilt = false;
 
 /* STRINGS runs high-e first; pkFrets runs low-E first, so the rows flip */
 const pkStr = si => 5 - si;
+const pkBarred = s => !!pkBarre && s >= pkBarre.from && s <= 5 && pkFrets[s] !== -2;
+/* what the guitar actually sounds: fingers win, the barre fills in the rest */
+function pkEff(){
+  return pkFrets.map((f, s) => f === -2 ? -1 : f >= 0 ? f : (pkBarred(s) ? pkBarre.fret : -1));
+}
 function pkRenderBoard(){
   const grid = document.getElementById('pk-grid');
+  const eff = pkEff();
   let h = '';
   STRINGS.forEach((st, si) => {
     const s = pkStr(si);
-    h += `<div class="slabel${pkFrets[s] < 0 ? ' off' : ''}">${st.lbl}</div>`;
+    h += `<div class="slabel${eff[s] < 0 ? ' off' : ''}">${st.lbl}</div>`;
     for (let f = 0; f <= FRETS; f++){
-      const on = pkFrets[s] === f;
-      h += `<div class="cell${f === 0 ? ' fret0' : ''}${f === 1 ? ' nut' : ''}${on ? ' has' : ''}"`
-         + ` data-s="${s}" data-f="${f}">`
-         + (on ? `<div class="dot">${f === 0 ? '&#9711;' : f}</div>` : '')
-         + '</div>';
+      const bar = pkBarred(s) && f === pkBarre.fret;
+      const on  = pkFrets[s] === f;
+      let cls = 'cell' + (f === 0 ? ' fret0' : '') + (f === 1 ? ' nut' : '') + (on || bar ? ' has' : '');
+      if (bar) cls += ' pk-barre'
+        + (pkBarred(s + 1) ? '' : ' bar-top')      // s+1 renders directly above
+        + (pkBarred(s - 1) ? '' : ' bar-bot');
+      let inner = '';
+      if (bar) inner = '<div class="pkbar"></div>'
+        + (s === pkBarre.from ? `<div class="dot bardot">${f === 0 ? '&#9711;' : f}</div>` : '');
+      else if (on) inner = `<div class="dot">${f === 0 ? '&#9711;' : f}</div>`;
+      h += `<div class="${cls}" data-s="${s}" data-f="${f}">${inner}</div>`;
     }
   });
   grid.innerHTML = h;
@@ -6048,7 +6070,7 @@ function pkRenderBoard(){
 }
 function pkReadout(){
   const el = document.getElementById('pk-readout');
-  const id = pkIdentify(pkFrets);
+  const id = pkIdentify(pkEff());
   document.getElementById('pk-add').disabled = !id || id.twoNote;
   if (!id){
     el.innerHTML = '<div class="pk-hint">Tap in at least two notes and I\'ll name it.</div>';
@@ -6062,8 +6084,30 @@ function pkReadout(){
   el.innerHTML = `<div class="pk-name">${id.display}</div><div class="pk-sub">${line}</div>`;
 }
 function pkSetCell(s, f){
-  pkFrets[s] = (pkFrets[s] === f) ? -1 : f;      // tapping the same dot takes the string out
+  if (pkArm){                                    // armed: this tap lays the barre
+    pkArm = false;
+    const same = pkBarre && pkBarre.fret === f && pkBarre.from === s;
+    pkBarre = same ? null : {fret:f, from:s};
+    if (pkBarre)                                 // fingers at or under the bar are now redundant
+      pkFrets = pkFrets.map((v, i) => (i >= pkBarre.from && v >= 0 && v <= pkBarre.fret) ? -1 : v);
+    pkBarreBtn();
+    pkRenderBoard();
+    return;
+  }
+  if (pkBarre && s >= pkBarre.from && f === pkBarre.fret){
+    pkFrets[s] = pkFrets[s] === -2 ? -1 : -2;    // tap the bar itself to mute/unmute that string
+  } else {
+    pkFrets[s] = (pkFrets[s] === f) ? -1 : f;    // tapping the same dot takes the string out
+  }
   pkRenderBoard();
+}
+function pkBarreBtn(){
+  const b = document.getElementById('pk-barre');
+  if (!b) return;
+  b.classList.toggle('armed', pkArm);
+  b.innerHTML = pkArm    ? 'Tap where the bar goes&nbsp; &#10005;'
+              : pkBarre  ? 'Remove the barre'
+              :            '&#9647;&nbsp; Add a barre';
 }
 
 /* ---- the progression strip ---- */
@@ -6236,17 +6280,24 @@ function buildPocket(){
     const c = e.target.closest('.cell');
     if (c) pkSetCell(+c.dataset.s, +c.dataset.f);
   });
-  document.getElementById('pk-hear').addEventListener('click', () => slStrum(pkFrets, 0, 0.035, 0.5));
-  document.getElementById('pk-clear').addEventListener('click', () => {
-    pkFrets = [-1,-1,-1,-1,-1,-1]; pkRenderBoard();
+  document.getElementById('pk-hear').addEventListener('click', () => slStrum(pkEff(), 0, 0.035, 0.5));
+  document.getElementById('pk-barre').addEventListener('click', () => {
+    if (pkBarre && !pkArm){ pkBarre = null; }     // there's one already: this clears it
+    else pkArm = !pkArm;
+    pkBarreBtn(); pkRenderBoard();
   });
+  const pkWipe = () => {
+    pkFrets = [-1,-1,-1,-1,-1,-1]; pkBarre = null; pkArm = false;
+    pkBarreBtn(); pkRenderBoard();
+  };
+  document.getElementById('pk-clear').addEventListener('click', pkWipe);
   document.getElementById('pk-add').addEventListener('click', () => {
-    const id = pkIdentify(pkFrets);
+    const eff = pkEff();
+    const id = pkIdentify(eff);
     if (!id || id.twoNote) return;
     pkChords.push({root:id.root, quality:id.quality, name:id.name,
-                   display:id.display, frets:pkFrets.slice()});
-    pkFrets = [-1,-1,-1,-1,-1,-1];
-    pkRenderBoard(); pkRenderStrip();
+                   display:id.display, frets:eff});
+    pkWipe(); pkRenderStrip();
   });
   document.getElementById('pk-reset').addEventListener('click', () => {
     pkChords = []; pkRenderStrip();
@@ -6254,7 +6305,7 @@ function buildPocket(){
   document.getElementById('pk-play').addEventListener('click', () => {
     pkChords.forEach((c, i) => slStrum(c.frets, i * 1.05, 0.03, 0.45));
   });
-  pkRenderBoard(); pkRenderStrip();
+  pkBarreBtn(); pkRenderBoard(); pkRenderStrip();
 }
 
 /* ---------- offline support (only active when hosted over https) ---------- */
