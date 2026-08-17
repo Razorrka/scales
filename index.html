@@ -954,6 +954,14 @@
   #pk-grid .bar-bot .pkbar{border-bottom-left-radius:17px;border-bottom-right-radius:17px}
   #pk-grid .bardot{background:transparent;box-shadow:none}
   #pk-barre.armed{background:var(--root);border-color:transparent;color:var(--bg);font-weight:800}
+  .pk-poswrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+  .pk-poslab{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .pk-poschips{display:flex;flex-wrap:wrap;gap:6px}
+  .pk-poschips button{font:inherit;font-size:12.5px;font-weight:700;color:var(--muted);
+    background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    padding:6px 12px;cursor:pointer}
+  .pk-poschips button:hover{border-color:var(--scale);color:var(--ink)}
+  .pk-poschips button.on{background:var(--scale);border-color:transparent;color:var(--bg)}
   .pk-cell .pkd{width:28px;height:28px;border-radius:50%;background:var(--scale);
     display:none;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;
     color:#fff;line-height:1}
@@ -1542,6 +1550,10 @@
     <div class="pk-sec" id="pk-pocketsec" hidden>
       <div class="pk-h">3 &middot; The pocket you're in</div>
       <p class="pk-why" id="pk-keyline"></p>
+      <div class="pk-poswrap">
+        <span class="pk-poslab">Voice them around</span>
+        <div class="pk-poschips" id="pk-poschips"></div>
+      </div>
       <div id="pk-suggest"></div>
     </div>
   </div><!-- /view-pocket -->
@@ -6172,6 +6184,54 @@ const PK_WHY_MIN = [
   'warm, open lift out of the gloom',
   'steps down to the 6th or straight back up to home',
 ];
+/* Every shape a chord can take on this neck: the open one if it has a name
+   we know, plus the movable E-shape and A-shape at each octave that fits. */
+function pkVoicings(ch){
+  const out = [];
+  const open = SL_OPEN[ch.name];
+  if (open) out.push(open.map(f => f === null ? -1 : f));
+  [6, 5].forEach(rs => {
+    const shape = SL_MOV[rs][ch.quality];
+    if (!shape) return;
+    const openPc = rs === 6 ? 4 : 9;
+    let rf = (ch.pc - openPc + 12) % 12;
+    if (rf === 0) rf = 12;
+    [rf, rf + 12].forEach(base => {
+      const frets = shape.map(o => o === null ? -1 : o + base);
+      if (Math.max(...frets) > FRETS) return;
+      out.push(frets);
+    });
+  });
+  return out;
+}
+const pkCentre = fr => {
+  const f = fr.filter(x => x > 0);
+  return f.length ? (Math.min(...f) + Math.max(...f)) / 2 : 0;
+};
+/* pick the voicing sitting closest to where they're actually playing */
+function pkShapeNear(ch, target){
+  const vs = pkVoicings(ch);
+  if (!vs.length) return null;
+  if (target == null) return vs[0];
+  let best = null;
+  vs.forEach(v => {
+    const d = Math.abs(pkCentre(v) - target);
+    if (!best || d < best.d) best = {v, d};
+  });
+  return best.v;
+}
+/* where they are on the neck: the median fretted note across their chords,
+   which shrugs off one stray finger in a way an average wouldn't */
+function pkPos(){
+  const fr = [];
+  pkChords.forEach(c => c.frets.forEach(f => { if (f > 0) fr.push(f); }));
+  if (!fr.length) return null;
+  fr.sort((a, b) => a - b);
+  return fr[Math.floor(fr.length / 2)];
+}
+let pkPosSel = 'auto';
+const pkTarget = () => pkPosSel === 'auto' ? pkPos() : (pkPosSel === 0 ? 0 : pkPosSel);
+
 /* the seventh each scale degree actually gets — a G in A minor is G7, not Gmaj7 */
 const PK_MAJ_7 = ['maj7','m7','m7','maj7','7','m7','m7b5'];
 const PK_MIN_7 = ['m7','m7b5','maj7','m7','m7','maj7','7'];
@@ -6243,10 +6303,22 @@ function pkRenderPocket(){
   sec.hidden = false;
   const kn = noteFmt(pkNote(key.root)) + (key.minor ? ' minor' : ' major');
   const rel = key.minor ? (key.root + 3) % 12 : (key.root + 9) % 12;
+  const auto = pkPos();
+  const target = pkTarget();
   document.getElementById('pk-keyline').innerHTML =
     `Those chords sit in <b>${kn}</b> — its relative ${key.minor ? 'major' : 'minor'} is ` +
     `<b>${noteFmt(pkNote(rel))}${key.minor ? '' : ' minor'}</b>, which shares every note. ` +
-    `Tap any chord below to hear it.`;
+    `Tap any chord below to hear it.` +
+    (target
+      ? ` The shapes are drawn <b>around fret ${target}</b>` +
+        (pkPosSel === 'auto' ? `, near where you're playing.` : `.`)
+      : ` The shapes are drawn in <b>open position</b>.`) +
+    ` Move them up or down the neck below.`;
+  const chips = document.getElementById('pk-poschips');
+  const opts = [['auto', auto == null ? 'Auto' : 'Auto (fret ' + auto + ')'], [0, 'Open'],
+                [3, '3rd'], [5, '5th'], [7, '7th'], [9, '9th'], [12, '12th']];
+  chips.innerHTML = opts.map(([v, l]) =>
+    `<button data-pos="${v}" class="${pkPosSel === v ? 'on' : ''}">${l}</button>`).join('');
   const wrap = document.getElementById('pk-suggest');
   wrap.innerHTML = '';
   pkSuggest(key).forEach(g => {
@@ -6259,7 +6331,7 @@ function pkRenderPocket(){
     g.items.forEach(it => {
       const nm = pkNote(it.root) + (PK_SUFFIX[it.quality] !== undefined ? PK_SUFFIX[it.quality] : it.quality);
       const ch = slParse(nm);
-      const fr = ch ? slShape(ch) : null;
+      const fr = ch ? pkShapeNear(ch, pkTarget()) : null;
       if (!fr) return;
       const rn = slRoman({pc:it.root, quality:it.quality}, key);
       const d = document.createElement('div');
@@ -6281,6 +6353,12 @@ const PK_SUFFIX = {'maj':'','m':'m','7':'7','m7':'m7','maj7':'maj7','dim':'dim',
 function buildPocket(){
   if (pkBuilt){ pkRenderBoard(); pkRenderStrip(); return; }
   pkBuilt = true;
+  document.getElementById('pk-poschips').addEventListener('click', e => {
+    const b = e.target.closest('[data-pos]');
+    if (!b) return;
+    pkPosSel = b.dataset.pos === 'auto' ? 'auto' : +b.dataset.pos;
+    pkRenderPocket();
+  });
   document.getElementById('pk-grid').addEventListener('click', e => {
     const c = e.target.closest('.cell');
     if (c) pkSetCell(+c.dataset.s, +c.dataset.f);
@@ -6318,7 +6396,7 @@ function buildPocket(){
    most confusing failure there is: the site updates and the app doesn't. The
    worker below checks for a new version on every load and whenever the app
    comes back to the foreground, then reloads itself once when one arrives. */
-const APP_BUILD = '202608162055';
+const APP_BUILD = '202608170229';
 const verEl = document.getElementById('verline');
 function verShow(msg){
   verEl.textContent = msg || ('build ' + APP_BUILD + ' · tap to check for updates');
