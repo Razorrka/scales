@@ -991,6 +991,85 @@
   .pk-sn{font-weight:800;font-size:15px;color:var(--ink)}
   .pk-sr{font-size:11px;font-weight:700;color:var(--root);letter-spacing:.04em}
   .pk-sw{font-size:11.5px;color:var(--muted);line-height:1.4;margin-top:3px}
+
+  /* ---------- down the neck ---------- */
+  .nk-lead{color:var(--muted);font-size:14px;max-width:62ch;line-height:1.6}
+  .nk-key{display:inline-flex;align-items:center;gap:8px;background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-weight:700;font-size:14px}
+  .nk-key b{color:var(--root)}
+  .nk-key button{background:none;border:none;color:var(--muted);font:inherit;font-size:12px;
+    cursor:pointer;padding:2px 4px;min-height:auto}
+  .nk-key button:hover{color:var(--ink)}
+  .nk-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0 6px}
+  @media (max-width:640px){ .nk-bar{padding-right:52px} }   /* clear the fixed theme orb */
+  .nk-steps{display:flex;gap:5px;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;padding:5px}
+  .nk-steps button{min-width:40px;min-height:40px;padding:0 6px;font:inherit;font-weight:800;font-size:14px;
+    background:none;border:none;border-radius:8px;color:var(--muted);cursor:pointer;transition:all .14s}
+  .nk-steps button:hover{color:var(--ink)}
+  .nk-steps button.on{background:var(--panel-2);color:var(--ink)}
+  .nk-steps button.wide{min-width:auto;padding:0 13px;font-weight:700}
+  .nk-board{background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line);border-radius:16px;padding:16px 8px 10px;box-shadow:var(--shadow);
+    overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .nk-grid{display:grid;grid-template-columns:30px repeat(18,minmax(34px,1fr));min-width:660px}
+  .nk-sl{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+    color:var(--muted)}
+  .nk-c{position:relative;height:44px;display:flex;align-items:center;justify-content:center;
+    border-left:1px solid var(--line)}
+  .nk-c::before{content:"";position:absolute;left:0;right:0;top:50%;height:1.5px;
+    background:var(--line);opacity:.7}
+  .nk-c.f0{border-left:none}
+  .nk-c.nut{border-left:4px solid var(--muted)}
+  .nk-d{position:relative;z-index:2;width:30px;height:30px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
+    cursor:pointer;transition:transform .12s}
+  .nk-d:hover{transform:scale(1.15)}
+  .nk-d.dim{background:transparent;border:1px solid var(--line);color:var(--muted);opacity:.5}
+  .nk-d.in{background:var(--scale);color:#fff}
+  .nk-d.root{background:var(--root);color:#2a1400}
+  .nk-d.share{box-shadow:0 0 0 3px var(--root-soft,rgba(242,166,90,.5))}
+  .nk-d.extra{width:22px;height:22px;font-size:10px;background:transparent;
+    border:2px dashed var(--scale);color:var(--scale)}
+  .nk-d.pick{box-shadow:0 0 0 3px var(--ink)}
+  .nk-d.oct{box-shadow:0 0 0 3px var(--scale);opacity:1}
+  .nk-fr{display:grid;grid-template-columns:30px repeat(18,minmax(34px,1fr));min-width:660px;margin-top:5px}
+  .nk-fn{text-align:center;font-size:11px;color:var(--muted);position:relative;height:20px}
+  .nk-fn.inl::after{content:"";position:absolute;left:50%;bottom:1px;transform:translateX(-50%);
+    width:5px;height:5px;border-radius:50%;background:var(--line)}
+  .nk-fn.hl{color:var(--root);font-weight:800}
+  .nk-say{margin-top:14px;font-size:15px;line-height:1.6}
+  .nk-say b{color:var(--root)}
+  .nk-leg{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;font-size:12.5px;color:var(--muted);
+    align-items:center}
+  .nk-chip{display:inline-flex;align-items:center;gap:7px}
+  .nk-sw{width:13px;height:13px;border-radius:50%}
+  .nk-sw.d{background:transparent;border:2px dashed var(--scale)}
+  .nk-sec{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--line);
+    border-radius:16px;padding:20px;margin-top:16px;box-shadow:var(--shadow)}
+  .nk-sec h3{margin:0 0 6px;font-size:17px}
+  .nk-sec p{color:var(--muted);font-size:14px;line-height:1.65;margin:0 0 12px;max-width:66ch}
+  .nk-sec p b{color:var(--ink)}
+  .nk-rule{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;padding:12px 14px;margin-bottom:9px}
+  .nk-rule .r-n{font-size:21px;font-weight:800;color:var(--root);min-width:62px;text-align:center;line-height:1.1}
+  .nk-rule .r-n small{display:block;font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.05em}
+  .nk-rule .r-t{font-size:13.5px;line-height:1.5;color:var(--ink)}
+  .nk-rule .r-t span{color:var(--muted)}
+  /* daily card */
+  .nk-today{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+  .nk-streak{display:inline-flex;align-items:center;gap:7px;background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:700}
+  .nk-streak b{color:var(--root);font-size:16px}
+  .nk-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .nk-q{font-size:17px;font-weight:700;line-height:1.45;margin-bottom:4px}
+  .nk-hint{font-size:13px;color:var(--muted);margin-bottom:14px}
+  .nk-ans{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+  .nk-ans button{min-height:44px}
+  .nk-fb{margin-top:14px;font-size:14.5px;line-height:1.55}
+  .nk-fb.ok{color:#5ec98a}
+  .nk-fb.no{color:var(--root)}
+  .nk-done{font-size:14.5px;line-height:1.6;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -1069,6 +1148,7 @@
         <div class="tf-glab">Fretboard</div>
         <div class="tf-items">
           <button class="tab" data-tab="explore" data-label="Explore"><span class="tf-e">&#127928;</span><span class="tf-t"><span class="tf-n">Explore</span><span class="tf-d">scales on the neck</span></span></button>
+          <button class="tab" data-tab="neck" data-label="Down the Neck"><span class="tf-e">&#129518;</span><span class="tf-t"><span class="tf-n">Down the Neck</span><span class="tf-d">all 5 positions, connected</span></span></button>
           <button class="tab" data-tab="map" data-label="Map"><span class="tf-e">&#128506;&#65039;</span><span class="tf-t"><span class="tf-n">Map</span><span class="tf-d">every note, memorised</span></span></button>
           <button class="tab" data-tab="intervals" data-label="Intervals"><span class="tf-e">&#128207;</span><span class="tf-t"><span class="tf-n">Intervals</span><span class="tf-d">the distance between notes</span></span></button>
           <button class="tab" data-tab="quiz" data-label="Neck quiz"><span class="tf-e">&#127919;</span><span class="tf-t"><span class="tf-n">Neck quiz</span><span class="tf-d">drill what you know</span></span></button>
@@ -1162,6 +1242,82 @@
 
   <p class="hint">Hover or tap any dot to hear the actual note.</p>
   </div><!-- /view-explore -->
+
+
+  <div id="view-neck" hidden>
+    <p class="nk-lead">Five positions, one neck. The thing nobody shows you is that
+      <b>each position shares half its notes with the next one</b> &mdash; so this isn't five
+      shapes to memorise, it's one shape sliding up. Step through them below and watch the overlap.</p>
+
+    <div class="nk-bar">
+      <span class="nk-key" id="nk-key"></span>
+      <div class="nk-steps" id="nk-steps">
+        <button data-p="1">1</button><button data-p="2">2</button><button data-p="3">3</button>
+        <button data-p="4">4</button><button data-p="5">5</button>
+        <button class="wide" data-p="all">All five</button>
+      </div>
+      <div class="nk-steps">
+        <button class="wide" id="nk-ov">Show the door</button>
+        <button class="wide" id="nk-ex">+2 notes</button>
+      </div>
+    </div>
+
+    <div class="nk-board">
+      <div class="nk-grid" id="nk-grid"></div>
+      <div class="nk-fr" id="nk-frets"></div>
+    </div>
+    <p class="nk-say" id="nk-say"></p>
+    <div class="nk-leg">
+      <span class="nk-chip"><span class="nk-sw" style="background:var(--root)"></span> root</span>
+      <span class="nk-chip"><span class="nk-sw" style="background:var(--scale)"></span> in this position</span>
+      <span class="nk-chip"><span class="nk-sw d"></span> the 2 extra notes</span>
+      <span class="nk-chip">ring = shared with the next position</span>
+    </div>
+    <div class="nk-bar"><button id="nk-play">&#9654;&nbsp; Play this position</button>
+      <button id="nk-playall">&#9654;&nbsp; Run all five, bottom to top</button></div>
+
+    <div class="nk-sec">
+      <h3>Stop memorising pictures &mdash; learn two rules</h3>
+      <p>Every root on the neck is reachable from another root by one of these. Learn these two
+        and you stop needing to remember where anything is; you work it out in a second.
+        Tap any root on the board above and the octave partners light up.</p>
+      <div class="nk-rule">
+        <div class="r-n">+2<small>STRINGS</small></div>
+        <div class="r-t"><b>+2 frets = the same note, an octave up.</b>
+          <span>Works from the low E to the D string, and from the A to the G.</span></div>
+      </div>
+      <div class="nk-rule">
+        <div class="r-n">+2<small>STRINGS</small></div>
+        <div class="r-t"><b>+3 frets &mdash; but only crossing the B string.</b>
+          <span>D&rarr;B and G&rarr;high&nbsp;e need one extra fret, because the B string is tuned
+          a half step closer. That one exception is the whole catch.</span></div>
+      </div>
+      <p style="margin-top:12px">Same note on the <b>next string up</b>? Go <b>5 frets back</b>
+        &mdash; 4 frets for G&rarr;B. Same exception, same reason.</p>
+    </div>
+
+    <div class="nk-sec">
+      <h3>The way out of the box: one string at a time</h3>
+      <p>Boxes make you play across the neck. Playing <b>along</b> a single string is what makes it
+        sound like you're travelling instead of sitting still &mdash; and it's the fastest way to stop
+        seeing five separate shapes. Pick a string and play just these, up and back, slowly.</p>
+      <div class="nk-steps" id="nk-ladder" style="margin-bottom:12px"></div>
+      <div class="nk-board"><div class="nk-grid" id="nk-lad-grid" style="min-width:660px"></div></div>
+      <p id="nk-lad-say" style="margin-top:12px;margin-bottom:0"></p>
+    </div>
+
+    <div class="nk-sec" id="nk-daily">
+      <h3>Two minutes</h3>
+      <p>One card. That's the whole ask &mdash; not a practice session. Cards you get right come
+        back later and later; ones you fumble come back tomorrow. This is the part that fixes
+        learning it and then losing it.</p>
+      <div class="nk-today">
+        <span class="nk-streak">&#128293; <b id="nk-st">0</b> day streak</span>
+        <span class="nk-streak" id="nk-due">&mdash;</span>
+      </div>
+      <div class="nk-card" id="nk-cardbox"></div>
+    </div>
+  </div><!-- /view-neck -->
 
   <div id="view-map" hidden>
     <p class="sub">Every note on every fret. Tap a note to light up all its spots across the neck — and hear it. Tap a string name on the left to focus just that string.</p>
@@ -4580,8 +4736,9 @@ function buildSheets(){
 }
 
 /* ---------- tabs: folded into one button ---------- */
-const TAB_EMOJI = {explore:'🎸', map:'🗺️', intervals:'📏', neo:'🎹', phrasing:'🎤', rhythm:'🥁', finger:'🖐️', insp:'📖', quiz:'🎯', decoder:'🧭', chords:'✋', songs:'🎵', pocket:'🧩', sheets:'🖨️', notes:'📝'};
+const TAB_EMOJI = {explore:'🎸', neck:'🧭', map:'🗺️', intervals:'📏', neo:'🎹', phrasing:'🎤', rhythm:'🥁', finger:'🖐️', insp:'📖', quiz:'🎯', decoder:'🧭', chords:'✋', songs:'🎵', pocket:'🧩', sheets:'🖨️', notes:'📝'};
 const TAB_VIEWS = {
+  neck:      document.getElementById('view-neck'),
   explore:   document.getElementById('view-explore'),
   map:       document.getElementById('view-map'),
   intervals: document.getElementById('view-intervals'),
@@ -4650,6 +4807,10 @@ function showTab(t){
     document.getElementById('title').textContent = 'Decoder';
     renderDecoder(0);
     updateTape(false);          // tape can only be measured once visible
+  } else if (t === 'neck'){
+    document.getElementById('title').textContent = 'Down the Neck';
+    nkRender();
+    nkRenderCard();
   } else if (t === 'chords'){
     document.getElementById('title').textContent = 'Chord Shapes';
     renderChords();
@@ -6391,12 +6552,488 @@ function buildPocket(){
   pkBarreBtn(); pkRenderBoard(); pkRenderStrip();
 }
 
+
+/* ======================================================================
+   DOWN THE NECK — the 5 positions as one connected map.
+   Positions are DERIVED (12 consecutive scale tones, 2 per string), not
+   recalled from a table; verified offline against the standard shapes.
+   ====================================================================== */
+const NK_MIDI = [40,45,50,55,59,64];                 // low E -> high e
+const NK_LBL  = ['E','A','D','G','B','e'];
+const NK_FRETS = 17;
+const NK_INL = new Set([3,5,7,9,12,15,17]);
+/* pentatonic skeleton + the 2 notes that complete the full scale */
+const NK_SYS = {
+  'minor': {name:'Minor Pentatonic', full:'Natural Minor',
+            pent:[0,3,5,7,10], extra:[2,8]},
+  'major': {name:'Major Pentatonic', full:'Major',
+            pent:[0,2,4,7,9],  extra:[5,11]}
+};
+let nkRoot = 9, nkMode = 'minor', nkPos = 1, nkOverlap = false, nkExtra = false,
+    nkPick = null, nkLadder = 0;
+
+function nkPcs(){
+  const s = NK_SYS[nkMode];
+  return {
+    pent: new Set(s.pent.map(i => (nkRoot + i) % 12)),
+    extra: new Set(s.extra.map(i => (nkRoot + i) % 12))
+  };
+}
+/* a position = 12 consecutive scale tones, 2 per string, from a low-E start fret */
+function nkBox(startFret){
+  const {pent} = nkPcs();
+  const per = []; let last = -1;
+  for (let s = 0; s < 6; s++){
+    const got = [];
+    for (let f = (s === 0 ? startFret : 0); f <= NK_FRETS + 3; f++){
+      if (!pent.has((NK_MIDI[s] + f) % 12)) continue;
+      if (NK_MIDI[s] + f <= last) continue;
+      got.push(f);
+      if (got.length === 2) break;
+    }
+    if (got.length < 2) return null;
+    last = NK_MIDI[s] + got[1];
+    per.push(got);
+  }
+  return per;
+}
+/* the five low-E starting frets, lowest first, inside the playable neck */
+function nkStarts(){
+  const {pent} = nkPcs();
+  const all = [];
+  for (let f = 0; f <= 16; f++) if (pent.has((NK_MIDI[0] + f) % 12)) all.push(f);
+  // position 1 is the one rooted on the root note
+  const rootIdx = all.findIndex(f => (NK_MIDI[0] + f) % 12 === nkRoot);
+  const out = [];
+  for (let k = 0; k < 5; k++){
+    const i = rootIdx + k;
+    if (i < all.length) out.push(all[i]);
+  }
+  // if we ran off the end, wrap to the lower octave so all five always exist
+  while (out.length < 5){
+    const need = 5 - out.length;
+    for (let k = 0; k < need; k++){
+      const i = rootIdx - (need - k);
+      if (i >= 0) out.unshift(all[i]);
+      else out.push(out[out.length-1] + 12);
+    }
+    break;
+  }
+  return out;
+}
+function nkBoxes(){ return nkStarts().map(f => ({start:f, per:nkBox(f)})).filter(b => b.per); }
+function nkSpan(per){
+  let lo = 99, hi = -1;
+  per.forEach(a => a.forEach(f => { lo = Math.min(lo,f); hi = Math.max(hi,f); }));
+  return [lo,hi];
+}
+function nkNames(){ return FLAT_KEYS.has(nkRoot) ? FLATS : SHARPS; }
+
+/* ---------- the board ---------- */
+function nkRender(){
+  const sys = NK_SYS[nkMode], NN = nkNames();
+  const {pent, extra} = nkPcs();
+  const boxes = nkBoxes();
+  const idx = nkPos === 'all' ? -1 : Math.min(nkPos, boxes.length) - 1;
+  const cur = idx >= 0 ? boxes[idx] : null;
+  const nxt = idx >= 0 && idx + 1 < boxes.length ? boxes[idx+1] : null;
+
+  document.getElementById('nk-key').innerHTML =
+    `You're in <b>${NN[nkRoot]} ${nkExtra ? sys.full : sys.name}</b>` +
+    `<button id="nk-cyc" title="Different key">change</button>` +
+    `<button id="nk-flip" title="Major or minor">${nkMode === 'minor' ? 'minor' : 'major'}</button>`;
+  document.getElementById('nk-cyc').onclick = () => {
+    nkRoot = (nkRoot + 7) % 12; nkPick = null; nkRender(); };
+  document.getElementById('nk-flip').onclick = () => {
+    nkMode = nkMode === 'minor' ? 'major' : 'minor'; nkPick = null; nkRender(); };
+
+  document.querySelectorAll('#nk-steps button').forEach(b =>
+    b.classList.toggle('on', String(nkPos) === b.dataset.p));
+  document.getElementById('nk-ov').classList.toggle('on', nkOverlap);
+  document.getElementById('nk-ex').classList.toggle('on', nkExtra);
+
+  const inCur = (s,f) => cur && cur.per[s].includes(f);
+  const inNxt = (s,f) => nxt && nxt.per[s].includes(f);
+
+  // octave + unison partners of a tapped root (the two rules, made visible)
+  const partners = [];
+  if (nkPick){
+    const {s:ps, f:pf} = nkPick;
+    if (ps + 2 <= 5) partners.push({s:ps+2, f:pf + (ps <= 1 ? 2 : 3), why:'octave up'});
+    if (ps - 2 >= 0) partners.push({s:ps-2, f:pf - (ps-2 <= 1 ? 2 : 3), why:'octave down'});
+    if (ps + 1 <= 5) partners.push({s:ps+1, f:pf - (ps === 3 ? 4 : 5), why:'same note'});
+    if (ps - 1 >= 0) partners.push({s:ps-1, f:pf + (ps-1 === 3 ? 4 : 5), why:'same note'});
+  }
+  const isPartner = (s,f) => partners.some(p => p.s === s && p.f === f);
+
+  const grid = document.getElementById('nk-grid');
+  grid.innerHTML = '';
+  for (let s = 0; s < 6; s++){
+    const lab = document.createElement('div');
+    lab.className = 'nk-sl'; lab.textContent = NK_LBL[s];
+    grid.appendChild(lab);
+    for (let f = 0; f <= NK_FRETS; f++){
+      const cell = document.createElement('div');
+      cell.className = 'nk-c' + (f === 0 ? ' f0' : '') + (f === 1 ? ' nut' : '');
+      const pc = (NK_MIDI[s] + f) % 12;
+      const isRoot = pc === nkRoot;
+      const isPent = pent.has(pc), isExtra = extra.has(pc);
+      let show = false, cls = '';
+      if (nkPos === 'all'){
+        if (isPent){ show = true; cls = isRoot ? 'root' : 'in'; }
+        else if (nkExtra && isExtra){ show = true; cls = 'extra'; }
+      } else {
+        if (inCur(s,f)){ show = true; cls = isRoot ? 'root' : 'in'; }
+        else if (nkOverlap && inNxt(s,f)){ show = true; cls = isRoot ? 'root' : 'in'; }
+        else if (nkExtra && isExtra && cur){
+          const [lo,hi] = nkSpan(cur.per);
+          if (f >= lo && f <= hi){ show = true; cls = 'extra'; }
+        }
+        else if (isPent){ show = true; cls = 'dim'; }
+        if (isPartner(s,f)){ show = true; if (cls === 'dim' || !cls) cls = 'in'; }
+      }
+      if (show){
+        const d = document.createElement('div');
+        d.className = 'nk-d ' + cls;
+        if (nkOverlap && inCur(s,f) && inNxt(s,f)) d.classList.add('share');
+        if (nkPick && nkPick.s === s && nkPick.f === f) d.classList.add('pick');
+        if (isPartner(s,f)) d.classList.add('oct');
+        d.textContent = NN[pc];
+        const midi = NK_MIDI[s] + f;
+        d.addEventListener('click', () => {
+          pluck(midi);
+          if (isRoot){ nkPick = nkPick && nkPick.s === s && nkPick.f === f ? null : {s,f,pc}; nkRender(); }
+        });
+        cell.appendChild(d);
+      }
+      grid.appendChild(cell);
+    }
+  }
+  const fr = document.getElementById('nk-frets');
+  fr.innerHTML = '<div></div>';
+  const span = cur ? nkSpan(cur.per) : null;
+  for (let f = 0; f <= NK_FRETS; f++){
+    const n = document.createElement('div');
+    n.className = 'nk-fn' + (NK_INL.has(f) ? ' inl' : '') +
+      (span && f >= span[0] && f <= span[1] ? ' hl' : '');
+    n.textContent = f;
+    fr.appendChild(n);
+  }
+
+  // the sentence under the board
+  const say = document.getElementById('nk-say');
+  if (nkPos === 'all'){
+    say.innerHTML = `Every <b>${NN[nkRoot]} ${nkExtra ? sys.full : sys.name}</b> note on the neck. ` +
+      `Five positions tile this whole thing &mdash; nothing here is outside them.`;
+  } else if (cur){
+    const [lo,hi] = nkSpan(cur.per);
+    const rootStr = NN[(NK_MIDI[0] + cur.start) % 12];
+    let t = `<b>Position ${nkPos}</b> &mdash; frets <b>${lo}&ndash;${hi}</b>, ` +
+            `starting on <b>${rootStr}</b> on the low E string. Two notes per string, twelve notes total.`;
+    if (nxt){
+      const shared = [0,1,2,3,4,5].reduce((n,s) =>
+        n + cur.per[s].filter(f => nxt.per[s].includes(f)).length, 0);
+      const [nlo,nhi] = nkSpan(nxt.per);
+      t += ` It shares <b>${shared} of its 12 notes</b> with position ${nkPos+1} (frets ${nlo}&ndash;${nhi})` +
+           ` &mdash; those are your way across.`;
+    }
+    say.innerHTML = t;
+  }
+  if (nkPick){
+    const {s:ps, f:pf} = nkPick;
+    const bits = [];
+    if (ps + 2 <= 5)
+      bits.push(`<b>${NK_LBL[ps]}&rarr;${NK_LBL[ps+2]}</b>: +2 strings, <b>+${ps <= 1 ? 2 : 3} frets</b> ` +
+        `&rarr; fret ${pf + (ps <= 1 ? 2 : 3)}` + (ps > 1 ? ' (the B-string +3)' : ''));
+    if (ps + 1 <= 5)
+      bits.push(`same note one string up: <b>${pf - (ps === 3 ? 4 : 5)}</b>`);
+    say.innerHTML += `<br><span style="color:var(--muted)">You tapped the ${NN[nkPick.pc]} on the ` +
+      `${NK_LBL[ps]} string, fret ${pf}. ${bits.join(' &nbsp;·&nbsp; ')}. ` +
+      `Tap it again to clear.</span>`;
+  }
+  nkLadderRender();
+}
+document.getElementById('nk-steps').addEventListener('click', e => {
+  const b = e.target.closest('button[data-p]');
+  if (!b) return;
+  nkPos = b.dataset.p === 'all' ? 'all' : +b.dataset.p;
+  nkRender();
+});
+document.getElementById('nk-ov').addEventListener('click', () => { nkOverlap = !nkOverlap; nkRender(); });
+document.getElementById('nk-ex').addEventListener('click', () => { nkExtra = !nkExtra; nkRender(); });
+document.getElementById('nk-play').addEventListener('click', () => {
+  const boxes = nkBoxes();
+  const b = nkPos === 'all' ? boxes[0] : boxes[Math.min(nkPos, boxes.length) - 1];
+  if (!b) return;
+  let i = 0;
+  for (let s = 0; s < 6; s++) b.per[s].forEach(f => pluck(NK_MIDI[s] + f, (i++) * 0.19, 0.45));
+});
+document.getElementById('nk-playall').addEventListener('click', () => {
+  let i = 0;
+  nkBoxes().forEach(b => {
+    for (let s = 0; s < 6; s++) b.per[s].forEach(f => pluck(NK_MIDI[s] + f, (i++) * 0.15, 0.4));
+    i += 1;
+  });
+});
+
+/* ---------- the one-string ladder ---------- */
+function nkLadderRender(){
+  const NN = nkNames(), {pent} = nkPcs();
+  const sel = document.getElementById('nk-ladder');
+  if (sel.children.length !== 6){
+    sel.innerHTML = '';
+    NK_LBL.forEach((l,i) => {
+      const b = document.createElement('button');
+      b.textContent = l; b.dataset.s = i;
+      b.addEventListener('click', () => { nkLadder = i; nkLadderRender(); });
+      sel.appendChild(b);
+    });
+  }
+  [...sel.children].forEach(b => b.classList.toggle('on', +b.dataset.s === nkLadder));
+  const g = document.getElementById('nk-lad-grid');
+  g.innerHTML = '';
+  const lab = document.createElement('div');
+  lab.className = 'nk-sl'; lab.textContent = NK_LBL[nkLadder];
+  g.appendChild(lab);
+  const frets = [];
+  for (let f = 0; f <= NK_FRETS; f++){
+    const cell = document.createElement('div');
+    cell.className = 'nk-c' + (f === 0 ? ' f0' : '') + (f === 1 ? ' nut' : '');
+    const pc = (NK_MIDI[nkLadder] + f) % 12;
+    if (pent.has(pc)){
+      frets.push(f);
+      const d = document.createElement('div');
+      d.className = 'nk-d ' + (pc === nkRoot ? 'root' : 'in');
+      d.textContent = NN[pc];
+      d.addEventListener('click', () => pluck(NK_MIDI[nkLadder] + f));
+      cell.appendChild(d);
+    }
+    g.appendChild(cell);
+  }
+  const gaps = frets.slice(1).map((f,i) => f - frets[i]);
+  document.getElementById('nk-lad-say').innerHTML =
+    `On the <b>${NK_LBL[nkLadder]}</b> string: frets <b>${frets.join(' · ')}</b>. ` +
+    `The jumps are <b>${gaps.join(' · ')}</b> frets &mdash; that repeating gap pattern is the scale itself, ` +
+    `and it's the same on every string. Play it up and back with one finger, slowly.`;
+}
+
+/* ---------- two minutes: spaced recall over neck facts ---------- */
+const NK_SRS_KEY = 'sv-neck-srs', NK_ST_KEY = 'sv-neck-streak';
+const NK_STEPS = [1,3,7,16,35];
+function nkToday(){ return new Date().toISOString().slice(0,10); }
+function nkLoadSrs(){
+  try{ const r = localStorage.getItem(NK_SRS_KEY); if (r) return JSON.parse(r); }catch(e){}
+  return {};
+}
+function nkSaveSrs(d){ try{ localStorage.setItem(NK_SRS_KEY, JSON.stringify(d)); }catch(e){} }
+function nkLoadSt(){
+  try{ const r = localStorage.getItem(NK_ST_KEY); if (r) return JSON.parse(r); }catch(e){}
+  return {days:[], best:0};
+}
+function nkSaveSt(s){ try{ localStorage.setItem(NK_ST_KEY, JSON.stringify(s)); }catch(e){} }
+function nkStreak(){
+  const st = nkLoadSt();
+  const set = new Set(st.days);
+  let n = 0;
+  const d = new Date();
+  // today doesn't break a streak until it's missed, so start from today and walk back
+  if (!set.has(nkToday())) d.setDate(d.getDate() - 1);
+  for (;;){
+    const k = d.toISOString().slice(0,10);
+    if (!set.has(k)) break;
+    n++; d.setDate(d.getDate() - 1);
+  }
+  return n;
+}
+function nkMarkDone(){
+  const st = nkLoadSt();
+  const t = nkToday();
+  if (!st.days.includes(t)) st.days.push(t);
+  st.days = st.days.slice(-400);
+  nkSaveSt(st);
+  const n = nkStreak();
+  if (n > (st.best || 0)){ st.best = n; nkSaveSt(st); }
+}
+/* the finite deck of facts worth retaining */
+function nkDeck(){
+  const out = [];
+  // 1. octave partner of a root
+  for (let s = 0; s <= 3; s++)
+    out.push({id:`oct-${s}`, kind:'oct', s});
+  // 2. which frets two positions share
+  for (let p = 1; p <= 4; p++)
+    out.push({id:`door-${p}`, kind:'door', p});
+  // 3. where a position sits
+  for (let p = 1; p <= 5; p++)
+    out.push({id:`where-${p}`, kind:'where', p});
+  // 4. play it (self-rated)
+  for (let p = 1; p <= 5; p++)
+    out.push({id:`play-${p}`, kind:'play', p});
+  // 5. the ladder on a string
+  for (let s = 0; s < 6; s++)
+    out.push({id:`lad-${s}`, kind:'lad', s});
+  return out;
+}
+function nkNextCard(){
+  const srs = nkLoadSrs(), today = nkToday(), deck = nkDeck();
+  const due = deck.filter(c => {
+    const r = srs[c.id];
+    return !r || !r.due || r.due <= today;
+  });
+  return {card: due.length ? due[Math.floor(Math.random() * due.length)] : null,
+          dueCount: due.length, total: deck.length};
+}
+function nkGrade(id, ok){
+  const srs = nkLoadSrs();
+  const r = srs[id] || {n:0};
+  r.n = ok ? Math.min((r.n || 0) + 1, NK_STEPS.length) : 1;
+  const days = NK_STEPS[r.n - 1];
+  const d = new Date(); d.setDate(d.getDate() + days);
+  r.due = d.toISOString().slice(0,10);
+  srs[id] = r;
+  nkSaveSrs(srs);
+  nkMarkDone();
+  return days;
+}
+function nkRenderCard(){
+  const box = document.getElementById('nk-cardbox');
+  const {card, dueCount, total} = nkNextCard();
+  document.getElementById('nk-st').textContent = nkStreak();
+  document.getElementById('nk-due').textContent =
+    dueCount ? `${dueCount} of ${total} cards due` : 'all caught up';
+  if (!card){
+    box.innerHTML = `<div class="nk-done">Nothing due today &mdash; you're genuinely on top of it.
+      Come back tomorrow, or just play with the board above. <br><br>
+      <button id="nk-force">Give me one anyway</button></div>`;
+    document.getElementById('nk-force').onclick = () => {
+      const d = nkDeck();
+      nkShowCard(d[Math.floor(Math.random()*d.length)]);
+    };
+    return;
+  }
+  nkShowCard(card);
+}
+function nkShowCard(card){
+  const box = document.getElementById('nk-cardbox');
+  const NN = nkNames(), boxes = nkBoxes();
+  let q = '', hint = '', opts = [], answer = null, explain = '';
+
+  if (card.kind === 'oct'){
+    const s = card.s, f = [5,7,8,10,12][Math.floor(Math.random()*5)];
+    const df = s <= 1 ? 2 : 3;
+    q = `A note on the <b>${NK_LBL[s]}</b> string at fret <b>${f}</b>. ` +
+        `Two strings up, which fret is the same note an octave higher?`;
+    hint = 'The rule, not the picture.';
+    answer = f + df;
+    opts = [f+2, f+3, f+5, f-2].map(x => ({label:'fret ' + x, val:x}));
+    explain = `${NK_LBL[s]}&rarr;${NK_LBL[s+2]} is <b>+${df} frets</b>` +
+      (df === 3 ? ' &mdash; the +3 one, because it crosses the B string.' : ' &mdash; the plain +2 one.');
+  } else if (card.kind === 'door'){
+    const a = boxes[card.p-1], b = boxes[card.p];
+    if (!a || !b){ box.innerHTML = '<div class="nk-done">—</div>'; return; }
+    const shared = [0,1,2,3,4,5].reduce((n,s) =>
+      n + a.per[s].filter(f => b.per[s].includes(f)).length, 0);
+    q = `How many of position <b>${card.p}</b>'s twelve notes are also in position <b>${card.p+1}</b>?`;
+    hint = 'This is the whole point of the tab.';
+    answer = shared;
+    opts = [2,4,6,9].map(x => ({label:String(x), val:x}));
+    explain = `<b>${shared}</b> &mdash; exactly half. Adjacent positions always share half their notes, ` +
+      `which is why it's one shape sliding rather than five shapes to memorise.`;
+  } else if (card.kind === 'where'){
+    const b = boxes[card.p-1];
+    if (!b){ box.innerHTML = '<div class="nk-done">—</div>'; return; }
+    const [lo,hi] = nkSpan(b.per);
+    q = `In <b>${NN[nkRoot]} ${NK_SYS[nkMode].name}</b>, which frets does <b>position ${card.p}</b> cover?`;
+    hint = 'Roughly — the low fret is what matters.';
+    answer = lo;
+    const wrong = [lo+2, lo-2, lo+5].filter(x => x >= 0);
+    opts = [lo, ...wrong].slice(0,4).map(x => ({label:`${x}–${x + (hi-lo)}`, val:x}));
+    explain = `Frets <b>${lo}&ndash;${hi}</b>, rooted on ` +
+      `<b>${NN[(NK_MIDI[0]+b.start)%12]}</b> on the low E.`;
+  } else if (card.kind === 'lad'){
+    const {pent} = nkPcs();
+    const s = card.s, frets = [];
+    for (let f = 0; f <= 12; f++) if (pent.has((NK_MIDI[s]+f)%12)) frets.push(f);
+    q = `Playing <b>${NN[nkRoot]} ${NK_SYS[nkMode].name}</b> along the <b>${NK_LBL[s]}</b> string only ` +
+        `&mdash; how many notes from fret 0 to 12?`;
+    hint = 'Count them on the ladder above if you need to.';
+    answer = frets.length;
+    opts = [...new Set([frets.length, frets.length+1, frets.length-1, frets.length+2])]
+      .slice(0,4).map(x => ({label:String(x), val:x}));
+    explain = `Frets <b>${frets.join(' · ')}</b>.`;
+  } else {
+    q = `Play <b>position ${card.p}</b> &mdash; slowly, lowest note to highest, then back down. ` +
+        `Named notes out loud if you can.`;
+    hint = 'No speed. Clean and in time beats fast.';
+    box.innerHTML = `<div class="nk-q">${q}</div><div class="nk-hint">${hint}</div>
+      <div class="nk-ans">
+        <button id="nk-go">&#9654;&nbsp; Hear it first</button>
+        <button class="primary" id="nk-ok">Did it cleanly</button>
+        <button id="nk-no">Was shaky</button>
+      </div>`;
+    document.getElementById('nk-go').onclick = () => {
+      const b = boxes[card.p-1]; if (!b) return;
+      let i = 0;
+      for (let s = 0; s < 6; s++) b.per[s].forEach(f => pluck(NK_MIDI[s]+f, (i++)*0.21, 0.45));
+    };
+    const finish = ok => {
+      const days = nkGrade(card.id, ok);
+      box.innerHTML = `<div class="nk-fb ${ok?'ok':'no'}">${ok ? 'Logged.' : 'Fine — back tomorrow.'}
+        Next time in <b>${days} day${days>1?'s':''}</b>.</div>
+        <div class="nk-ans"><button class="primary" id="nk-more">Another card</button>
+        <button id="nk-stop">That's my two minutes</button></div>`;
+      document.getElementById('nk-more').onclick = nkRenderCard;
+      document.getElementById('nk-stop').onclick = () => {
+        box.innerHTML = `<div class="nk-done">Good. <b>${nkStreak()} day streak.</b>
+          That counted — one card is the whole bar.</div>`;
+      };
+      document.getElementById('nk-st').textContent = nkStreak();
+    };
+    document.getElementById('nk-ok').onclick = () => finish(true);
+    document.getElementById('nk-no').onclick = () => finish(false);
+    return;
+  }
+
+  // shuffle, keeping the answer in there
+  opts = opts.filter((o,i,a) => a.findIndex(x => x.val === o.val) === i);
+  for (let i = opts.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i+1));
+    [opts[i], opts[j]] = [opts[j], opts[i]];
+  }
+  box.innerHTML = `<div class="nk-q">${q}</div><div class="nk-hint">${hint}</div>
+    <div class="nk-ans" id="nk-opts"></div><div class="nk-fb" id="nk-res"></div>`;
+  const wrap = document.getElementById('nk-opts');
+  opts.forEach(o => {
+    const b = document.createElement('button');
+    b.textContent = o.label;
+    b.onclick = () => {
+      const ok = o.val === answer;
+      const days = nkGrade(card.id, ok);
+      wrap.querySelectorAll('button').forEach(x => x.disabled = true);
+      b.classList.add('primary');
+      document.getElementById('nk-res').className = 'nk-fb ' + (ok ? 'ok' : 'no');
+      document.getElementById('nk-res').innerHTML =
+        (ok ? '<b>Right.</b> ' : '<b>Not quite.</b> ') + explain +
+        `<br><br>Next time in <b>${days} day${days>1?'s':''}</b>.
+         <div class="nk-ans"><button class="primary" id="nk-more">Another card</button>
+         <button id="nk-stop">That's my two minutes</button></div>`;
+      document.getElementById('nk-more').onclick = nkRenderCard;
+      document.getElementById('nk-stop').onclick = () => {
+        box.innerHTML = `<div class="nk-done">Good. <b>${nkStreak()} day streak.</b>
+          That counted — one card is the whole bar.</div>`;
+      };
+      document.getElementById('nk-st').textContent = nkStreak();
+    };
+    wrap.appendChild(b);
+  });
+}
+
 /* ---------- offline support + keeping the installed app up to date ----------
    The app gets added to a home screen, so a stale cached copy is the single
    most confusing failure there is: the site updates and the app doesn't. The
    worker below checks for a new version on every load and whenever the app
    comes back to the foreground, then reloads itself once when one arrives. */
-const APP_BUILD = '202608170229';
+const APP_BUILD = '202610082118';
 const verEl = document.getElementById('verline');
 function verShow(msg){
   verEl.textContent = msg || ('build ' + APP_BUILD + ' · tap to check for updates');
