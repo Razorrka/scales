@@ -1,4 +1,4 @@
-const CACHE = 'scales-202610082118';
+const CACHE = 'scales-202610122216';
 const ASSETS = ['./', './index.html', './manifest.webmanifest',
                 './apple-touch-icon.png', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
